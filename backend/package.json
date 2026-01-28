@@ -1,0 +1,16 @@
+{
+  "name": "creaolink",
+  "version": "1.0.0",
+  "description": "A Colaboration Plateform for designers developers and video editors",
+  "keywords": [
+    "creolink",
+    "scenoxis"
+  ],
+  "license": "MIT",
+  "author": "imkunal01,iamdevkrishna",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "nodemon index "
+  }
+}
