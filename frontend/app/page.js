@@ -1,11 +1,15 @@
-import React from 'react'
+import Link from "next/link";
 
-function page() {
+export default function HomePage() {
   return (
-    <>
-      this project Data is moved to different repo 
-    </>
-  )
+    <main className="container">
+      <h1>CreaoLink</h1>
+      <p>Phase 1 foundation: auth + roles + PostgreSQL.</p>
+      <div className="stack">
+        <Link className="button" href="/login">Login</Link>
+        <Link className="button" href="/register">Register</Link>
+        <Link className="button" href="/dashboard">Dashboard</Link>
+      </div>
+    </main>
+  );
 }
-
-export default page
