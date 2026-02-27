@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AdminGate from "../components/AdminGate";
 import AuthInput from "../components/AuthInput";
+import RoleSelector from "../components/RoleSelector";
+import { mockLogin, type UserRole } from "@/lib/auth";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"client" | "freelancer">("client");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -29,9 +34,15 @@ export default function LoginPage() {
     if (!validate()) return;
 
     setLoading(true);
-    // TODO: Connect to backend API
-    console.log("Login:", { email, password, isAdmin });
-    setTimeout(() => setLoading(false), 1500);
+    // TODO: Replace with real API call in Phase 1C
+    // Mock login: derive name from email, set role
+    const name = email.split("@")[0].replace(/[^a-zA-Z]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).trim() || "User";
+    const loginRole: UserRole = isAdmin ? "admin" : role;
+    mockLogin(loginRole, name);
+    setTimeout(() => {
+      setLoading(false);
+      router.push("/dashboard");
+    }, 800);
   };
 
   return (
@@ -88,7 +99,8 @@ export default function LoginPage() {
             error={errors.password}
           />
 
-          <div className="flex items-center justify-end mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs text-text-tertiary">Sign in as</span>
             <Link
               href="/auth/forgot-password"
               className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
@@ -96,6 +108,8 @@ export default function LoginPage() {
               Forgot password?
             </Link>
           </div>
+
+          {!isAdmin && <RoleSelector selected={role} onChange={setRole} />}
 
           <button
             type="submit"
