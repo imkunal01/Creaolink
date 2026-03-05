@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { User } from "@/lib/auth";
 
 interface TopbarProps {
@@ -20,8 +21,8 @@ export default function Topbar({ user }: TopbarProps) {
     <header className="h-14 border-b border-border bg-bg/80 backdrop-blur-sm flex items-center justify-between px-6 sticky top-0 z-20">
       <div />
 
-      {/* User info */}
-      <div className="flex items-center gap-3">
+      {/* User info — clicking profile icon goes to profile page */}
+      <Link href="/dashboard/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
         <div className="text-right hidden sm:block">
           <p className="text-sm font-medium text-text-primary leading-tight">
             {user?.name ?? "User"}
@@ -35,7 +36,7 @@ export default function Topbar({ user }: TopbarProps) {
             {initials}
           </span>
         </div>
-      </div>
+      </Link>
     </header>
   );
 }
