@@ -52,9 +52,9 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
   return (
     <div className="space-y-8">
       {/* Header — no primary action button for freelancers */}
-      <div>
+      <div className="min-w-0">
         <h1 className="text-xl font-semibold text-text-primary">Dashboard</h1>
-        <p className="text-sm text-text-secondary mt-1">
+        <p className="text-sm text-text-secondary mt-1 truncate">
           Welcome back, {user.name} 👋
         </p>
       </div>
@@ -101,7 +101,7 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             {assignedProjects.map((project) => (
               <ProjectCard
                 key={project.id}

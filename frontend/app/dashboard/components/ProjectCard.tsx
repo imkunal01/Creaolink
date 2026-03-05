@@ -23,7 +23,7 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-bg-secondary border border-border rounded-xl p-5 hover:border-border-hover transition-all duration-200 cursor-pointer group"
+      className="w-full text-left bg-bg-secondary border border-border rounded-xl p-4 sm:p-5 hover:border-border-hover transition-all duration-200 cursor-pointer group"
     >
       <div className="flex items-start justify-between gap-3 mb-2">
         <h3 className="text-sm font-medium text-text-primary group-hover:text-accent transition-colors">

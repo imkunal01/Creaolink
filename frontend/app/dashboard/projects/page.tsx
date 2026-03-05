@@ -46,7 +46,7 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-text-primary">Projects</h1>
           <p className="text-sm text-text-secondary mt-1">
@@ -58,7 +58,7 @@ export default function ProjectsPage() {
         {isClient && (
           <button
             onClick={() => setShowCreate(true)}
-            className="px-5 py-2.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-all duration-200 cursor-pointer"
+            className="self-start sm:self-auto px-5 py-2.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-all duration-200 cursor-pointer shrink-0"
           >
             + Create Project
           </button>
@@ -90,7 +90,7 @@ export default function ProjectsPage() {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {projects.map((project) => (
             <ProjectCard
               key={project.id}

@@ -181,8 +181,8 @@ export default function ProjectDetailPage() {
       </button>
 
       {/* ━━━ Top Section: Title + Status ━━━ */}
-      <div className="bg-bg-secondary border border-border rounded-xl p-6">
-        <div className="flex items-start justify-between gap-4">
+      <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-semibold text-text-primary truncate">{project.title}</h1>
             <p className="text-sm text-text-tertiary mt-1">
@@ -245,7 +245,7 @@ export default function ProjectDetailPage() {
       {activeTab === "overview" && (
         <div className="space-y-6">
           {/* Description + Deadline */}
-          <div className="bg-bg-secondary border border-border rounded-xl p-6 space-y-4">
+          <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6 space-y-4">
             <div>
               <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">Description</h3>
               <p className="text-sm text-text-secondary leading-relaxed">
@@ -268,8 +268,8 @@ export default function ProjectDetailPage() {
           </div>
 
           {/* Current Version + Version History */}
-          <div className="bg-bg-secondary border border-border rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
               <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider">Versions</h3>
               <button
                 onClick={() => setShowVersionForm((v) => !v)}
@@ -316,7 +316,7 @@ export default function ProjectDetailPage() {
                 </span>
                 <span className="text-xs text-text-tertiary">— Current</span>
                 {project.currentVersion.notes && (
-                  <span className="text-xs text-text-tertiary ml-auto truncate max-w-[200px]">
+                  <span className="text-xs text-text-tertiary ml-auto truncate max-w-[120px] sm:max-w-[200px] hidden sm:inline">
                     {project.currentVersion.notes}
                   </span>
                 )}
@@ -346,7 +346,7 @@ export default function ProjectDetailPage() {
           </div>
 
           {/* Team Members */}
-          <div className="bg-bg-secondary border border-border rounded-xl p-6">
+          <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
             <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-4">Team Members</h3>
             <div className="space-y-3">
               {project.members.map((member) => (
@@ -391,8 +391,8 @@ export default function ProjectDetailPage() {
 
           {/* Feedback form */}
           {showFeedbackForm && (
-            <form onSubmit={handleAddFeedback} className="bg-bg-secondary border border-border rounded-xl p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleAddFeedback} className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-text-tertiary mb-1.5">Type</label>
                   <select
@@ -471,7 +471,7 @@ export default function ProjectDetailPage() {
               {feedback.map((item) => (
                 <div
                   key={item.id}
-                  className={`bg-bg-secondary border rounded-xl p-5 ${
+                  className={`bg-bg-secondary border rounded-xl p-4 sm:p-5 ${
                     item.status === "resolved" ? "border-border/50 opacity-70" : "border-border"
                   }`}
                 >

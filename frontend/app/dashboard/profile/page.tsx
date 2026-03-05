@@ -21,7 +21,7 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      <div className="bg-bg-secondary border border-border rounded-xl p-6 space-y-5">
+      <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6 space-y-5">
         {/* Avatar */}
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-bg-tertiary border border-border flex items-center justify-center">

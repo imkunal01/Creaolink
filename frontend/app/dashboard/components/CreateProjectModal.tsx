@@ -58,7 +58,7 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-bg-secondary border border-border rounded-xl w-full max-w-[480px] mx-4 p-6 sm:p-8 shadow-2xl">
+      <div className="relative bg-bg-secondary border border-border rounded-xl w-full max-w-[480px] mx-4 p-5 sm:p-8 shadow-2xl max-h-[90dvh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-text-primary">Create Project</h2>
