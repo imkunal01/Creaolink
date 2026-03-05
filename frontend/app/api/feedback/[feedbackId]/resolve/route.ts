@@ -1,62 +1,46 @@
-import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/api-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getPool, getAuthUser } from "@/lib/db";
 
-// PATCH /api/feedback/[feedbackId]/resolve — Resolve feedback (freelancer only)
+// ── PATCH /api/feedback/:feedbackId/resolve — Mark feedback resolved ──
 export async function PATCH(
-  req: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ feedbackId: string }> }
 ) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { feedbackId } = await params;
-  const db = getDb();
+    // Only freelancer can resolve feedback
+    if (user.role !== "freelancer" && user.role !== "admin") {
+      return NextResponse.json({ error: "Only freelancers can resolve feedback" }, { status: 403 });
+    }
 
-  // Get the feedback item
-  const feedbackItem = db
-    .prepare("SELECT * FROM feedback WHERE id = ?")
-    .get(feedbackId) as Record<string, unknown> | undefined;
+    const { feedbackId } = await params;
+    const db = await getPool();
 
-  if (!feedbackItem) {
-    return NextResponse.json(
-      { error: "Feedback not found" },
-      { status: 404 }
+    // Get the feedback to find its project
+    const { rows: fbRows } = await db.query("SELECT * FROM feedback WHERE id = $1", [feedbackId]);
+    if (fbRows.length === 0) {
+      return NextResponse.json({ error: "Feedback not found" }, { status: 404 });
+    }
+    const feedback = fbRows[0];
+
+    // Check user belongs to the project
+    const { rows: memberRows } = await db.query(
+      "SELECT id FROM project_members WHERE project_id = $1 AND user_id = $2",
+      [feedback.project_id, user.id]
     );
+    if (memberRows.length === 0) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Update status to resolved
+    await db.query("UPDATE feedback SET status = 'resolved' WHERE id = $1", [feedbackId]);
+
+    const { rows: updatedRows } = await db.query("SELECT * FROM feedback WHERE id = $1", [feedbackId]);
+    return NextResponse.json({ feedback: updatedRows[0] });
+  } catch (err) {
+    console.error("Resolve feedback error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  // Check user is freelancer
-  if (user.role !== "freelancer") {
-    return NextResponse.json(
-      { error: "Only freelancers can resolve feedback" },
-      { status: 403 }
-    );
-  }
-
-  // Check user belongs to the project
-  const membership = db
-    .prepare(
-      "SELECT id FROM project_members WHERE project_id = ? AND user_id = ?"
-    )
-    .get(feedbackItem.project_id, user.id);
-
-  if (!membership) {
-    return NextResponse.json(
-      { error: "You are not a member of this project" },
-      { status: 403 }
-    );
-  }
-
-  // Update status to resolved
-  db.prepare("UPDATE feedback SET status = 'resolved' WHERE id = ?").run(
-    feedbackId
-  );
-
-  const updated = db
-    .prepare("SELECT * FROM feedback WHERE id = ?")
-    .get(feedbackId);
-
-  return NextResponse.json({ feedback: updated });
 }

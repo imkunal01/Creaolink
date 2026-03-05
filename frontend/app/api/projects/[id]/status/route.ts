@@ -1,50 +1,43 @@
-import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import { getUserFromRequest } from "@/lib/api-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getPool, getAuthUser } from "@/lib/db";
 
-// PATCH /api/projects/[id]/status — Update project status (client only)
+// ── PATCH /api/projects/:id/status — Update project status ──
 export async function PATCH(
-  req: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = getUserFromRequest(req);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const user = await getAuthUser(request);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id } = await params;
-  const db = getDb();
+    // Only client/admin can update status
+    if (user.role !== "client" && user.role !== "admin") {
+      return NextResponse.json({ error: "Only clients can update project status" }, { status: 403 });
+    }
 
-  // Check project exists and user is the creator (client)
-  const project = db
-    .prepare("SELECT * FROM projects WHERE id = ?")
-    .get(id) as Record<string, unknown> | undefined;
+    const { id } = await params;
+    const db = await getPool();
 
-  if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
-  }
-
-  if (project.created_by !== user.id) {
-    return NextResponse.json(
-      { error: "Only the project owner can update status" },
-      { status: 403 }
+    // Verify membership
+    const { rows: memberRows } = await db.query(
+      "SELECT id FROM project_members WHERE project_id = $1 AND user_id = $2",
+      [id, user.id]
     );
+    if (memberRows.length === 0) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { status } = await request.json();
+    if (!["active", "completed", "approved", "pending"].includes(status)) {
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    }
+
+    await db.query("UPDATE projects SET status = $1 WHERE id = $2", [status, id]);
+
+    const { rows } = await db.query("SELECT * FROM projects WHERE id = $1", [id]);
+    return NextResponse.json({ project: rows[0] });
+  } catch (err) {
+    console.error("Status update error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  const body = await req.json();
-  const { status } = body as { status: string };
-
-  const validStatuses = ["active", "completed", "approved", "paused"];
-  if (!validStatuses.includes(status)) {
-    return NextResponse.json(
-      { error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` },
-      { status: 400 }
-    );
-  }
-
-  db.prepare("UPDATE projects SET status = ? WHERE id = ?").run(status, id);
-
-  const updated = db.prepare("SELECT * FROM projects WHERE id = ?").get(id);
-
-  return NextResponse.json({ project: updated });
 }

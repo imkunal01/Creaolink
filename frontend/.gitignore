@@ -38,4 +38,9 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# sqlite database
+creolink.db
+creolink.db-wal
+creolink.db-shm
 next-env.d.ts

@@ -1,27 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "@/lib/auth";
-import { apiFetch } from "@/lib/api-client";
+import { apiListProjects } from "@/lib/api";
 import StatsCards from "./StatsCards";
 import EmptyState from "./EmptyState";
-import ProjectCard from "./ProjectCard";
+import ProjectCard, { Project } from "./ProjectCard";
 import CreateProjectModal from "./CreateProjectModal";
-
-interface ApiProject {
-  id: string;
-  title: string;
-  description: string;
-  deadline: string | null;
-  status: "active" | "completed" | "approved" | "paused";
-  current_version_id: string | null;
-  current_version_name: string | null;
-  created_by: string;
-  created_at: string;
-  memberCount: number;
-  openFeedback: number;
-}
 
 interface ClientDashboardProps {
   user: User;
@@ -29,19 +15,24 @@ interface ClientDashboardProps {
 
 export default function ClientDashboard({ user }: ClientDashboardProps) {
   const router = useRouter();
-  const [projects, setProjects] = useState<ApiProject[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/projects");
-      if (res.ok) {
-        const data = await res.json();
-        setProjects(data.projects);
-      }
+      const { projects: raw } = await apiListProjects();
+      setProjects(
+        raw.map((p) => ({
+          id: p.id as string,
+          name: p.title as string,
+          description: (p.description as string) || undefined,
+          status: (p.status as "active" | "completed" | "pending") || "active",
+          updatedAt: new Date(p.created_at as string).toLocaleDateString(),
+        }))
+      );
     } catch {
-      // silently fail
+      // silently fail — show empty
     } finally {
       setLoading(false);
     }
@@ -52,24 +43,13 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
   }, [fetchProjects]);
 
   const activeCount = projects.filter((p) => p.status === "active").length;
-  const completedCount = projects.filter(
-    (p) => p.status === "completed" || p.status === "approved"
-  ).length;
-  const pendingFeedback = projects.reduce(
-    (sum, p) => sum + (p.openFeedback || 0),
-    0
-  );
+  const completedCount = projects.filter((p) => p.status === "completed").length;
 
   const clientStats = [
     { label: "Active Projects", value: activeCount },
     { label: "Completed", value: completedCount },
-    { label: "Pending Feedback", value: pendingFeedback },
+    { label: "Total Projects", value: projects.length },
   ];
-
-  const handleProjectCreated = (project: { id: string }) => {
-    setShowCreateModal(false);
-    router.push(`/dashboard/projects/${project.id}`);
-  };
 
   return (
     <div className="space-y-8">
@@ -78,11 +58,11 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
         <div>
           <h1 className="text-xl font-semibold text-text-primary">Dashboard</h1>
           <p className="text-sm text-text-secondary mt-1">
-            Welcome back, {user.name}
+            Welcome back, {user.name} 👋
           </p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => setShowCreate(true)}
           className="px-5 py-2.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-all duration-200 cursor-pointer"
         >
           + Create Project
@@ -97,33 +77,13 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-medium text-text-primary">My Projects</h2>
           {projects.length > 0 && (
-            <span className="text-xs text-text-tertiary">
-              {projects.length} project{projects.length !== 1 ? "s" : ""}
-            </span>
+            <span className="text-xs text-text-tertiary">{projects.length} projects</span>
           )}
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <svg
-              className="animate-spin h-6 w-6 text-text-tertiary"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
+            <div className="w-5 h-5 border-2 border-text-tertiary border-t-accent rounded-full animate-spin" />
           </div>
         ) : projects.length === 0 ? (
           <div className="bg-bg-secondary border border-border rounded-xl">
@@ -151,7 +111,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
               description="Create your first project to get started. Manage deliverables, track progress, and collaborate with freelancers."
               action={{
                 label: "Create Project",
-                onClick: () => setShowCreateModal(true),
+                onClick: () => setShowCreate(true),
               }}
             />
           </div>
@@ -160,21 +120,8 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}
-                project={{
-                  id: project.id,
-                  name: project.title,
-                  description: project.description,
-                  status:
-                    project.status === "approved"
-                      ? "completed"
-                      : project.status === "paused"
-                      ? "pending"
-                      : project.status,
-                  updatedAt: new Date(project.created_at).toLocaleDateString(),
-                }}
-                onClick={() =>
-                  router.push(`/dashboard/projects/${project.id}`)
-                }
+                project={project}
+                onClick={() => router.push(`/dashboard/projects/${project.id}`)}
               />
             ))}
           </div>
@@ -183,9 +130,11 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
 
       {/* Create Project Modal */}
       <CreateProjectModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onCreated={handleProjectCreated}
+        open={showCreate}
+        onClose={() => {
+          setShowCreate(false);
+          fetchProjects();
+        }}
       />
     </div>
   );

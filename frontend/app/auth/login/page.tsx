@@ -5,15 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AdminGate from "../components/AdminGate";
 import AuthInput from "../components/AuthInput";
-import RoleSelector from "../components/RoleSelector";
-import { mockLogin, type UserRole } from "@/lib/auth";
+import { setUser, type UserRole } from "@/lib/auth";
+import { apiLogin } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"client" | "freelancer">("client");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
@@ -23,8 +22,6 @@ export default function LoginPage() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       newErrors.email = "Invalid email format";
     if (!password) newErrors.password = "Password is required";
-    else if (password.length < 6)
-      newErrors.password = "Must be at least 6 characters";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -34,15 +31,16 @@ export default function LoginPage() {
     if (!validate()) return;
 
     setLoading(true);
-    // TODO: Replace with real API call in Phase 1C
-    // Mock login: derive name from email, set role
-    const name = email.split("@")[0].replace(/[^a-zA-Z]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).trim() || "User";
-    const loginRole: UserRole = isAdmin ? "admin" : role;
-    mockLogin(loginRole, name);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { user } = await apiLogin(email, password);
+      setUser({ id: user.id, name: user.name, email: user.email, role: user.role as UserRole });
       router.push("/dashboard");
-    }, 800);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Login failed";
+      setErrors({ email: message });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -99,8 +97,7 @@ export default function LoginPage() {
             error={errors.password}
           />
 
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs text-text-tertiary">Sign in as</span>
+          <div className="flex items-center justify-end mb-4">
             <Link
               href="/auth/forgot-password"
               className="text-xs text-text-tertiary hover:text-text-primary transition-colors"
@@ -108,8 +105,6 @@ export default function LoginPage() {
               Forgot password?
             </Link>
           </div>
-
-          {!isAdmin && <RoleSelector selected={role} onChange={setRole} />}
 
           <button
             type="submit"

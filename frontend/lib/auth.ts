@@ -1,4 +1,4 @@
-// Mock auth utilities — will be replaced with real JWT logic in Phase 1C
+// Auth utilities — localStorage-based session (user stored after real login/signup)
 
 export type UserRole = "client" | "freelancer" | "admin";
 
@@ -55,17 +55,4 @@ export function isAuthenticated(): boolean {
 export function logout(): void {
   if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
-}
-
-/**
- * Mock login — sets a fake user for development
- * Remove this when real auth is wired
- */
-export function mockLogin(role: UserRole = "client", name: string = "Kunal"): void {
-  setUser({
-    id: `mock-${role}-${Date.now()}`,
-    name,
-    email: `${name.toLowerCase()}@creolink.dev`,
-    role,
-  });
 }
