@@ -52,7 +52,11 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (err) {
-    console.error("Signup error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error("Signup error:", err instanceof Error ? err.message : err);
+    console.error("Stack:", err instanceof Error ? err.stack : "N/A");
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

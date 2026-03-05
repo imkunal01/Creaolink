@@ -1,25 +1,41 @@
 import { Pool } from "pg";
 
-const isSupabase = (process.env.DATABASE_URL || "").includes("supabase");
-
-const pool = new Pool({
-  connectionString:
-    process.env.DATABASE_URL || "postgresql://postgres:kunal@localhost:5432/myapp",
-  ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
-});
-
+let pool: Pool | null = null;
 let _initialized = false;
 
+function createPool(): Pool {
+  const connStr =
+    process.env.DATABASE_URL ||
+    "postgresql://postgres:kunal@localhost:5432/myapp";
+  const isSupabase = connStr.includes("supabase");
+
+  return new Pool({
+    connectionString: connStr,
+    ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
+    max: 5,
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 30000,
+  });
+}
+
 export async function getPool(): Promise<Pool> {
+  if (!pool) {
+    pool = createPool();
+  }
   if (!_initialized) {
-    await initTables();
     _initialized = true;
+    try {
+      await initTables();
+    } catch (err) {
+      console.error("initTables failed (tables may already exist):", err);
+      // Don't block — tables likely already exist in production
+    }
   }
   return pool;
 }
 
 async function initTables() {
-  const client = await pool.connect();
+  const client = await pool!.connect();
   try {
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
