@@ -14,17 +14,16 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    // Load user if logged in — dashboard is accessible without auth
     setUser(getUser());
   }, []);
 
   return (
-    <div className="min-h-dvh bg-bg">
+    <div className="min-h-screen bg-bg">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      {/* Main column — push right on lg+ */}
-      <div className="lg:ml-[220px] flex flex-col min-h-dvh">
+      <div className="ml-[220px]">
         <Topbar user={user} onMenuToggle={() => setSidebarOpen(true)} />
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-[1100px] w-full">
+        <main className="px-6 lg:px-8 py-6 max-w-[1100px]">
           {typeof children === "object" && children !== null
             ? children
             : null}

@@ -16,16 +16,12 @@ export default function DashboardPage() {
 
   if (!loaded) return null;
 
-  // Redirect to login if not authenticated
-  if (!user) {
-    window.location.href = "/auth/login";
-    return null;
-  }
-
   // Role-based UI branching
-  if (user.role === "freelancer") {
+  if (user?.role === "freelancer") {
     return <FreelancerDashboard user={user} />;
   }
 
-  return <ClientDashboard user={user} />;
+  // Logged-in client / admin, or guest (unauthenticated) — show client dashboard
+  const guestUser: User = { id: "guest", name: "Guest", email: "", role: "client" };
+  return <ClientDashboard user={user ?? guestUser} />;
 }

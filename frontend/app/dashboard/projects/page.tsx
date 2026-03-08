@@ -3,30 +3,33 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getUser, type User } from "@/lib/auth";
-import { apiListProjects } from "@/lib/api";
+import { apiFetch } from "@/lib/api-client";
 import EmptyState from "../components/EmptyState";
-import ProjectCard, { type Project } from "../components/ProjectCard";
+import ProjectCard from "../components/ProjectCard";
 import CreateProjectModal from "../components/CreateProjectModal";
+
+interface ApiProject {
+  id: string;
+  title: string;
+  description: string;
+  status: "active" | "completed" | "approved" | "paused";
+  created_at: string;
+}
 
 export default function ProjectsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ApiProject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     try {
-      const { projects: raw } = await apiListProjects();
-      setProjects(
-        raw.map((p) => ({
-          id: p.id as string,
-          name: p.title as string,
-          description: (p.description as string) || undefined,
-          status: (p.status as "active" | "completed" | "pending") || "active",
-          updatedAt: new Date(p.created_at as string).toLocaleDateString(),
-        }))
-      );
+      const res = await apiFetch("/api/projects");
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data.projects);
+      }
     } catch {
       // silently fail
     } finally {
@@ -43,10 +46,15 @@ export default function ProjectsPage() {
 
   const isClient = user.role === "client" || user.role === "admin";
 
+  const handleProjectCreated = (project: { id: string }) => {
+    setShowCreateModal(false);
+    router.push(`/dashboard/projects/${project.id}`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-text-primary">Projects</h1>
           <p className="text-sm text-text-secondary mt-1">
@@ -57,8 +65,8 @@ export default function ProjectsPage() {
         </div>
         {isClient && (
           <button
-            onClick={() => setShowCreate(true)}
-            className="self-start sm:self-auto px-5 py-2.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-all duration-200 cursor-pointer shrink-0"
+            onClick={() => setShowCreateModal(true)}
+            className="px-5 py-2.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-all duration-200 cursor-pointer"
           >
             + Create Project
           </button>
@@ -68,7 +76,25 @@ export default function ProjectsPage() {
       {/* Projects list */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-5 h-5 border-2 border-text-tertiary border-t-accent rounded-full animate-spin" />
+          <svg
+            className="animate-spin h-6 w-6 text-text-tertiary"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
+          </svg>
         </div>
       ) : projects.length === 0 ? (
         <div className="bg-bg-secondary border border-border rounded-xl">
@@ -83,19 +109,32 @@ export default function ProjectsPage() {
               isClient
                 ? {
                     label: "Create Project",
-                    onClick: () => setShowCreate(true),
+                    onClick: () => setShowCreateModal(true),
                   }
                 : undefined
             }
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {projects.map((project) => (
             <ProjectCard
               key={project.id}
-              project={project}
-              onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+              project={{
+                id: project.id,
+                name: project.title,
+                description: project.description,
+                status:
+                  project.status === "approved"
+                    ? "completed"
+                    : project.status === "paused"
+                    ? "pending"
+                    : project.status,
+                updatedAt: new Date(project.created_at).toLocaleDateString(),
+              }}
+              onClick={() =>
+                router.push(`/dashboard/projects/${project.id}`)
+              }
             />
           ))}
         </div>
@@ -104,11 +143,9 @@ export default function ProjectsPage() {
       {/* Create Project Modal */}
       {isClient && (
         <CreateProjectModal
-          open={showCreate}
-          onClose={() => {
-            setShowCreate(false);
-            fetchProjects();
-          }}
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onCreated={handleProjectCreated}
         />
       )}
     </div>

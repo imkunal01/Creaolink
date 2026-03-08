@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { User } from "@/lib/auth";
-import { apiListProjects } from "@/lib/api";
+import { apiFetch } from "@/lib/api-client";
 import StatsCards from "./StatsCards";
 import EmptyState from "./EmptyState";
-import ProjectCard, { Project } from "./ProjectCard";
+import ProjectCard from "./ProjectCard";
+
+interface ApiProject {
+  id: string;
+  title: string;
+  description: string;
+  deadline: string | null;
+  status: "active" | "completed" | "approved" | "paused";
+  created_at: string;
+  openFeedback: number;
+}
 
 interface FreelancerDashboardProps {
   user: User;
@@ -14,21 +24,16 @@ interface FreelancerDashboardProps {
 
 export default function FreelancerDashboard({ user }: FreelancerDashboardProps) {
   const router = useRouter();
-  const [assignedProjects, setAssignedProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ApiProject[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchProjects = useCallback(async () => {
     try {
-      const { projects: raw } = await apiListProjects();
-      setAssignedProjects(
-        raw.map((p) => ({
-          id: p.id as string,
-          name: p.title as string,
-          description: (p.description as string) || undefined,
-          status: (p.status as "active" | "completed" | "pending") || "active",
-          updatedAt: new Date(p.created_at as string).toLocaleDateString(),
-        }))
-      );
+      const res = await apiFetch("/api/projects");
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data.projects);
+      }
     } catch {
       // silently fail
     } finally {
@@ -40,22 +45,28 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
     fetchProjects();
   }, [fetchProjects]);
 
-  const activeCount = assignedProjects.filter((p) => p.status === "active").length;
-  const completedCount = assignedProjects.filter((p) => p.status === "completed").length;
+  const assignedCount = projects.filter((p) => p.status === "active").length;
+  const openFeedback = projects.reduce(
+    (sum, p) => sum + (p.openFeedback || 0),
+    0
+  );
+  const completedCount = projects.filter(
+    (p) => p.status === "completed" || p.status === "approved"
+  ).length;
 
   const freelancerStats = [
-    { label: "Assigned Projects", value: assignedProjects.length },
-    { label: "Active", value: activeCount },
+    { label: "Assigned Projects", value: assignedCount },
+    { label: "Open Feedback", value: openFeedback },
     { label: "Completed", value: completedCount },
   ];
 
   return (
     <div className="space-y-8">
       {/* Header — no primary action button for freelancers */}
-      <div className="min-w-0">
+      <div>
         <h1 className="text-xl font-semibold text-text-primary">Dashboard</h1>
-        <p className="text-sm text-text-secondary mt-1 truncate">
-          Welcome back, {user.name} 👋
+        <p className="text-sm text-text-secondary mt-1">
+          Welcome back, {user.name}
         </p>
       </div>
 
@@ -66,18 +77,36 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-medium text-text-primary">Assigned Projects</h2>
-          {assignedProjects.length > 0 && (
+          {projects.length > 0 && (
             <span className="text-xs text-text-tertiary">
-              {assignedProjects.length} projects
+              {projects.length} project{projects.length !== 1 ? "s" : ""}
             </span>
           )}
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="w-5 h-5 border-2 border-text-tertiary border-t-accent rounded-full animate-spin" />
+            <svg
+              className="animate-spin h-6 w-6 text-text-tertiary"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
           </div>
-        ) : assignedProjects.length === 0 ? (
+        ) : projects.length === 0 ? (
           <div className="bg-bg-secondary border border-border rounded-xl">
             <EmptyState
               icon={
@@ -101,12 +130,25 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {assignedProjects.map((project) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {projects.map((project) => (
               <ProjectCard
                 key={project.id}
-                project={project}
-                onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+                project={{
+                  id: project.id,
+                  name: project.title,
+                  description: project.description,
+                  status:
+                    project.status === "approved"
+                      ? "completed"
+                      : project.status === "paused"
+                      ? "pending"
+                      : project.status,
+                  updatedAt: new Date(project.created_at).toLocaleDateString(),
+                }}
+                onClick={() =>
+                  router.push(`/dashboard/projects/${project.id}`)
+                }
               />
             ))}
           </div>
