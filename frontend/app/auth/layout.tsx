@@ -1,4 +1,5 @@
 import AuthTicker from "./components/AuthTicker";
+import AuthNavbar from "./components/AuthNavbar";
 
 export default function AuthLayout({
   children,
@@ -7,6 +8,8 @@ export default function AuthLayout({
 }) {
   return (
     <div className="min-h-dvh flex flex-col bg-bg">
+      <AuthNavbar />
+
       {/* Centered content area */}
       <div className="flex-1 flex items-start sm:items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
         <div className="w-full max-w-[460px]">

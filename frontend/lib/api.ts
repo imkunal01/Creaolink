@@ -34,6 +34,27 @@ export function apiSignup(data: { name: string; email: string; password: string;
   );
 }
 
+export function apiGoogleAuth(accessToken: string, role?: "client" | "freelancer") {
+  return request<{ user: { id: string; name: string; email: string; role: string } }>(
+    "/api/auth/google",
+    { method: "POST", body: JSON.stringify({ accessToken, role }) }
+  );
+}
+
+export function apiCheckSupabaseConnection() {
+  return request<{
+    ok: boolean;
+    source: string;
+    mode: "direct-db-url";
+    dbHost: string;
+    error?: string;
+  }>(
+    "/api/health/supabase"
+  );
+}
+
+export const apiCheckDatabaseConnection = apiCheckSupabaseConnection;
+
 // ── Projects ──
 export function apiCreateProject(data: {
   title: string;

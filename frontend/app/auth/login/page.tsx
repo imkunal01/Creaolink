@@ -7,6 +7,7 @@ import AdminGate from "../components/AdminGate";
 import AuthInput from "../components/AuthInput";
 import { setUser, type UserRole } from "@/lib/auth";
 import { apiLogin } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -40,6 +42,25 @@ export default function LoginPage() {
       setErrors({ email: message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
+      const redirectTo = `${window.location.origin}/auth/callback?role=client`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Google sign in failed";
+      setErrors({ email: message });
+      setGoogleLoading(false);
     }
   };
 
@@ -151,12 +172,14 @@ export default function LoginPage() {
         <div className="space-y-3">
           <button
             type="button"
+            onClick={handleGoogleLogin}
+            disabled={googleLoading}
             className="w-full flex items-center justify-center gap-2 py-2.5 border border-border rounded-lg text-sm text-text-secondary hover:border-border-hover hover:text-text-primary transition-all duration-200 cursor-pointer"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
             </svg>
-            Continue with Google
+            {googleLoading ? "Redirecting to Google..." : "Continue with Google"}
           </button>
           <button
             type="button"
