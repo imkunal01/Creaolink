@@ -10,10 +10,10 @@ type Status = "loading" | "error";
 
 async function waitForAccessToken(): Promise<string | null> {
   const supabase = getSupabase();
-  for (let i = 0; i < 8; i += 1) {
+  for (let i = 0; i < 20; i += 1) {
     const { data, error } = await supabase.auth.getSession();
     if (!error && data.session?.access_token) return data.session.access_token;
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 300));
   }
   return null;
 }
@@ -29,12 +29,26 @@ function CallbackContent() {
 
     const completeAuth = async () => {
       try {
+        const authError = searchParams.get("error_description") || searchParams.get("error");
+        if (authError) {
+          throw new Error(decodeURIComponent(authError));
+        }
+
         const roleParam = searchParams.get("role");
         const role = roleParam === "freelancer" ? "freelancer" : "client";
 
+        const code = searchParams.get("code");
+        if (code) {
+          const supabase = getSupabase();
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) {
+            throw new Error(exchangeError.message);
+          }
+        }
+
         const accessToken = await waitForAccessToken();
         if (!accessToken) {
-          throw new Error("Could not verify Google session. Please try again.");
+          throw new Error("Could not verify Google session. Please try again in a new tab.");
         }
 
         const { user } = await apiGoogleAuth(accessToken, role);

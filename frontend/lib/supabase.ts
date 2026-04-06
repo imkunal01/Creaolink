@@ -4,19 +4,26 @@ type SupabaseBrowserClient = ReturnType<typeof createClient>;
 
 let browserClient: SupabaseBrowserClient | null = null;
 
-function getClientEnv(name: string): string {
-	const value = process.env[name];
-	if (!value) {
-		throw new Error(`[Supabase] Missing required environment variable: ${name}`);
-	}
-	return value;
-}
-
 export function getSupabase(): SupabaseBrowserClient {
 	if (browserClient) return browserClient;
 
-	const supabaseUrl = getClientEnv("NEXT_PUBLIC_SUPABASE_URL");
-	const supabaseAnonKey = getClientEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+	// NEXT_PUBLIC_* variables must be referenced statically so Next can inline
+	// them into the client bundle.
+	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+	if (!supabaseUrl) {
+		throw new Error(
+			"[Supabase] Missing required environment variable: NEXT_PUBLIC_SUPABASE_URL"
+		);
+	}
+
+	if (!supabaseAnonKey) {
+		throw new Error(
+			"[Supabase] Missing required environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY"
+		);
+	}
+
 	browserClient = createClient(supabaseUrl, supabaseAnonKey);
 
 	return browserClient;
