@@ -5,11 +5,18 @@ import { useRouter } from "next/navigation";
 import { apiCreateProject } from "@/lib/api";
 
 interface CreateProjectModalProps {
-  open: boolean;
+  open?: boolean;
+  isOpen?: boolean;
   onClose: () => void;
+  onCreated?: (project: { id: string }) => void;
 }
 
-export default function CreateProjectModal({ open, onClose }: CreateProjectModalProps) {
+export default function CreateProjectModal({
+  open,
+  isOpen,
+  onClose,
+  onCreated,
+}: CreateProjectModalProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -18,7 +25,9 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  if (!open) return null;
+  const modalOpen = isOpen ?? open ?? false;
+
+  if (!modalOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +53,12 @@ export default function CreateProjectModal({ open, onClose }: CreateProjectModal
       });
 
       onClose();
-      router.push(`/dashboard/projects/${(project as { id: string }).id}`);
+      const createdProject = project as { id: string };
+      if (onCreated) {
+        onCreated(createdProject);
+      } else {
+        router.push(`/dashboard/projects/${createdProject.id}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create project");
     } finally {

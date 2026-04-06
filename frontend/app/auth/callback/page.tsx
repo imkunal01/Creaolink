@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setUser, type UserRole } from "@/lib/auth";
 import { apiGoogleAuth } from "@/lib/api";
@@ -17,7 +17,7 @@ async function waitForAccessToken(): Promise<string | null> {
   return null;
 }
 
-export default function AuthCallbackPage() {
+function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<Status>("loading");
@@ -83,5 +83,23 @@ export default function AuthCallbackPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function CallbackFallback() {
+  return (
+    <div className="min-h-[50vh] flex items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-xl border border-border bg-bg-secondary p-6 text-center">
+        <p className="text-sm text-text-secondary">Finalizing Google sign in...</p>
+      </div>
+    </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<CallbackFallback />}>
+      <CallbackContent />
+    </Suspense>
   );
 }
