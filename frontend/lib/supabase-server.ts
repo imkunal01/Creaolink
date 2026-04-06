@@ -1,10 +1,35 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+type SupabaseServerClient = ReturnType<typeof createClient>;
+
+let adminClient: SupabaseServerClient | null = null;
+
+function getServerEnv(...names: string[]): string {
+	for (const name of names) {
+		const value = process.env[name];
+		if (value) return value;
+	}
+
+	throw new Error(
+		`[Supabase] Missing required environment variable. Tried: ${names.join(", ")}`
+	);
+}
+
+function getSupabaseUrl(): string {
+	return getServerEnv("NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL");
+}
+
+export function getSupabaseAdmin(): SupabaseServerClient {
+	if (adminClient) return adminClient;
+
+	const supabaseUrl = getSupabaseUrl();
+	const supabaseServiceKey = getServerEnv("SUPABASE_SERVICE_ROLE_KEY");
+
+	adminClient = createClient(supabaseUrl, supabaseServiceKey);
+	return adminClient;
+}
 
 // Server client — uses service role key, never expose to browser
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 type SupabaseConnectionCheckResult = {
 	ok: boolean;
@@ -17,6 +42,9 @@ type SupabaseConnectionCheckResult = {
 export async function checkSupabaseServerConnection(
 	source = "unknown"
 ): Promise<SupabaseConnectionCheckResult> {
+	const supabaseUrl = getSupabaseUrl();
+	const admin = getSupabaseAdmin();
+
 	const urlHost = (() => {
 		try {
 			return new URL(supabaseUrl).host;
@@ -28,7 +56,7 @@ export async function checkSupabaseServerConnection(
 	const startedAt = Date.now();
 
 	try {
-		const { error } = await supabaseAdmin.auth.admin.listUsers({
+		const { error } = await admin.auth.admin.listUsers({
 			page: 1,
 			perPage: 1,
 		});

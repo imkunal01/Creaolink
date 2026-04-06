@@ -6,7 +6,7 @@ import Link from "next/link";
 import AuthInput from "../components/AuthInput";
 import { setUser, type UserRole } from "@/lib/auth";
 import { apiSignup } from "@/lib/api";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 type PlanType = "hobby" | "pro";
 type ProTier = "pro" | "business";
@@ -131,6 +131,7 @@ export default function SignupPage() {
     try {
       setGoogleLoading(true);
       const redirectTo = `${window.location.origin}/auth/callback?role=${role}`;
+      const supabase = getSupabase();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },

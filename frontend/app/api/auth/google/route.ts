@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
-import { supabaseAdmin } from "@/lib/supabase-server";
+import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 function deriveName(email: string, metadata: Record<string, unknown> | null) {
   const fullName =
@@ -14,6 +14,7 @@ function deriveName(email: string, metadata: Record<string, unknown> | null) {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
     const { accessToken, role } = await request.json();
 
     if (!accessToken || typeof accessToken !== "string") {

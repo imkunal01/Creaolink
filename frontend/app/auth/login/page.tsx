@@ -7,7 +7,7 @@ import AdminGate from "../components/AdminGate";
 import AuthInput from "../components/AuthInput";
 import { setUser, type UserRole } from "@/lib/auth";
 import { apiLogin } from "@/lib/api";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,6 +49,7 @@ export default function LoginPage() {
     try {
       setGoogleLoading(true);
       const redirectTo = `${window.location.origin}/auth/callback?role=client`;
+      const supabase = getSupabase();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },

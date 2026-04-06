@@ -4,11 +4,12 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setUser, type UserRole } from "@/lib/auth";
 import { apiGoogleAuth } from "@/lib/api";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 type Status = "loading" | "error";
 
 async function waitForAccessToken(): Promise<string | null> {
+  const supabase = getSupabase();
   for (let i = 0; i < 8; i += 1) {
     const { data, error } = await supabase.auth.getSession();
     if (!error && data.session?.access_token) return data.session.access_token;
