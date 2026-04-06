@@ -77,7 +77,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       >
         {/* Logo + close button */}
         <div className="px-5 h-14 flex items-center justify-between border-b border-border shrink-0">
-          <Link href="/dashboard" className="text-base font-bold tracking-tight text-text-primary">
+          <Link href="/" className="text-base font-bold tracking-tight text-text-primary">
             CreaoLink
           </Link>
           <button
