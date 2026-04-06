@@ -66,11 +66,6 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
     { label: "Pending Feedback", value: pendingFeedback },
   ];
 
-  const handleProjectCreated = (project: { id: string }) => {
-    setShowCreateModal(false);
-    router.push(`/dashboard/projects/${project.id}`);
-  };
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -183,9 +178,8 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
 
       {/* Create Project Modal */}
       <CreateProjectModal
-        isOpen={showCreateModal}
+        open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreated={handleProjectCreated}
       />
     </div>
   );

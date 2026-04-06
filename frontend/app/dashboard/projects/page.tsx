@@ -46,11 +46,6 @@ export default function ProjectsPage() {
 
   const isClient = user.role === "client" || user.role === "admin";
 
-  const handleProjectCreated = (project: { id: string }) => {
-    setShowCreateModal(false);
-    router.push(`/dashboard/projects/${project.id}`);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -143,9 +138,8 @@ export default function ProjectsPage() {
       {/* Create Project Modal */}
       {isClient && (
         <CreateProjectModal
-          isOpen={showCreateModal}
+          open={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onCreated={handleProjectCreated}
         />
       )}
     </div>
