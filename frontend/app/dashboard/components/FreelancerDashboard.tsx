@@ -61,11 +61,11 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header — no primary action button for freelancers */}
       <div>
-        <h1 className="text-xl font-semibold text-text-primary">Dashboard</h1>
-        <p className="text-sm text-text-secondary mt-1">
+        <h1 className="text-xl font-semibold text-[#f0f6fc]">Overview</h1>
+        <p className="mt-1 text-sm text-[#8b949e]">
           Welcome back, {user.name}
         </p>
       </div>
@@ -75,10 +75,10 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
 
       {/* Assigned Projects Section */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-medium text-text-primary">Assigned Projects</h2>
+        <div className="mb-3 flex items-center justify-between border-b border-[#30363d] pb-3">
+          <h2 className="text-sm font-medium text-[#f0f6fc]">Assigned Projects</h2>
           {projects.length > 0 && (
-            <span className="text-xs text-text-tertiary">
+            <span className="text-xs text-[#8b949e]">
               {projects.length} project{projects.length !== 1 ? "s" : ""}
             </span>
           )}
@@ -107,7 +107,7 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
             </svg>
           </div>
         ) : projects.length === 0 ? (
-          <div className="bg-bg-secondary border border-border rounded-xl">
+          <div className="rounded-md border border-[#30363d] bg-[#161b22]">
             <EmptyState
               icon={
                 <svg
@@ -130,7 +130,7 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}

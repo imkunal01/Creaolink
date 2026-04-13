@@ -50,9 +50,17 @@ export default function LoginPage() {
       setGoogleLoading(true);
       const redirectTo = `${window.location.origin}/auth/callback?role=client`;
       const supabase = getSupabase();
+
+      await supabase.auth.signOut({ scope: "local" });
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo },
+        options: {
+          redirectTo,
+          queryParams: {
+            prompt: "select_account",
+          },
+        },
       });
 
       if (error) {

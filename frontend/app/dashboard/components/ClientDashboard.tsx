@@ -67,20 +67,20 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-text-primary">Dashboard</h1>
-          <p className="text-sm text-text-secondary mt-1">
+          <h1 className="text-xl font-semibold text-[#f0f6fc]">Overview</h1>
+          <p className="mt-1 text-sm text-[#8b949e]">
             Welcome back, {user.name}
           </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-5 py-2.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-all duration-200 cursor-pointer"
+          className="w-full rounded-md border border-[#238636] bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-[#2ea043] sm:w-auto cursor-pointer"
         >
-          + Create Project
+          New project
         </button>
       </div>
 
@@ -89,10 +89,10 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
 
       {/* Projects Section */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-medium text-text-primary">My Projects</h2>
+        <div className="mb-3 flex items-center justify-between border-b border-[#30363d] pb-3">
+          <h2 className="text-sm font-medium text-[#f0f6fc]">My Projects</h2>
           {projects.length > 0 && (
-            <span className="text-xs text-text-tertiary">
+            <span className="text-xs text-[#8b949e]">
               {projects.length} project{projects.length !== 1 ? "s" : ""}
             </span>
           )}
@@ -121,7 +121,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             </svg>
           </div>
         ) : projects.length === 0 ? (
-          <div className="bg-bg-secondary border border-border rounded-xl">
+          <div className="rounded-md border border-[#30363d] bg-[#161b22]">
             <EmptyState
               icon={
                 <svg
@@ -151,7 +151,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}

@@ -12,27 +12,32 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [user] = useState<User | null>(() => getUser());
+  const [user, setUser] = useState<User | null>(null);
+  const [ready, setReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    const currentUser = getUser();
+    setUser(currentUser);
+    setReady(true);
+
+    if (!currentUser) {
       router.replace("/auth/login");
     }
-  }, [router, user]);
+  }, [router]);
 
-  if (!user) {
+  if (!ready || !user) {
     return (
-      <div className="min-h-screen bg-bg" />
+      <div className="min-h-screen bg-[#0d1117]" />
     );
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9]">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="ml-[220px]">
+      <div className="lg:ml-64">
         <Topbar user={user} onMenuToggle={() => setSidebarOpen(true)} />
-        <main className="px-6 lg:px-8 py-6 max-w-[1100px]">
+        <main className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
           {typeof children === "object" && children !== null
             ? children
             : null}

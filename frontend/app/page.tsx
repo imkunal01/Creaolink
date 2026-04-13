@@ -63,6 +63,78 @@ const events = [
   },
 ];
 
+const outcomes = [
+  {
+    segment: "Agency teams",
+    metric: "31% faster approvals",
+    detail:
+      "Agencies reduce client wait cycles with versioned reviews, status checkpoints, and resolved feedback threads.",
+  },
+  {
+    segment: "Freelancer pods",
+    metric: "2.4x clearer handoffs",
+    detail:
+      "Contributors move work with less context loss using role-based briefs, owner tags, and delivery notes.",
+  },
+  {
+    segment: "Product studios",
+    metric: "42% fewer revision loops",
+    detail:
+      "Structured review templates and mandatory acceptance criteria cut repetitive back-and-forth.",
+  },
+];
+
+const onboardingPlan = [
+  { week: "Week 1", title: "Workspace setup", detail: "Import projects, create roles, define review stages." },
+  { week: "Week 2", title: "Team onboarding", detail: "Invite clients and freelancers, set permissions, and align rituals." },
+  { week: "Week 3", title: "Delivery baseline", detail: "Activate versioning, feedback SLAs, and progress dashboards." },
+  { week: "Week 4", title: "Scale and optimize", detail: "Track closure velocity, automate updates, and improve cycle time." },
+];
+
+const plans = [
+  {
+    name: "Starter",
+    price: "Free",
+    target: "Small teams validating workflow",
+    points: ["Up to 3 active projects", "Basic feedback tracking", "Client and freelancer roles", "Email support"],
+  },
+  {
+    name: "Growth",
+    price: "$29 / workspace",
+    target: "Growing teams with active delivery",
+    points: ["Unlimited projects", "Version-safe approvals", "Custom review templates", "Priority support"],
+  },
+  {
+    name: "Scale",
+    price: "Custom",
+    target: "High-volume operations and agencies",
+    points: ["Multi-team governance", "Advanced analytics", "SSO and audit controls", "Dedicated success manager"],
+  },
+];
+
+const faqs = [
+  {
+    question: "How is CreaoLink different from general task tools?",
+    answer:
+      "CreaoLink is purpose-built for client plus freelancer delivery with version-aware approvals and feedback closure workflows, not just generic task tracking.",
+  },
+  {
+    question: "Can clients and freelancers see different information?",
+    answer:
+      "Yes. Role-based dashboards keep each user focused on relevant tasks, updates, and feedback responsibilities.",
+  },
+  {
+    question: "Does CreaoLink support project version history?",
+    answer:
+      "Every version is stored with notes, timestamps, and linked feedback to preserve delivery context and reduce confusion.",
+  },
+  {
+    question: "What is a typical rollout timeline?",
+    answer:
+      "Most teams complete setup and first live workflow within 2 to 4 weeks, depending on team size and migration scope.",
+  },
+];
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-bg text-text-primary">
@@ -214,6 +286,60 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="border-b border-white/10 bg-[#070b10]">
+          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+            <div className="mb-8 max-w-3xl reveal-up">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Measured outcomes</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                Delivery impact teams can measure
+              </h2>
+              <p className="mt-3 text-gray-300">
+                Teams using CreaoLink report faster approvals, fewer revision cycles, and clearer ownership across every project phase.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {outcomes.map((item, index) => (
+                <article
+                  key={item.segment}
+                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+                  style={{ animationDelay: `${index * 120}ms` }}
+                >
+                  <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">{item.segment}</p>
+                  <h3 className="mt-2 text-2xl font-semibold text-emerald-200">{item.metric}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-gray-300">{item.detail}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-b border-white/10 bg-[linear-gradient(180deg,#08090c_0%,#080d14_100%)]">
+          <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8 lg:py-20">
+            <div className="reveal-up">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Implementation</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                First-value rollout in 4 weeks
+              </h2>
+              <p className="mt-3 text-gray-300">
+                A practical onboarding rhythm to launch quickly without disrupting active project delivery.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {onboardingPlan.map((step, index) => (
+                <div
+                  key={step.week}
+                  className="reveal-up rounded-xl border border-white/10 bg-white/[0.03] p-4"
+                  style={{ animationDelay: `${index * 120}ms` }}
+                >
+                  <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">{step.week}</p>
+                  <p className="mt-1 text-sm font-semibold text-white">{step.title}</p>
+                  <p className="mt-1 text-sm text-gray-300">{step.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section id="about" className="border-b border-white/10 bg-[#07070b]">
           <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-20">
             <div className="reveal-up">
@@ -274,6 +400,61 @@ export default function Home() {
           </div>
         </section>
 
+        <section id="pricing" className="border-b border-white/10 bg-[#07080c]">
+          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+            <div className="mb-8 max-w-3xl reveal-up">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Pricing</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                Plans that scale with your delivery volume
+              </h2>
+              <p className="mt-3 text-gray-300">
+                Start free, standardize your process, and upgrade when your collaboration volume grows.
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              {plans.map((plan, index) => (
+                <article
+                  key={plan.name}
+                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+                  style={{ animationDelay: `${index * 120}ms` }}
+                >
+                  <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">{plan.name}</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">{plan.price}</p>
+                  <p className="mt-2 text-sm text-gray-300">{plan.target}</p>
+                  <ul className="mt-4 space-y-2 text-sm text-gray-300">
+                    {plan.points.map((point) => (
+                      <li key={point}>• {point}</li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="faq" className="border-b border-white/10 bg-[#08080b]">
+          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+            <div className="mb-8 max-w-3xl reveal-up">
+              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">FAQ</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                Common questions from delivery teams
+              </h2>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {faqs.map((faq, index) => (
+                <article
+                  key={faq.question}
+                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-5"
+                  style={{ animationDelay: `${index * 120}ms` }}
+                >
+                  <h3 className="text-base font-semibold text-white">{faq.question}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-300">{faq.answer}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section id="contact" className="border-b border-white/10 bg-[#07080d]">
           <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-20">
             <div className="reveal-up">
@@ -327,6 +508,8 @@ export default function Home() {
           <div className="flex flex-wrap gap-4">
             <a href="#features" className="transition-colors hover:text-white">Features</a>
             <a href="#about" className="transition-colors hover:text-white">About</a>
+            <a href="#pricing" className="transition-colors hover:text-white">Pricing</a>
+            <a href="#faq" className="transition-colors hover:text-white">FAQ</a>
             <a href="#events" className="transition-colors hover:text-white">Events</a>
             <a href="#contact" className="transition-colors hover:text-white">Contact</a>
           </div>

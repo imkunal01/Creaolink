@@ -8,15 +8,20 @@ import FreelancerDashboard from "./components/FreelancerDashboard";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user] = useState<User | null>(() => getUser());
+  const [user, setUser] = useState<User | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!user) {
+    const currentUser = getUser();
+    setUser(currentUser);
+    setReady(true);
+
+    if (!currentUser) {
       router.replace("/auth/login");
     }
-  }, [router, user]);
+  }, [router]);
 
-  if (!user) return null;
+  if (!ready || !user) return null;
 
   // Role-based UI branching
   if (user?.role === "freelancer") {
