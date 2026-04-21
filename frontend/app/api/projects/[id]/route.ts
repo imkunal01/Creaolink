@@ -57,6 +57,7 @@ export async function GET(
       description: project.description,
       status: project.status,
       deadline: project.deadline,
+      sync_code: project.sync_code,
       created_by: project.created_by,
       created_at: project.created_at,
       currentVersion,

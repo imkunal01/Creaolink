@@ -20,14 +20,15 @@ export async function POST(request: NextRequest) {
     const client = await db.connect();
     const projectId = uuid();
     const versionId = uuid();
+    const syncCode = "LNK-" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
     try {
       await client.query("BEGIN");
 
       // Step 2: Create project
       await client.query(
-        "INSERT INTO projects (id, title, description, deadline, created_by) VALUES ($1, $2, $3, $4, $5)",
-        [projectId, title, description || "", deadline || null, user.id]
+        "INSERT INTO projects (id, title, description, deadline, created_by, sync_code) VALUES ($1, $2, $3, $4, $5, $6)",
+        [projectId, title, description || "", deadline || null, user.id, syncCode]
       );
 
       // Step 3: Insert client into project_members

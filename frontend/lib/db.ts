@@ -54,6 +54,7 @@ async function initTables() {
         deadline TEXT,
         status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'completed', 'approved', 'pending')),
         current_version_id TEXT,
+        sync_code TEXT UNIQUE,
         created_by TEXT NOT NULL REFERENCES users(id),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
@@ -85,6 +86,9 @@ async function initTables() {
         status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'resolved')),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      -- Add sync code to existing projects table if it doesn't exist
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS sync_code TEXT UNIQUE;
     `);
   } finally {
     client.release();

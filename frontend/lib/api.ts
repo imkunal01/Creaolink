@@ -79,6 +79,7 @@ export function apiGetProject(id: string) {
     description: string;
     status: string;
     deadline: string;
+    sync_code: string;
     created_by: string;
     created_at: string;
     currentVersion: { id: string; version_name: string; notes: string; created_at: string } | null;
