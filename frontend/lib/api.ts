@@ -82,8 +82,8 @@ export function apiGetProject(id: string) {
     sync_code: string;
     created_by: string;
     created_at: string;
-    currentVersion: { id: string; version_name: string; notes: string; created_at: string } | null;
-    versions: Array<{ id: string; version_name: string; notes: string; created_at: string }>;
+    currentVersion: { id: string; version_name: string; notes: string; created_at: string; timeline_data: any } | null;
+    versions: Array<{ id: string; version_name: string; notes: string; created_at: string; timeline_data: any }>;
     members: Array<{ id: string; name: string; email: string; role: string }>;
   }>(`/api/projects/${id}`);
 }

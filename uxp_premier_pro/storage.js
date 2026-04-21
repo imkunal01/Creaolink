@@ -27,14 +27,15 @@ async function getCredentialsFile(mode) {
 
 // ─── Public API ──────────────────────────────────────────
 
-async function saveCredentials(projectId, syncToken) {
-  if (!projectId || !syncToken) {
-    throw new Error("Both projectId and syncToken are required");
+async function saveCredentials(projectId, currentVersionId, projectName) {
+  if (!projectId || !currentVersionId) {
+    throw new Error("Both projectId and currentVersionId are required");
   }
 
   const credentials = {
     projectId: projectId.trim(),
-    syncToken: syncToken.trim(),
+    currentVersionId: currentVersionId.trim(),
+    projectName: projectName ? projectName.trim() : "Unknown Project",
     linkedAt: new Date().toISOString()
   };
 
@@ -52,13 +53,14 @@ async function loadCredentials() {
     const credentials = JSON.parse(raw);
 
     // Validate the stored data has what we need
-    if (!credentials.projectId || !credentials.syncToken) {
+    if (!credentials.projectId || !credentials.currentVersionId) {
       return null;
     }
 
     return {
       projectId: credentials.projectId,
-      syncToken: credentials.syncToken,
+      currentVersionId: credentials.currentVersionId,
+      projectName: credentials.projectName || "Unknown Project",
       linkedAt: credentials.linkedAt || null
     };
   } catch (e) {

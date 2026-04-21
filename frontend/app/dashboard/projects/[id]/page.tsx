@@ -11,6 +11,7 @@ import {
   apiGetFeedback,
   apiResolveFeedback,
 } from "@/lib/api";
+import TimelineViewer from "../../components/TimelineViewer";
 
 type ProjectData = Awaited<ReturnType<typeof apiGetProject>>;
 type FeedbackItem = Awaited<ReturnType<typeof apiGetFeedback>>["feedback"][number];
@@ -267,7 +268,22 @@ export default function ProjectDetailPage() {
       {/* ━━━ Overview Tab ━━━ */}
       {activeTab === "overview" && (
         <div className="space-y-6">
+
+          {/* Timeline View */}
+          <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
+            <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-4">Premiere Pro Sequence</h3>
+            {project.currentVersion?.timeline_data ? (
+               <TimelineViewer data={project.currentVersion.timeline_data} />
+            ) : (
+               <div className="w-full h-32 bg-[#1e1e1e] border border-[#333] rounded-lg flex items-center justify-center text-xs text-text-tertiary">
+                 No timeline data synced yet. Use the plugin to sync.
+               </div>
+            )}
+          </div>
+
           {/* Description + Deadline */}
+          </div>
+
           <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6 space-y-4">
             <div>
               <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">Description</h3>

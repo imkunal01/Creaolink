@@ -186,7 +186,7 @@ export default function TimelineViewer({ data, pixelsPerSecond = 20 }: TimelineV
 
           {/* Video Tracks */}
           {videoTracks.map((track, i) => (
-            <div key={`v-${i}`} style={{ height: TRACK_HEIGHT }} className="border-b border-[#222] relative w-full bg-[linear-gradient(to_right,#1b1f24_1px,transparent_1px)]" style={{ backgroundSize: `${pixelsPerSecond}px 100%` }}>
+            <div key={`v-${i}`} className="border-b border-[#222] relative w-full bg-[linear-gradient(to_right,#1b1f24_1px,transparent_1px)]" style={{ height: TRACK_HEIGHT, backgroundSize: `${pixelsPerSecond}px 100%` }}>
               {track.clips.map((clip, j) => (
                 <div 
                   key={`vc-${j}`} 
@@ -206,7 +206,7 @@ export default function TimelineViewer({ data, pixelsPerSecond = 20 }: TimelineV
 
           {/* Audio Tracks */}
           {audioTracks.map((track, i) => (
-            <div key={`a-${i}`} style={{ height: TRACK_HEIGHT }} className="border-b border-[#222] relative w-full bg-[linear-gradient(to_right,#171c1b_1px,transparent_1px)]" style={{ backgroundSize: `${pixelsPerSecond}px 100%` }}>
+            <div key={`a-${i}`} className="border-b border-[#222] relative w-full bg-[linear-gradient(to_right,#171c1b_1px,transparent_1px)]" style={{ height: TRACK_HEIGHT, backgroundSize: `${pixelsPerSecond}px 100%` }}>
               {track.clips.map((clip, j) => (
                 <div 
                   key={`ac-${j}`} 

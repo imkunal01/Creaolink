@@ -71,6 +71,7 @@ async function initTables() {
         project_id TEXT NOT NULL REFERENCES projects(id),
         version_name TEXT NOT NULL,
         notes TEXT NOT NULL DEFAULT '',
+        timeline_data JSONB,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
@@ -89,6 +90,9 @@ async function initTables() {
 
       -- Add sync code to existing projects table if it doesn't exist
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS sync_code TEXT UNIQUE;
+      
+      -- Add timeline_data to versions table if it doesn't exist
+      ALTER TABLE versions ADD COLUMN IF NOT EXISTS timeline_data JSONB;
     `);
   } finally {
     client.release();

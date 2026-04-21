@@ -1,11 +1,31 @@
-const API_BASE_URL = "https://your-backend.com";  // swap for your real URL
-const SYNC_ENDPOINT = `${API_BASE_URL}/api/timeline/sync`;
+const API_BASE_URL = "http://localhost:3000";  // swap for your real URL
+const SYNC_ENDPOINT = `${API_BASE_URL}/api/plugin/sync`;
+const LINK_ENDPOINT = `${API_BASE_URL}/api/plugin/link`;
 const TIMEOUT_MS = 15000;  // 15 seconds — generous for large timelines
+
+// ─── Verify Link Code ────────────────────────────────────
+
+async function verifyLinkCode(code) {
+  if (!code) throw new Error("Sync code is missing");
+
+  const response = await fetchWithTimeout(`${LINK_ENDPOINT}?code=${encodeURIComponent(code)}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" }
+  }, 10000);
+
+  if (!response.ok) {
+    const errorBody = await safeReadBody(response);
+    throw new Error(errorBody?.error || "Invalid sync code or project not found.");
+  }
+
+  const result = await safeReadBody(response);
+  return result; // { success: true, projectId, projectName, currentVersionId }
+}
 
 // ─── Core sync function ──────────────────────────────────
 
-async function syncToBackend(projectId, syncToken, timelineData) {
-  if (!projectId || !syncToken) {
+async function syncToBackend(projectId, versionId, timelineData) {
+  if (!projectId || !versionId) {
     throw new Error("Not linked — missing project credentials");
   }
 
@@ -15,7 +35,8 @@ async function syncToBackend(projectId, syncToken, timelineData) {
 
   const payload = {
     projectId: projectId,
-    timeline: timelineData
+    versionId: versionId,
+    timelineData: timelineData
   };
 
   // UXP supports fetch() natively — no import needed
@@ -23,7 +44,6 @@ async function syncToBackend(projectId, syncToken, timelineData) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${syncToken}`,
       "X-Plugin-Version": "1.0.0"
     },
     body: JSON.stringify(payload)
@@ -112,4 +132,4 @@ function buildErrorMessage(status, body) {
     : fallback;
 }
 
-module.exports = { syncToBackend };
+module.exports = { syncToBackend, verifyLinkCode };

@@ -1,6 +1,6 @@
 const { entrypoints } = require("uxp");
 const { extractTimelineData, buildCleanJSON } = require("./timeline.js");
-const { syncToBackend } = require("./api.js");
+const { syncToBackend, verifyLinkCode } = require("./api.js");
 const {
   saveCredentials,
   loadCredentials,
@@ -24,7 +24,7 @@ async function initPanel() {
     const credentials = await loadCredentials();
 
     if (credentials) {
-      setLinkedState(credentials.projectId, credentials.linkedAt);
+      setLinkedState(credentials.projectName || credentials.projectId, credentials.linkedAt);
     } else {
       setUnlinkedState();
     }
@@ -35,9 +35,9 @@ async function initPanel() {
 
 // ─── UI state helpers ────────────────────────────────────
 
-function setLinkedState(projectId, linkedAt) {
+function setLinkedState(projectName, linkedAt) {
   const statusEl = document.getElementById("connection-status");
-  statusEl.textContent = `Connected to: ${projectId}`;
+  statusEl.textContent = `Connected: ${projectName}`;
   if (linkedAt) {
     const date = new Date(linkedAt).toLocaleDateString();
     statusEl.textContent += ` (linked ${date})`;
@@ -64,41 +64,37 @@ function setUnlinkedState() {
 function linkProject() {
   document.getElementById("link-form").classList.remove("hidden");
   document.getElementById("btn-link").classList.add("hidden");
-  document.getElementById("input-project-id").focus();
+  document.getElementById("input-sync-code").focus();
   updateStatus("");
 }
 
 function cancelLink() {
   document.getElementById("link-form").classList.add("hidden");
   document.getElementById("btn-link").classList.remove("hidden");
-  document.getElementById("input-project-id").value = "";
-  document.getElementById("input-sync-token").value = "";
+  document.getElementById("input-sync-code").value = "";
 }
 
 async function confirmLink() {
-  const projectId = document.getElementById("input-project-id").value.trim();
-  const syncToken = document.getElementById("input-sync-token").value.trim();
+  const syncCode = document.getElementById("input-sync-code").value.trim();
 
-  if (!projectId) {
-    updateStatus("Project ID is required", "error");
-    return;
-  }
-  if (!syncToken) {
-    updateStatus("Sync Token is required", "error");
+  if (!syncCode) {
+    updateStatus("Link Code is required", "error");
     return;
   }
 
   try {
-    await saveCredentials(projectId, syncToken);
+    updateStatus("Verifying code...");
+    const result = await verifyLinkCode(syncCode);
+
+    await saveCredentials(result.projectId, result.currentVersionId, result.projectName);
 
     document.getElementById("link-form").classList.add("hidden");
-    document.getElementById("input-project-id").value = "";
-    document.getElementById("input-sync-token").value = "";
+    document.getElementById("input-sync-code").value = "";
 
-    setLinkedState(projectId, new Date().toISOString());
+    setLinkedState(result.projectName, new Date().toISOString());
     updateStatus("Project linked successfully", "success");
   } catch (e) {
-    updateStatus("Failed to save credentials: " + e.message, "error");
+    updateStatus("Failed to link: " + e.message, "error");
   }
 }
 
@@ -138,7 +134,7 @@ async function syncTimeline() {
     // Step 3: send to backend
     await syncToBackend(
       credentials.projectId,
-      credentials.syncToken,
+      credentials.currentVersionId,
       data
     );
 
