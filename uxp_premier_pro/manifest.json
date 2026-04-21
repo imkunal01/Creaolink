@@ -1,0 +1,28 @@
+{
+  "id": "com.creaolink.premiere",
+  "name": "CreaoLink",
+  "version": "1.0.0",
+  "manifestVersion": 5,
+  "host": [
+    {
+      "app": "PPRO",
+      "minVersion": "22.0"
+    }
+  ],
+  "entrypoints": [
+    {
+      "type": "panel",
+      "id": "creaolink-panel",
+      "label": { "default": "CreaoLink" },
+      "main": "index.html",
+      "minimumSize": { "width": 260, "height": 300 },
+      "preferredDockedSize": { "width": 300, "height": 400 }
+    }
+  ],
+  "requiredPermissions": {
+    "network": {
+      "domains": ["<all_urls>"]
+    },
+    "localFileSystem": "request"
+  }
+}

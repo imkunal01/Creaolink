@@ -1,0 +1,121 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, 'Adobe Clean', sans-serif;
+  font-size: 12px;
+  color: #e0e0e0;
+}
+
+body {
+  background-color: #1e1e1e;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-bar {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #aaaaaa;
+}
+
+.status-bar.connected {
+  border-color: #3a7d44;
+  color: #6fcf97;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+button {
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #e0e0e0;
+  padding: 8px 12px;
+  cursor: pointer;
+  width: 100%;
+}
+
+button:hover { background: #4a4a4a; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+button#btn-sync {
+  background: #1a4a8a;
+  border-color: #2060b0;
+}
+
+button#btn-sync:not(:disabled):hover { background: #2060b0; }
+
+.link-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.link-form.hidden { display: none; }
+
+input {
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 3px;
+  color: #e0e0e0;
+  padding: 6px 8px;
+  width: 100%;
+}
+
+.status-message {
+  font-size: 11px;
+  color: #aaaaaa;
+  min-height: 16px;
+  padding: 4px 0;
+}
+
+.status-message.success { color: #6fcf97; }
+.status-message.error   { color: #eb5757; }
+
+button.danger {
+  background: #4a1a1a;
+  border-color: #8b2020;
+  color: #eb8080;
+  margin-top: 4px;
+}
+
+button.danger:hover { background: #6a2020; }
+
+.link-form label {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.form-actions button {
+  flex: 1;
+}
+
+.hidden { display: none; }
+
+.status-bar .linked-at {
+  font-size: 10px;
+  color: #666;
+  margin-top: 2px;
+}
