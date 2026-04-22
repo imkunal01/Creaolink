@@ -1,5 +1,3 @@
-// Auth utilities — localStorage-based session (user stored after real login/signup)
-
 export type UserRole = "client" | "freelancer" | "admin";
 
 export interface User {
@@ -10,20 +8,34 @@ export interface User {
   role: UserRole;
 }
 
-const STORAGE_KEY = "creolink_user";
+const STORAGE_KEY = "creaolink_user";
+const AUTH_EVENT = "creaolink-auth-change";
 
-/**
- * Mock: Save user to localStorage after login/signup
- */
-export function setUser(user: User): void {
+function emitAuthChange() {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  window.dispatchEvent(new Event(AUTH_EVENT));
 }
 
-/**
- * Get current user from localStorage
- * In Phase 1C, this will decode a JWT from cookies instead
- */
+function writeSnapshot(user: User | null) {
+  if (typeof window === "undefined") return;
+
+  if (user) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  } else {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
+  emitAuthChange();
+}
+
+export function setUser(user: User): void {
+  writeSnapshot(user);
+}
+
+export function clearUser(): void {
+  writeSnapshot(null);
+}
+
 export function getUser(): User | null {
   if (typeof window === "undefined") return null;
   try {
@@ -35,25 +47,71 @@ export function getUser(): User | null {
   }
 }
 
-/**
- * Get the current user's role
- */
 export function getUserRole(): UserRole | null {
-  const user = getUser();
-  return user?.role ?? null;
+  return getUser()?.role ?? null;
 }
 
-/**
- * Check if a user is authenticated
- */
 export function isAuthenticated(): boolean {
   return getUser() !== null;
 }
 
-/**
- * Logout: clear stored user
- */
-export function logout(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(STORAGE_KEY);
+export async function syncUserFromSession(): Promise<User | null> {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const response = await fetch("/api/auth/me", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      clearUser();
+      return null;
+    }
+
+    const data = (await response.json()) as { user?: User | null };
+    if (!data.user) {
+      clearUser();
+      return null;
+    }
+
+    setUser(data.user);
+    return data.user;
+  } catch {
+    return getUser();
+  }
+}
+
+export async function logout(): Promise<void> {
+  if (typeof window !== "undefined") {
+    try {
+      await fetch("/api/auth/logout", {
+        credentials: "same-origin",
+        method: "POST",
+      });
+    } catch {
+      // Ignore network failures and clear the local snapshot either way.
+    }
+  }
+
+  clearUser();
+}
+
+export function subscribeToAuthChanges(listener: () => void) {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+
+  const handleChange = () => listener();
+
+  window.addEventListener("storage", handleChange);
+  window.addEventListener("focus", handleChange);
+  window.addEventListener(AUTH_EVENT, handleChange);
+
+  return () => {
+    window.removeEventListener("storage", handleChange);
+    window.removeEventListener("focus", handleChange);
+    window.removeEventListener(AUTH_EVENT, handleChange);
+  };
 }

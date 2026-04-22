@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { setSessionCookie } from "@/lib/session";
 import { getSupabaseAdmin } from "@/lib/supabase-server";
 
 function deriveName(email: string, metadata: Record<string, unknown> | null) {
@@ -93,7 +94,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unable to create user session" }, { status: 500 });
     }
 
-    return NextResponse.json({ user });
+    const response = NextResponse.json({ user });
+    setSessionCookie(response, user.id);
+    return response;
   } catch (err) {
     console.error("Google auth error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

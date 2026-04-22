@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { setSessionCookie } from "@/lib/session";
 import { v4 as uuid } from "uuid";
 import bcrypt from "bcryptjs";
 
@@ -81,10 +82,12 @@ export async function POST(request: NextRequest) {
       [id, name.trim(), email.toLowerCase().trim(), finalUsername, hashedPassword, role]
     );
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { user: { id, name: name.trim(), email: email.toLowerCase().trim(), username: finalUsername, role } },
       { status: 201 }
     );
+    setSessionCookie(response, id);
+    return response;
   } catch (err) {
     console.error("Signup error:", err instanceof Error ? err.message : err);
     console.error("Stack:", err instanceof Error ? err.stack : "N/A");

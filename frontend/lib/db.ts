@@ -1,4 +1,13 @@
 import { Pool } from "pg";
+import { getSessionUserIdFromRequest } from "./session";
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  username: string;
+  role: string;
+}
 
 let pool: Pool | null = null;
 let _initialized = false;
@@ -185,6 +194,19 @@ async function initTables() {
       WHERE u.id = r.id;
 
       CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique_idx ON users(username);
+      CREATE INDEX IF NOT EXISTS projects_created_by_updated_idx ON projects(created_by, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS projects_visibility_updated_idx ON projects(visibility, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS project_members_user_project_idx ON project_members(user_id, project_id);
+      CREATE INDEX IF NOT EXISTS project_members_project_idx ON project_members(project_id);
+      CREATE INDEX IF NOT EXISTS versions_project_created_idx ON versions(project_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS feedback_project_status_created_idx ON feedback(project_id, status, created_at DESC);
+      CREATE INDEX IF NOT EXISTS freelancer_presence_project_seen_idx ON freelancer_presence(project_id, last_seen DESC);
+      CREATE INDEX IF NOT EXISTS user_follows_follower_idx ON user_follows(follower_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS user_follows_following_idx ON user_follows(following_id);
+      CREATE INDEX IF NOT EXISTS posts_user_created_idx ON posts(user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS posts_project_created_idx ON posts(project_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS post_reactions_post_idx ON post_reactions(post_id);
+      CREATE INDEX IF NOT EXISTS post_comments_post_idx ON post_comments(post_id);
     `);
   } finally {
     client.release();
@@ -192,8 +214,9 @@ async function initTables() {
 }
 
 // ── Helper: get authenticated user from request header ──
-export async function getAuthUser(request: Request) {
-  const userId = request.headers.get("x-user-id");
+export async function getUserById(
+  userId: string | null | undefined
+): Promise<AuthUser | null> {
   if (!userId) return null;
   const db = await getPool();
   try {
@@ -201,7 +224,7 @@ export async function getAuthUser(request: Request) {
       "SELECT id, name, email, username, role FROM users WHERE id = $1",
       [userId]
     );
-    return (rows[0] as { id: string; name: string; email: string; username: string; role: string }) ?? null;
+    return (rows[0] as AuthUser) ?? null;
   } catch (err) {
     if ((err as { code?: string }).code !== "42703") {
       throw err;
@@ -212,6 +235,10 @@ export async function getAuthUser(request: Request) {
       [userId]
     );
     if (rows.length === 0) return null;
-    return { ...rows[0], username: "" } as { id: string; name: string; email: string; username: string; role: string };
+    return { ...rows[0], username: "" } as AuthUser;
   }
+}
+
+export async function getAuthUser(request: Request) {
+  return getUserById(getSessionUserIdFromRequest(request));
 }

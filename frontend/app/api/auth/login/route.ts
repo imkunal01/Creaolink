@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { setSessionCookie } from "@/lib/session";
 import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
@@ -30,9 +31,11 @@ export async function POST(request: NextRequest) {
     if (!valid) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: { id: user.id, name: user.name, email: user.email, username: user.username, role: user.role },
     });
+    setSessionCookie(response, user.id);
+    return response;
   } catch (err) {
     console.error("Login error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

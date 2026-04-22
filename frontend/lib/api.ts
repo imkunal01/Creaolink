@@ -1,5 +1,3 @@
-import { getUser } from "./auth";
-
 const BASE = "";
 
 export type ProjectVisibility = "public" | "private" | "followers-only";
@@ -159,15 +157,13 @@ export interface UserPortfolioProject {
 }
 
 function headers(): HeadersInit {
-  const user = getUser();
-  const h: Record<string, string> = { "Content-Type": "application/json" };
-  if (user) h["x-user-id"] = user.id;
-  return h;
+  return { "Content-Type": "application/json" };
 }
 
 async function request<T>(url: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${url}`, {
     ...opts,
+    credentials: "same-origin",
     headers: { ...headers(), ...(opts?.headers || {}) },
   });
   const data = await res.json();
@@ -179,6 +175,12 @@ export function apiLogin(email: string, password: string) {
   return request<{ user: { id: string; name: string; email: string; username: string; role: string } }>(
     "/api/auth/login",
     { method: "POST", body: JSON.stringify({ email, password }) }
+  );
+}
+
+export function apiGetCurrentUser() {
+  return request<{ user: { id: string; name: string; email: string; username: string; role: string } }>(
+    "/api/auth/me"
   );
 }
 
