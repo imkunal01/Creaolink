@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { apiFetch } from "@/lib/api-client";
 
 interface NavItem {
   label: string;
@@ -44,11 +45,68 @@ const navItems: NavItem[] = [
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [projectsOpen, setProjectsOpen] = useState(true);
+  const [projectSearch, setProjectSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "alphabetical" | "status">("recent");
+  const [projects, setProjects] = useState<Array<{ id: string; title: string; status: string; created_at: string }>>([]);
+  const [pinned, setPinned] = useState<string[]>([]);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
     onClose();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const raw = typeof window !== "undefined" ? localStorage.getItem("creaolink_pinned_projects") : null;
+    setPinned(raw ? JSON.parse(raw) : []);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchProjects() {
+      try {
+        const res = await apiFetch("/api/projects");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setProjects(data.projects || []);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    fetchProjects();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
+  const visibleProjects = useMemo(() => {
+    const search = projectSearch.trim().toLowerCase();
+    let list = projects.filter((project) =>
+      search ? project.title.toLowerCase().includes(search) : true
+    );
+
+    if (sortBy === "alphabetical") {
+      list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === "status") {
+      list = [...list].sort((a, b) => a.status.localeCompare(b.status));
+    } else {
+      list = [...list].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
+    }
+
+    return list;
+  }, [projectSearch, projects, sortBy]);
+
+  const togglePin = (projectId: string) => {
+    const next = pinned.includes(projectId)
+      ? pinned.filter((id) => id !== projectId)
+      : [projectId, ...pinned];
+    setPinned(next);
+    localStorage.setItem("creaolink_pinned_projects", JSON.stringify(next));
+  };
 
   const handleLogout = () => {
     logout();
@@ -120,6 +178,95 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               </Link>
             );
           })}
+
+          <div className="mt-4 rounded-md border border-[#30363d] bg-[#0d1117]">
+            <button
+              onClick={() => setProjectsOpen((value) => !value)}
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.14em] text-[#8b949e]"
+            >
+              <span>Projects Tree</span>
+              <span>{projectsOpen ? "-" : "+"}</span>
+            </button>
+
+            {projectsOpen && (
+              <div className="space-y-2 border-t border-[#30363d] p-2">
+                <input
+                  value={projectSearch}
+                  onChange={(event) => setProjectSearch(event.target.value)}
+                  placeholder="Search projects"
+                  className="w-full rounded-md border border-[#30363d] bg-[#010409] px-2 py-1.5 text-xs text-[#c9d1d9] outline-none"
+                />
+
+                <select
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value as "recent" | "alphabetical" | "status")}
+                  className="w-full rounded-md border border-[#30363d] bg-[#010409] px-2 py-1.5 text-xs text-[#c9d1d9]"
+                >
+                  <option value="recent">Sort: Recent</option>
+                  <option value="alphabetical">Sort: Alphabetical</option>
+                  <option value="status">Sort: Status</option>
+                </select>
+
+                <div className="space-y-1.5">
+                  {visibleProjects.length === 0 ? (
+                    <p className="rounded-md border border-dashed border-[#30363d] px-2 py-2 text-[11px] text-[#6e7681]">
+                      No matching projects.
+                    </p>
+                  ) : (
+                    visibleProjects.slice(0, 8).map((project) => {
+                      const isPinned = pinned.includes(project.id);
+                      return (
+                        <div key={project.id} className="rounded-md border border-[#30363d] bg-[#010409] p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <button
+                              onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+                              className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                            >
+                              <span
+                                className={`inline-block h-2 w-2 rounded-full ${
+                                  project.status === "active"
+                                    ? "bg-emerald-400"
+                                    : project.status === "pending"
+                                    ? "bg-amber-400"
+                                    : "bg-slate-500"
+                                }`}
+                              />
+                              <span className="truncate text-xs text-[#c9d1d9]">{project.title}</span>
+                            </button>
+                            <button
+                              onClick={() => togglePin(project.id)}
+                              className="text-[10px] text-[#8b949e] hover:text-[#f0f6fc]"
+                              title="Pin project"
+                            >
+                              {isPinned ? "Unpin" : "Pin"}
+                            </button>
+                          </div>
+
+                          <div className="mt-2 flex items-center gap-1">
+                            <button
+                              onClick={() => togglePin(project.id)}
+                              className="rounded border border-[#30363d] px-1.5 py-0.5 text-[10px] text-[#8b949e]"
+                            >
+                              Pin
+                            </button>
+                            <button
+                              onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+                              className="rounded border border-[#30363d] px-1.5 py-0.5 text-[10px] text-[#8b949e]"
+                            >
+                              Settings
+                            </button>
+                            <span className="rounded border border-[#30363d] px-1.5 py-0.5 text-[10px] text-[#8b949e]">
+                              {project.status === "pending" ? "Archived" : "Active"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="mt-5 rounded-md border border-[#30363d] bg-[#0d1117] p-3">
             <p className="text-xs font-medium text-[#f0f6fc]">Need help onboarding?</p>

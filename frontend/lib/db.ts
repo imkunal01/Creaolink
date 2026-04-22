@@ -56,13 +56,16 @@ async function initTables() {
         current_version_id TEXT,
         sync_code TEXT UNIQUE,
         created_by TEXT NOT NULL REFERENCES users(id),
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        visibility TEXT NOT NULL DEFAULT 'private' CHECK(visibility IN ('public', 'private', 'followers-only'))
       );
 
       CREATE TABLE IF NOT EXISTS project_members (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL REFERENCES projects(id),
         user_id TEXT NOT NULL REFERENCES users(id),
+        permission TEXT NOT NULL DEFAULT 'editor' CHECK(permission IN ('admin', 'editor', 'viewer')),
         UNIQUE(project_id, user_id)
       );
 
@@ -88,8 +91,60 @@ async function initTables() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS freelancer_presence (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id),
+        user_id TEXT NOT NULL REFERENCES users(id),
+        status TEXT NOT NULL DEFAULT 'offline' CHECK(status IN ('online', 'away', 'offline')),
+        current_task TEXT NOT NULL DEFAULT '',
+        hours_logged NUMERIC NOT NULL DEFAULT 0,
+        last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(project_id, user_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS user_follows (
+        id TEXT PRIMARY KEY,
+        follower_id TEXT NOT NULL REFERENCES users(id),
+        following_id TEXT NOT NULL REFERENCES users(id),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(follower_id, following_id),
+        CHECK(follower_id <> following_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS posts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        project_id TEXT REFERENCES projects(id),
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        tags TEXT[] NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS post_reactions (
+        id TEXT PRIMARY KEY,
+        post_id TEXT NOT NULL REFERENCES posts(id),
+        user_id TEXT NOT NULL REFERENCES users(id),
+        reaction TEXT NOT NULL DEFAULT 'like',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE(post_id, user_id, reaction)
+      );
+
+      CREATE TABLE IF NOT EXISTS post_comments (
+        id TEXT PRIMARY KEY,
+        post_id TEXT NOT NULL REFERENCES posts(id),
+        user_id TEXT NOT NULL REFERENCES users(id),
+        content TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
       -- Add sync code to existing projects table if it doesn't exist
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS sync_code TEXT UNIQUE;
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS visibility TEXT NOT NULL DEFAULT 'private';
+
+      -- Add member permissions for team management
+      ALTER TABLE project_members ADD COLUMN IF NOT EXISTS permission TEXT NOT NULL DEFAULT 'editor';
       
       -- Add timeline_data to versions table if it doesn't exist
       ALTER TABLE versions ADD COLUMN IF NOT EXISTS timeline_data JSONB;

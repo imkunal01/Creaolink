@@ -58,6 +58,8 @@ export async function POST(
       ]
     );
 
+    await db.query("UPDATE projects SET updated_at = NOW() WHERE id = $1", [id]);
+
     const { rows: fbRows } = await db.query("SELECT * FROM feedback WHERE id = $1", [feedbackId]);
     return NextResponse.json({ feedback: fbRows[0] }, { status: 201 });
   } catch (err) {

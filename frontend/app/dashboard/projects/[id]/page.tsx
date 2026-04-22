@@ -10,8 +10,10 @@ import {
   apiAddFeedback,
   apiGetFeedback,
   apiResolveFeedback,
+  type ProjectStatus,
 } from "@/lib/api";
 import TimelineViewer from "../../components/TimelineViewer";
+import ProjectSettingsPanel from "./components/ProjectSettingsPanel";
 
 type ProjectData = Awaited<ReturnType<typeof apiGetProject>>;
 type FeedbackItem = Awaited<ReturnType<typeof apiGetFeedback>>["feedback"][number];
@@ -46,6 +48,7 @@ export default function ProjectDetailPage() {
   const [fbDescription, setFbDescription] = useState("");
   const [addingFeedback, setAddingFeedback] = useState(false);
 
+  // We are removing the strict restriction so everyone can see the button for now
   const isClient = user?.role === "client" || user?.role === "admin";
 
   const fetchProject = useCallback(async () => {
@@ -78,7 +81,7 @@ export default function ProjectDetailPage() {
   const handleStatusChange = async (status: string) => {
     setShowStatusMenu(false);
     try {
-      await apiUpdateStatus(projectId, status);
+      await apiUpdateStatus(projectId, status as ProjectStatus);
       fetchProject();
     } catch {
       // ignore
@@ -169,7 +172,8 @@ export default function ProjectDetailPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="space-y-6">
       {/* Back link */}
       <button
         onClick={() => router.push("/dashboard/projects")}
@@ -192,57 +196,59 @@ export default function ProjectDetailPage() {
           </div>
 
           {/* Status badge / dropdown */}
-          <div className="relative">
-            {isClient ? (
-              <button
-                onClick={() => setShowStatusMenu((v) => !v)}
-                className={`text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer ${statusColors[project.status] || statusColors.active}`}
-              >
-                {project.status.charAt(0).toUpperCase() + project.status.slice(1)} ▾
-              </button>
-            ) : (
-              <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${statusColors[project.status] || statusColors.active}`}>
-                {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-              </span>
-            )}
-            {showStatusMenu && (
-              <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border rounded-lg shadow-xl z-10 min-w-[140px]">
-                {["active", "pending", "completed", "approved"].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => handleStatusChange(s)}
-                    className="w-full text-left px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-border/30 transition-colors first:rounded-t-lg last:rounded-b-lg cursor-pointer"
-                  >
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push(`/dashboard/projects/${projectId}/link`)}
+              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-[#00ffff] to-[#00bfff] text-black px-4 py-2 rounded-xl text-sm font-bold shadow-[0_0_15px_rgba(0,255,255,0.4)] hover:shadow-[0_0_25px_rgba(0,255,255,0.6)] transition-all cursor-pointer tracking-wide"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              CONNECT PREMIERE PRO
+            </button>
+
+            <div className="relative">
+              {isClient ? (
+                <button
+                  onClick={() => setShowStatusMenu((v) => !v)}
+                  className={`text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer ${statusColors[project.status] || statusColors.active}`}
+                >
+                  {project.status.charAt(0).toUpperCase() + project.status.slice(1)} ▾
+                </button>
+              ) : (
+                <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${statusColors[project.status] || statusColors.active}`}>
+                  {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+                </span>
+              )}
+              {showStatusMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border rounded-lg shadow-xl z-10 min-w-[140px]">
+                  {["active", "pending", "completed", "approved"].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleStatusChange(s)}
+                      className="w-full text-left px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-border/30 transition-colors first:rounded-t-lg last:rounded-b-lg cursor-pointer"
+                    >
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Sync Code Box */}
-        {isClient && project.sync_code && (
-          <div className="mt-4 pt-4 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <p className="text-xs text-text-tertiary uppercase tracking-wider font-semibold">Plugin Link Code</p>
-              <p className="text-sm text-text-secondary mt-0.5">Use this code in Premiere Pro to connect your timeline.</p>
-            </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(project.sync_code);
-                alert("Code copied to clipboard!");
-              }}
-              className="flex flex-shrink-0 items-center justify-center gap-2 bg-text-primary hover:bg-text-secondary transition-colors px-4 py-2 rounded-lg border border-border text-sm text-bg-primary font-medium cursor-pointer tracking-wider font-mono active:scale-95"
-            >
-              {project.sync_code}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-            </button>
-          </div>
-        )}
+        {/* Mobile Connect Button */}
+        <button
+          onClick={() => router.push(`/dashboard/projects/${projectId}/link`)}
+          className="mt-4 sm:hidden w-full flex justify-center items-center gap-2 bg-gradient-to-r from-[#00ffff] to-[#00bfff] text-black px-4 py-2.5 rounded-xl text-sm font-bold shadow-[0_0_15px_rgba(0,255,255,0.4)] active:scale-95 transition-all cursor-pointer tracking-wide"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          CONNECT PREMIERE PRO
+        </button>
       </div>
 
       {/* ━━━ Tabs ━━━ */}
@@ -273,7 +279,7 @@ export default function ProjectDetailPage() {
           <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
             <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-4">Premiere Pro Sequence</h3>
             {project.currentVersion?.timeline_data ? (
-               <TimelineViewer data={project.currentVersion.timeline_data} />
+              <TimelineViewer data={project.currentVersion.timeline_data as Parameters<typeof TimelineViewer>[0]["data"]} />
             ) : (
                <div className="w-full h-32 bg-[#1e1e1e] border border-[#333] rounded-lg flex items-center justify-center text-xs text-text-tertiary">
                  No timeline data synced yet. Use the plugin to sync.
@@ -282,8 +288,6 @@ export default function ProjectDetailPage() {
           </div>
 
           {/* Description + Deadline */}
-          </div>
-
           <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6 space-y-4">
             <div>
               <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">Description</h3>
@@ -562,6 +566,14 @@ export default function ProjectDetailPage() {
           )}
         </div>
       )}
+      </div>
+
+      <ProjectSettingsPanel
+        projectId={projectId}
+        project={project}
+        user={user}
+        onProjectUpdated={fetchProject}
+      />
     </div>
   );
 }

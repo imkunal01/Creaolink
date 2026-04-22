@@ -42,7 +42,7 @@ export async function POST(
     );
 
     // Step 4: Update project current_version_id
-    await db.query("UPDATE projects SET current_version_id = $1 WHERE id = $2", [versionId, id]);
+    await db.query("UPDATE projects SET current_version_id = $1, updated_at = NOW() WHERE id = $2", [versionId, id]);
 
     // Step 5: Return updated version list
     const { rows: versions } = await db.query(

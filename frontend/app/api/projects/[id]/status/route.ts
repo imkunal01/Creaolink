@@ -32,7 +32,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
-    await db.query("UPDATE projects SET status = $1 WHERE id = $2", [status, id]);
+    await db.query("UPDATE projects SET status = $1, updated_at = NOW() WHERE id = $2", [status, id]);
 
     const { rows } = await db.query("SELECT * FROM projects WHERE id = $1", [id]);
     return NextResponse.json({ project: rows[0] });
