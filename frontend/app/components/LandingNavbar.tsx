@@ -14,12 +14,14 @@ function getInitials(name: string) {
 }
 
 export default function LandingNavbar() {
-  const [user, setUser] = useState<User | null>(() => getUser());
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     const refreshUser = () => {
       setUser(getUser());
     };
+
+    refreshUser();
 
     window.addEventListener("storage", refreshUser);
     window.addEventListener("focus", refreshUser);

@@ -76,19 +76,45 @@ export async function GET(
       [id]
     );
 
-    // Get members with user info and project permission
-    const { rows: members } = await db.query(
-      `SELECT u.id, u.name, u.email, u.role, pm.permission
-       FROM project_members pm
-       INNER JOIN users u ON u.id = pm.user_id
-       WHERE pm.project_id = $1`,
-      [id]
-    );
+    // Get members with user info and project permission.
+    let members: Array<Record<string, unknown>> = [];
+    let owners: Array<Record<string, unknown>> = [];
 
-    const { rows: owners } = await db.query(
-      "SELECT id, name, email, role FROM users WHERE id = $1",
-      [project.created_by]
-    );
+    try {
+      const membersResult = await db.query(
+        `SELECT u.id, u.name, u.email, u.username, u.role, pm.permission
+         FROM project_members pm
+         INNER JOIN users u ON u.id = pm.user_id
+         WHERE pm.project_id = $1`,
+        [id]
+      );
+      members = membersResult.rows;
+
+      const ownersResult = await db.query(
+        "SELECT id, name, email, username, role FROM users WHERE id = $1",
+        [project.created_by]
+      );
+      owners = ownersResult.rows;
+    } catch (err) {
+      if ((err as { code?: string }).code !== "42703") {
+        throw err;
+      }
+
+      const membersResult = await db.query(
+        `SELECT u.id, u.name, u.email, u.role, pm.permission
+         FROM project_members pm
+         INNER JOIN users u ON u.id = pm.user_id
+         WHERE pm.project_id = $1`,
+        [id]
+      );
+      members = membersResult.rows.map((row) => ({ ...row, username: "" }));
+
+      const ownersResult = await db.query(
+        "SELECT id, name, email, role FROM users WHERE id = $1",
+        [project.created_by]
+      );
+      owners = ownersResult.rows.map((row) => ({ ...row, username: "" }));
+    }
 
     return NextResponse.json({
       id: project.id,
@@ -195,6 +221,17 @@ export async function DELETE(
     const db = await getPool();
     const client = await db.connect();
 
+    const runSafeDelete = async (sql: string, values: unknown[]) => {
+      try {
+        await client.query(sql, values);
+      } catch (err) {
+        // Ignore missing-table errors for optional social modules.
+        if ((err as { code?: string }).code !== "42P01") {
+          throw err;
+        }
+      }
+    };
+
     try {
       await client.query("BEGIN");
 
@@ -222,11 +259,21 @@ export async function DELETE(
         return NextResponse.json({ error: "Only project admins can delete projects" }, { status: 403 });
       }
 
-      await client.query("DELETE FROM feedback WHERE project_id = $1", [id]);
-      await client.query("DELETE FROM freelancer_presence WHERE project_id = $1", [id]);
-      await client.query("DELETE FROM versions WHERE project_id = $1", [id]);
-      await client.query("DELETE FROM project_members WHERE project_id = $1", [id]);
-      await client.query("DELETE FROM posts WHERE project_id = $1", [id]);
+      await runSafeDelete("DELETE FROM feedback WHERE project_id = $1", [id]);
+      await runSafeDelete("DELETE FROM freelancer_presence WHERE project_id = $1", [id]);
+      await runSafeDelete("DELETE FROM versions WHERE project_id = $1", [id]);
+      await runSafeDelete("DELETE FROM project_members WHERE project_id = $1", [id]);
+      await runSafeDelete(
+        `DELETE FROM post_comments
+         WHERE post_id IN (SELECT id FROM posts WHERE project_id = $1)`,
+        [id]
+      );
+      await runSafeDelete(
+        `DELETE FROM post_reactions
+         WHERE post_id IN (SELECT id FROM posts WHERE project_id = $1)`,
+        [id]
+      );
+      await runSafeDelete("DELETE FROM posts WHERE project_id = $1", [id]);
       await client.query("DELETE FROM projects WHERE id = $1", [id]);
 
       await client.query("COMMIT");

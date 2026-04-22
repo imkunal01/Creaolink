@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 
+async function safeRowsQuery<T>(
+  queryFn: () => Promise<{ rows: T[] }>
+): Promise<T[]> {
+  try {
+    const { rows } = await queryFn();
+    return rows;
+  } catch (err) {
+    const code = (err as { code?: string }).code;
+    // Undefined table/column/function errors should not break the feed page.
+    if (code === "42P01" || code === "42703" || code === "42883") {
+      return [];
+    }
+    throw err;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
@@ -8,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const db = await getPool();
 
-    const { rows: activity } = await db.query(
+    const activity = await safeRowsQuery(() => db.query(
       `SELECT DISTINCT p.id,
               p.title,
               p.status,
@@ -42,9 +58,9 @@ export async function GET(request: NextRequest) {
        ORDER BY p.updated_at DESC
        LIMIT 20`,
       [user.id]
-    );
+    ));
 
-    const { rows: discover } = await db.query(
+    const discover = await safeRowsQuery(() => db.query(
       `SELECT p.id,
               p.title,
               p.description,
@@ -63,9 +79,9 @@ export async function GET(request: NextRequest) {
        ORDER BY p.updated_at DESC
        LIMIT 18`,
       [user.id]
-    );
+    ));
 
-    const { rows: featured } = await db.query(
+    const featured = await safeRowsQuery(() => db.query(
       `SELECT p.id,
               p.title,
               p.description,
@@ -84,9 +100,9 @@ export async function GET(request: NextRequest) {
        ORDER BY collaborators DESC, p.updated_at DESC
        LIMIT 6`,
       [user.id]
-    );
+    ));
 
-    const { rows: posts } = await db.query(
+    const posts = await safeRowsQuery(() => db.query(
       `SELECT ps.id,
               ps.title,
               ps.content,
@@ -121,9 +137,9 @@ export async function GET(request: NextRequest) {
        ORDER BY ps.created_at DESC
        LIMIT 15`,
       [user.id]
-    );
+    ));
 
-    const { rows: network } = await db.query(
+    const network = await safeRowsQuery(() => db.query(
       `SELECT uf.following_id,
               u.name,
               u.role,
@@ -145,7 +161,7 @@ export async function GET(request: NextRequest) {
        ORDER BY uf.created_at DESC
        LIMIT 12`,
       [user.id]
-    );
+    ));
 
     return NextResponse.json({
       activity,

@@ -170,6 +170,9 @@ export default function ProfileView({ userId, isCurrentUser = false }: ProfileVi
             <div className="max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-3xl font-semibold tracking-tight text-[#f0f6fc]">{data.profile.name}</h1>
+                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-[#9fb3c8]">
+                  @{data.profile.username}
+                </span>
                 <span className="rounded-full border border-white/10 px-3 py-1 text-xs capitalize text-[#9fb3c8]">
                   {data.profile.role}
                 </span>

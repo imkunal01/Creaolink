@@ -49,7 +49,7 @@ export async function GET(
       followStateResult,
       reverseFollowResult,
     ] = await Promise.all([
-      db.query("SELECT id, name, email, role, created_at FROM users WHERE id = $1", [id]),
+      db.query("SELECT id, name, email, username, role, created_at FROM users WHERE id = $1", [id]),
       db.query(
         `SELECT id, title, description, status, updated_at
          FROM projects
@@ -61,7 +61,7 @@ export async function GET(
       db.query("SELECT COUNT(*)::int AS count FROM user_follows WHERE following_id = $1", [id]),
       db.query("SELECT COUNT(*)::int AS count FROM user_follows WHERE follower_id = $1", [id]),
       db.query(
-        `SELECT u.id, u.name, u.role
+        `SELECT u.id, u.name, u.username, u.role
          FROM user_follows uf
          INNER JOIN users u ON u.id = uf.follower_id
          WHERE uf.following_id = $1
@@ -70,7 +70,7 @@ export async function GET(
         [id]
       ),
       db.query(
-        `SELECT u.id, u.name, u.role
+        `SELECT u.id, u.name, u.username, u.role
          FROM user_follows uf
          INNER JOIN users u ON u.id = uf.following_id
          WHERE uf.follower_id = $1
@@ -90,6 +90,7 @@ export async function GET(
       id: string;
       name: string;
       email: string;
+      username: string;
       role: string;
       created_at: string;
     };

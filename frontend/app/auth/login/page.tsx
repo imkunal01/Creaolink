@@ -35,7 +35,13 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { user } = await apiLogin(email, password);
-      setUser({ id: user.id, name: user.name, email: user.email, role: user.role as UserRole });
+      setUser({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        username: user.username,
+        role: user.role as UserRole,
+      });
       router.push("/dashboard");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";

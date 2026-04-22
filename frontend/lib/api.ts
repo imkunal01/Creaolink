@@ -28,6 +28,7 @@ export interface ProjectOwner {
   id: string;
   name: string;
   email: string;
+  username?: string;
   role: string;
 }
 
@@ -35,6 +36,7 @@ export interface ProjectMember {
   id: string;
   name: string;
   email: string;
+  username?: string;
   role: string;
   permission?: ProjectPermission;
 }
@@ -125,6 +127,14 @@ export interface FeedNetworkItem {
 export interface UserListItem {
   id: string;
   name: string;
+  username: string;
+  role: string;
+}
+
+export interface SearchUserItem {
+  id: string;
+  name: string;
+  username: string;
   role: string;
 }
 
@@ -132,6 +142,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  username: string;
   role: string;
   created_at: string;
   bio: string;
@@ -165,21 +176,21 @@ async function request<T>(url: string, opts?: RequestInit): Promise<T> {
 }
 
 export function apiLogin(email: string, password: string) {
-  return request<{ user: { id: string; name: string; email: string; role: string } }>(
+  return request<{ user: { id: string; name: string; email: string; username: string; role: string } }>(
     "/api/auth/login",
     { method: "POST", body: JSON.stringify({ email, password }) }
   );
 }
 
-export function apiSignup(data: { name: string; email: string; password: string; role: string }) {
-  return request<{ user: { id: string; name: string; email: string; role: string } }>(
+export function apiSignup(data: { name: string; username: string; email: string; password: string; role: string }) {
+  return request<{ user: { id: string; name: string; email: string; username: string; role: string } }>(
     "/api/auth/signup",
     { method: "POST", body: JSON.stringify(data) }
   );
 }
 
 export function apiGoogleAuth(accessToken: string, role?: "client" | "freelancer") {
-  return request<{ user: { id: string; name: string; email: string; role: string } }>(
+  return request<{ user: { id: string; name: string; email: string; username: string; role: string } }>(
     "/api/auth/google",
     { method: "POST", body: JSON.stringify({ accessToken, role }) }
   );
@@ -365,6 +376,10 @@ export function apiGetUserProfile(userId: string) {
     isFollowing: boolean;
     isMutual: boolean;
   }>(`/api/users/${userId}/profile`);
+}
+
+export function apiSearchUsers(query: string) {
+  return request<{ users: SearchUserItem[] }>(`/api/users/search?q=${encodeURIComponent(query)}`);
 }
 
 export function apiCreatePost(data: { title: string; content: string; tags: string[]; projectId?: string }) {

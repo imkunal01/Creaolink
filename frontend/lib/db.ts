@@ -42,6 +42,7 @@ async function initTables() {
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
+        username TEXT UNIQUE,
         password TEXT NOT NULL DEFAULT '',
         role TEXT NOT NULL CHECK(role IN ('client', 'freelancer', 'admin')),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -148,6 +149,42 @@ async function initTables() {
       
       -- Add timeline_data to versions table if it doesn't exist
       ALTER TABLE versions ADD COLUMN IF NOT EXISTS timeline_data JSONB;
+
+      -- Add username support for user search and quick mentions
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
+
+      WITH ranked_usernames AS (
+        SELECT
+          u.id,
+          COALESCE(
+            NULLIF(
+              LOWER(REGEXP_REPLACE(SPLIT_PART(u.email, '@', 1), '[^a-zA-Z0-9_]+', '_', 'g')),
+              ''
+            ),
+            'user'
+          ) AS base,
+          ROW_NUMBER() OVER (
+            PARTITION BY COALESCE(
+              NULLIF(
+                LOWER(REGEXP_REPLACE(SPLIT_PART(u.email, '@', 1), '[^a-zA-Z0-9_]+', '_', 'g')),
+                ''
+              ),
+              'user'
+            )
+            ORDER BY u.created_at, u.id
+          ) AS rn
+        FROM users u
+        WHERE u.username IS NULL OR u.username = ''
+      )
+      UPDATE users u
+      SET username = CASE
+        WHEN r.rn = 1 THEN LEFT(r.base, 24)
+        ELSE LEFT(r.base, 20) || r.rn::TEXT
+      END
+      FROM ranked_usernames r
+      WHERE u.id = r.id;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique_idx ON users(username);
     `);
   } finally {
     client.release();
@@ -159,9 +196,22 @@ export async function getAuthUser(request: Request) {
   const userId = request.headers.get("x-user-id");
   if (!userId) return null;
   const db = await getPool();
-  const { rows } = await db.query(
-    "SELECT id, name, email, role FROM users WHERE id = $1",
-    [userId]
-  );
-  return (rows[0] as { id: string; name: string; email: string; role: string }) ?? null;
+  try {
+    const { rows } = await db.query(
+      "SELECT id, name, email, username, role FROM users WHERE id = $1",
+      [userId]
+    );
+    return (rows[0] as { id: string; name: string; email: string; username: string; role: string }) ?? null;
+  } catch (err) {
+    if ((err as { code?: string }).code !== "42703") {
+      throw err;
+    }
+
+    const { rows } = await db.query(
+      "SELECT id, name, email, role FROM users WHERE id = $1",
+      [userId]
+    );
+    if (rows.length === 0) return null;
+    return { ...rows[0], username: "" } as { id: string; name: string; email: string; username: string; role: string };
+  }
 }

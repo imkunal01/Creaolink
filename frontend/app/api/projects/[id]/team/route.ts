@@ -31,7 +31,7 @@ export async function GET(
     }
 
     const { rows: members } = await db.query(
-      `SELECT u.id, u.name, u.email, u.role, pm.permission
+      `SELECT u.id, u.name, u.email, u.username, u.role, pm.permission
        FROM project_members pm
        INNER JOIN users u ON u.id = pm.user_id
        WHERE pm.project_id = $1
@@ -72,9 +72,13 @@ export async function POST(
       return NextResponse.json({ error: "Email or username is required" }, { status: 400 });
     }
 
-    const cleaned = identifier.trim().toLowerCase();
+    const cleaned = identifier.trim().toLowerCase().replace(/^@+/, "");
     const { rows: users } = await db.query(
-      `SELECT id, role FROM users WHERE LOWER(email) = $1 OR LOWER(name) = $1 LIMIT 1`,
+      `SELECT id, role
+       FROM users
+       WHERE LOWER(username) = $1
+          OR LOWER(email) = $1
+       LIMIT 1`,
       [cleaned]
     );
 

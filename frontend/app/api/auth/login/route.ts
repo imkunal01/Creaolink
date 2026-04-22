@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     // Find user by email
     const { rows } = await db.query(
-      "SELECT id, name, email, password, role FROM users WHERE email = $1",
+      "SELECT id, name, email, username, password, role FROM users WHERE email = $1",
       [email.toLowerCase().trim()]
     );
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
     return NextResponse.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, username: user.username, role: user.role },
     });
   } catch (err) {
     console.error("Login error:", err);

@@ -56,6 +56,7 @@ export default function SignupPage() {
   const [planType, setPlanType] = useState<PlanType>("hobby");
   const [proTier, setProTier] = useState<ProTier>("pro");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -91,6 +92,10 @@ export default function SignupPage() {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = "Name is required";
+    if (!username.trim()) newErrors.username = "Username is required";
+    else if (!/^[a-zA-Z0-9_]{3,24}$/.test(username.trim())) {
+      newErrors.username = "Use 3-24 letters, numbers, or underscore";
+    }
     setErrors(newErrors);
     if (Object.keys(newErrors).length === 0) nextStep();
   };
@@ -111,11 +116,12 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const { user } = await apiSignup({ name, email, password, role });
+      const { user } = await apiSignup({ name, username, email, password, role });
       setUser({
         id: user.id,
         name: user.name,
         email: user.email,
+        username: user.username,
         role: user.role as UserRole,
       });
       router.push("/dashboard");
@@ -381,6 +387,15 @@ export default function SignupPage() {
               value={name}
               onChange={setName}
               error={errors.name}
+            />
+
+            <AuthInput
+              label="Username"
+              type="text"
+              placeholder="john_doe"
+              value={username}
+              onChange={(value) => setUsername(value.replace(/^@+/, ""))}
+              error={errors.username}
             />
 
             <div className="flex items-center gap-3">
