@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
       [me.id, `${query}%`, query]
     );
 
-    return NextResponse.json({ users: rows });
+    const response = NextResponse.json({ users: rows });
+    // Phase 5: allow clients to cache identical search queries for 30s.
+    response.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+    return response;
   } catch (err) {
     console.error("User search error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

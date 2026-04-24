@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 import { v4 as uuid } from "uuid";
+import { readThroughCache, buildCacheKey } from "@/lib/cache";
+import { invalidateProject } from "@/lib/invalidation";
+import { flags } from "@/lib/feature-flags";
 
 function createSyncCode() {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -101,6 +104,9 @@ export async function POST(request: NextRequest) {
     const { rows: projectRows } = await db.query("SELECT * FROM projects WHERE id = $1", [projectId]);
     const { rows: versionRows } = await db.query("SELECT * FROM versions WHERE id = $1", [versionId]);
 
+    // Phase 4: bust the creator's project list cache so the new project appears immediately.
+    await invalidateProject(projectId, user.id);
+
     return NextResponse.json({ project: projectRows[0], currentVersion: versionRows[0] }, { status: 201 });
   } catch (err) {
     console.error("Create project error:", err);
@@ -108,48 +114,64 @@ export async function POST(request: NextRequest) {
   }
 }
 
+async function fetchProjectsList(userId: string) {
+  const db = await getPool();
+  const { rows: projects } = await db.query(
+    `SELECT p.id,
+            p.title,
+            p.description,
+            p.status,
+            p.deadline,
+            p.current_version_id,
+            cv.version_name AS current_version_name,
+            p.created_by,
+            p.created_at,
+            p.updated_at,
+            p.visibility,
+            pm.permission,
+            owner.name AS owner_name,
+            COALESCE(member_counts.member_count, 0)::int AS member_count,
+            COALESCE(feedback_counts.open_feedback, 0)::int AS open_feedback
+     FROM projects p
+     INNER JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = $1
+     INNER JOIN users owner ON owner.id = p.created_by
+     LEFT JOIN versions cv ON cv.id = p.current_version_id
+     LEFT JOIN (
+       SELECT project_id, COUNT(*) AS member_count
+       FROM project_members
+       GROUP BY project_id
+     ) member_counts ON member_counts.project_id = p.id
+     LEFT JOIN (
+       SELECT project_id, COUNT(*) FILTER (WHERE status = 'open') AS open_feedback
+       FROM feedback
+       GROUP BY project_id
+     ) feedback_counts ON feedback_counts.project_id = p.id
+     ORDER BY p.updated_at DESC, p.created_at DESC`,
+    [userId]
+  );
+  return { projects };
+}
+
 export async function GET(request: NextRequest) {
+  const startedAt = Date.now();
   try {
     const user = await getAuthUser(request);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const db = await getPool();
+    const cacheKey = buildCacheKey("projects-list", user.id);
 
-    const { rows: projects } = await db.query(
-      `SELECT p.id,
-              p.title,
-              p.description,
-              p.status,
-              p.deadline,
-              p.current_version_id,
-              cv.version_name AS current_version_name,
-              p.created_by,
-              p.created_at,
-              p.updated_at,
-              p.visibility,
-              pm.permission,
-              owner.name AS owner_name,
-              COALESCE(member_counts.member_count, 0)::int AS member_count,
-              COALESCE(feedback_counts.open_feedback, 0)::int AS open_feedback
-       FROM projects p
-       INNER JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = $1
-       INNER JOIN users owner ON owner.id = p.created_by
-       LEFT JOIN versions cv ON cv.id = p.current_version_id
-       LEFT JOIN (
-         SELECT project_id, COUNT(*) AS member_count
-         FROM project_members
-         GROUP BY project_id
-       ) member_counts ON member_counts.project_id = p.id
-       LEFT JOIN (
-         SELECT project_id, COUNT(*) FILTER (WHERE status = 'open') AS open_feedback
-         FROM feedback
-         GROUP BY project_id
-       ) feedback_counts ON feedback_counts.project_id = p.id
-       ORDER BY p.updated_at DESC, p.created_at DESC`,
-      [user.id]
-    );
+    const data = flags.cacheProject
+      ? await readThroughCache({
+          key: cacheKey,
+          ttlSeconds: 60,
+          source: "api/projects",
+          compute: () => fetchProjectsList(user.id),
+        })
+      : await fetchProjectsList(user.id);
 
-    return NextResponse.json({ projects });
+    const response = NextResponse.json(data);
+    response.headers.set("x-response-time", String(Date.now() - startedAt));
+    return response;
   } catch (err) {
     console.error("List projects error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

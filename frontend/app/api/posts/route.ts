@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 import { v4 as uuid } from "uuid";
+import { invalidateFeed } from "@/lib/invalidation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,10 @@ export async function GET(request: NextRequest) {
        LIMIT 50`
     );
 
-    return NextResponse.json({ posts: rows });
+    const response = NextResponse.json({ posts: rows });
+    // Phase 5: allow private caching of post list for 30s.
+    response.headers.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
+    return response;
   } catch (err) {
     console.error("List posts error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -47,6 +51,9 @@ export async function POST(request: NextRequest) {
         Array.isArray(tags) ? tags.slice(0, 10) : [],
       ]
     );
+
+    // Phase 3: bust the author's feed so next load reflects the new post.
+    await invalidateFeed(user.id);
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (err) {

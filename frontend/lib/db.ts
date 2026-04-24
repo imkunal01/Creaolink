@@ -12,7 +12,7 @@ function createPool(): Pool {
   return new Pool({
     connectionString: connStr,
     ssl: isSupabase ? { rejectUnauthorized: false } : undefined,
-    max: 5,
+    max: 10,
     connectionTimeoutMillis: 10000,
     idleTimeoutMillis: 30000,
   });
@@ -185,7 +185,26 @@ async function initTables() {
       WHERE u.id = r.id;
 
       CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique_idx ON users(username);
-    `);
+
+      -- ── Performance indexes (idempotent) ──────────────────────────────────────
+      -- Feed: project_members lookup by user (activity query)
+      CREATE INDEX IF NOT EXISTS idx_pm_user_id ON project_members(user_id);
+      -- Feed: project visibility + owner ordering
+      CREATE INDEX IF NOT EXISTS idx_projects_updated_at ON projects(updated_at DESC);
+      -- Feed: follow graph traversal
+      CREATE INDEX IF NOT EXISTS idx_uf_follower_id ON user_follows(follower_id);
+      CREATE INDEX IF NOT EXISTS idx_uf_following_id ON user_follows(following_id);
+      -- Feed/Posts: post ordering and authorship
+      CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
+      -- Feed: feedback open-count aggregation
+      CREATE INDEX IF NOT EXISTS idx_feedback_project_status ON feedback(project_id, status);
+      -- Profile: portfolio lookup by creator + ordering
+      CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by, updated_at DESC);
+      -- Reactions / comments aggregation
+      CREATE INDEX IF NOT EXISTS idx_post_reactions_post_id ON post_reactions(post_id);
+      CREATE INDEX IF NOT EXISTS idx_post_comments_post_id ON post_comments(post_id);
+    `, []);
   } finally {
     client.release();
   }

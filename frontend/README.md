@@ -16,6 +16,30 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Redis Setup (Phase 1)
+
+The API now includes a shared Redis cache utility and a Redis health endpoint.
+
+Set one of these environment variables:
+
+```bash
+REDIS_URL=redis://localhost:6379
+# or
+UPSTASH_REDIS_URL=rediss://default:<password>@<host>:<port>
+```
+
+Redis health check endpoint:
+
+```bash
+GET /api/health/redis
+```
+
+Expected behavior:
+
+- Returns `200` when Redis is reachable.
+- Returns `503` when Redis is unreachable or not configured.
+- API code continues to work even if Redis is not configured (cache is bypassed safely).
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

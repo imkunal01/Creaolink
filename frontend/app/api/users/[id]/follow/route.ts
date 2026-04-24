@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 import { v4 as uuid } from "uuid";
+import { invalidateFollowChange } from "@/lib/invalidation";
 
 export async function GET(
   request: NextRequest,
@@ -49,6 +50,9 @@ export async function POST(
       [uuid(), me.id, id]
     );
 
+    // Phase 3+4: bust both users' feeds and target's profile cache.
+    await invalidateFollowChange(me.id, id);
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Follow user error:", err);
@@ -71,6 +75,9 @@ export async function DELETE(
       "DELETE FROM user_follows WHERE follower_id = $1 AND following_id = $2",
       [me.id, id]
     );
+
+    // Phase 3+4: bust both users' feeds and target's profile cache.
+    await invalidateFollowChange(me.id, id);
 
     return NextResponse.json({ success: true });
   } catch (err) {
