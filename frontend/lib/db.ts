@@ -92,6 +92,24 @@ async function initTables() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id),
+        sender_id TEXT NOT NULL REFERENCES users(id),
+        body TEXT NOT NULL DEFAULT '',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS chat_attachments (
+        id TEXT PRIMARY KEY,
+        message_id TEXT NOT NULL REFERENCES chat_messages(id) ON DELETE CASCADE,
+        file_name TEXT NOT NULL,
+        mime_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+        file_size INTEGER NOT NULL DEFAULT 0,
+        data_url TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
       CREATE TABLE IF NOT EXISTS freelancer_presence (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL REFERENCES projects(id),
@@ -199,6 +217,9 @@ async function initTables() {
       CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
       -- Feed: feedback open-count aggregation
       CREATE INDEX IF NOT EXISTS idx_feedback_project_status ON feedback(project_id, status);
+      -- Project chat: newest messages and attachment lookup
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_project_created ON chat_messages(project_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_chat_attachments_message_id ON chat_attachments(message_id);
       -- Profile: portfolio lookup by creator + ordering
       CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by, updated_at DESC);
       -- Reactions / comments aggregation
