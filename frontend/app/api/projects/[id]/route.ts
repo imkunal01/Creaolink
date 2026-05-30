@@ -280,6 +280,12 @@ export async function DELETE(
       }
 
       await runSafeDelete("DELETE FROM feedback WHERE project_id = $1", [id]);
+      await runSafeDelete(
+        `DELETE FROM chat_attachments
+         WHERE message_id IN (SELECT id FROM chat_messages WHERE project_id = $1)`,
+        [id]
+      );
+      await runSafeDelete("DELETE FROM chat_messages WHERE project_id = $1", [id]);
       await runSafeDelete("DELETE FROM freelancer_presence WHERE project_id = $1", [id]);
       await runSafeDelete("DELETE FROM versions WHERE project_id = $1", [id]);
       await runSafeDelete("DELETE FROM project_members WHERE project_id = $1", [id]);

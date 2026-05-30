@@ -14,6 +14,7 @@ import {
 } from "@/lib/api";
 import TimelineViewer from "../../components/TimelineViewer";
 import ProjectSettingsPanel from "./components/ProjectSettingsPanel";
+import ProjectChatRoom from "./components/ProjectChatRoom";
 
 type ProjectData = Awaited<ReturnType<typeof apiGetProject>>;
 type FeedbackItem = Awaited<ReturnType<typeof apiGetFeedback>>["feedback"][number];
@@ -30,7 +31,7 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState("");
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"overview" | "feedback">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "chat" | "feedback">("overview");
 
   // Status dropdown
   const [showStatusMenu, setShowStatusMenu] = useState(false);
@@ -253,7 +254,7 @@ export default function ProjectDetailPage() {
 
       {/* ━━━ Tabs ━━━ */}
       <div className="flex gap-1 border-b border-border">
-        {(["overview", "feedback"] as const).map((tab) => (
+        {(["overview", "chat", "feedback"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -418,6 +419,10 @@ export default function ProjectDetailPage() {
       )}
 
       {/* ━━━ Feedback Tab ━━━ */}
+      {activeTab === "chat" && (
+        <ProjectChatRoom projectId={projectId} />
+      )}
+
       {activeTab === "feedback" && (
         <div className="space-y-4">
           {/* Add feedback button (client only) */}
