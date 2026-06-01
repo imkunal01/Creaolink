@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 import { v4 as uuid } from "uuid";
+import {
+  readThroughCache,
+  rateLimit,
+  chatKey,
+  invalidateChatCache,
+  CHAT_CACHE_TTL,
+} from "@/lib/cache";
+import { invalidateChat } from "@/lib/invalidation";
 
 const MAX_ATTACHMENTS = 6;
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
@@ -29,43 +37,52 @@ export async function GET(
     }
 
     const db = await getPool();
-    const { rows: messages } = await db.query(
-      `WITH recent_messages AS (
-         SELECT cm.*
-         FROM chat_messages cm
-         WHERE cm.project_id = $1
-         ORDER BY cm.created_at DESC
-         LIMIT 100
-       )
-       SELECT rm.id,
-              rm.project_id,
-              rm.sender_id,
-              rm.body,
-              rm.created_at,
-              u.name AS sender_name,
-              u.email AS sender_email,
-              u.username AS sender_username,
-              u.role AS sender_role,
-              COALESCE(
-                JSON_AGG(
-                  JSON_BUILD_OBJECT(
-                    'id', ca.id,
-                    'file_name', ca.file_name,
-                    'mime_type', ca.mime_type,
-                    'file_size', ca.file_size,
-                    'data_url', ca.data_url,
-                    'created_at', ca.created_at
-                  )
-                ) FILTER (WHERE ca.id IS NOT NULL),
-                '[]'::json
-              ) AS attachments
-       FROM recent_messages rm
-       INNER JOIN users u ON u.id = rm.sender_id
-       LEFT JOIN chat_attachments ca ON ca.message_id = rm.id
-       GROUP BY rm.id, rm.project_id, rm.sender_id, rm.body, rm.created_at, u.name, u.email, u.username, u.role
-       ORDER BY rm.created_at ASC`,
-      [id]
-    );
+
+    const messages = await readThroughCache({
+      key: chatKey(id),
+      ttlSeconds: CHAT_CACHE_TTL,
+      source: "api/projects/[id]/chat",
+      compute: async () => {
+        const { rows } = await db.query(
+          `WITH recent_messages AS (
+             SELECT cm.*
+             FROM chat_messages cm
+             WHERE cm.project_id = $1
+             ORDER BY cm.created_at DESC
+             LIMIT 100
+           )
+           SELECT rm.id,
+                  rm.project_id,
+                  rm.sender_id,
+                  rm.body,
+                  rm.created_at,
+                  u.name AS sender_name,
+                  u.email AS sender_email,
+                  u.username AS sender_username,
+                  u.role AS sender_role,
+                  COALESCE(
+                    JSON_AGG(
+                      JSON_BUILD_OBJECT(
+                        'id', ca.id,
+                        'file_name', ca.file_name,
+                        'mime_type', ca.mime_type,
+                        'file_size', ca.file_size,
+                        'data_url', ca.data_url,
+                        'created_at', ca.created_at
+                      )
+                    ) FILTER (WHERE ca.id IS NOT NULL),
+                    '[]'::json
+                  ) AS attachments
+           FROM recent_messages rm
+           INNER JOIN users u ON u.id = rm.sender_id
+           LEFT JOIN chat_attachments ca ON ca.message_id = rm.id
+           GROUP BY rm.id, rm.project_id, rm.sender_id, rm.body, rm.created_at, u.name, u.email, u.username, u.role
+           ORDER BY rm.created_at ASC`,
+          [id]
+        );
+        return rows;
+      },
+    });
 
     return NextResponse.json({ messages });
   } catch (err) {
@@ -85,6 +102,21 @@ export async function POST(
     const { id } = await params;
     if (!(await assertProjectMember(id, user.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Rate limit: 20 messages per minute per user per project
+    const rl = await rateLimit(`chat:${user.id}:${id}`, 20, 60);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many messages — please slow down" },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rl.resetInSeconds),
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      );
     }
 
     const form = await request.formData();
@@ -144,6 +176,9 @@ export async function POST(
 
       await client.query("UPDATE projects SET updated_at = NOW() WHERE id = $1", [id]);
       await client.query("COMMIT");
+
+      // Invalidate chat cache and project list caches for all members
+      await invalidateChat(id).catch(() => {});
 
       return NextResponse.json(
         {

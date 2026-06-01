@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 import { v4 as uuid } from "uuid";
+import { invalidateProject } from "@/lib/invalidation";
 
 // ── POST /api/projects/:id/version — Create new version ──
 export async function POST(
@@ -51,6 +52,10 @@ export async function POST(
     );
 
     const { rows: cvRows } = await db.query("SELECT * FROM versions WHERE id = $1", [versionId]);
+
+    // Invalidate project detail cache (current_version_id and versions list changed)
+    const { rows: projRows } = await db.query("SELECT created_by FROM projects WHERE id = $1", [id]);
+    await invalidateProject(id, projRows[0]?.created_by).catch(() => {});
 
     return NextResponse.json({ currentVersion: cvRows[0], versions }, { status: 201 });
   } catch (err) {

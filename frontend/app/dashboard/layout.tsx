@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { getUser, type User } from "@/lib/auth";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
@@ -12,6 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,27 +21,54 @@ export default function DashboardLayout({
     const currentUser = getUser();
     setUser(currentUser);
     setReady(true);
-
     if (!currentUser) {
       router.replace("/auth/login");
     }
   }, [router]);
 
+  // Close sidebar on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [sidebarOpen]);
+
   if (!ready || !user) {
     return (
-      <div className="min-h-screen bg-[#0d1117]" />
+      <div style={{ height: "100dvh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: "50%",
+          border: "2.5px solid var(--b2)", borderTopColor: "var(--red)",
+          animation: "spin 0.8s linear infinite",
+        }} />
+      </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-[#c9d1d9]">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="lg:ml-64">
-        <Topbar user={user} onMenuToggle={() => setSidebarOpen(true)} />
-        <main className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-          {typeof children === "object" && children !== null
-            ? children
-            : null}
+    <div className="app-shell">
+      <Topbar user={user} onMenuToggle={() => setSidebarOpen((v) => !v)} />
+      <div className="app-body">
+        {/* Sidebar */}
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        {/* Mobile backdrop overlay */}
+        <div
+          className={`sidebar-overlay${sidebarOpen ? " visible" : ""}`}
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+
+        <main className="app-main">
+          {typeof children === "object" && children !== null ? children : null}
         </main>
       </div>
     </div>

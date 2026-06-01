@@ -46,83 +46,58 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
   }, [fetchProjects]);
 
   const assignedCount = projects.filter((p) => p.status === "active").length;
-  const openFeedback = projects.reduce(
-    (sum, p) => sum + (p.openFeedback || 0),
-    0
-  );
-  const completedCount = projects.filter(
-    (p) => p.status === "completed" || p.status === "approved"
-  ).length;
+  const openFeedback = projects.reduce((sum, p) => sum + (p.openFeedback || 0), 0);
+  const completedCount = projects.filter((p) => p.status === "completed" || p.status === "approved").length;
 
   const freelancerStats = [
     { label: "Assigned Projects", value: assignedCount },
-    { label: "Open Feedback", value: openFeedback },
+    { label: "Open Feedback", value: openFeedback, accent: openFeedback > 0 },
     { label: "Completed", value: completedCount },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header — no primary action button for freelancers */}
-      <div>
-        <h1 className="text-xl font-semibold text-[#f0f6fc]">Overview</h1>
-        <p className="mt-1 text-sm text-[#8b949e]">
-          Welcome back, {user.name}
-        </p>
+    <div className="mc" style={{ paddingBottom: "2rem" }}>
+      {/* Page header */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <div style={{ fontFamily: "var(--fd)", fontSize: "1.3rem", color: "var(--white)", letterSpacing: "-0.02em" }}>
+          Overview
+        </div>
+        <div style={{ fontSize: "0.8rem", color: "var(--m1)", marginTop: "0.15rem" }}>
+          Welcome back, <span style={{ color: "var(--m2)", fontWeight: 500 }}>{user.name}</span>
+        </div>
       </div>
 
       {/* Stats */}
       <StatsCards stats={freelancerStats} />
 
-      {/* Assigned Projects Section */}
-      <div>
-        <div className="mb-3 flex items-center justify-between border-b border-[#30363d] pb-3">
-          <h2 className="text-sm font-medium text-[#f0f6fc]">Assigned Projects</h2>
+      {/* Assigned Projects */}
+      <div style={{ marginTop: "1.5rem" }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: "0.75rem", paddingBottom: "0.65rem", borderBottom: "1px solid var(--b2)",
+        }}>
+          <span style={{ fontSize: "0.84rem", fontWeight: 500, color: "var(--white)" }}>Assigned Projects</span>
           {projects.length > 0 && (
-            <span className="text-xs text-[#8b949e]">
+            <span style={{ fontSize: "0.73rem", color: "var(--m1)" }}>
               {projects.length} project{projects.length !== 1 ? "s" : ""}
             </span>
           )}
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <svg
-              className="animate-spin h-6 w-6 text-text-tertiary"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "4rem" }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: "50%",
+              border: "2px solid var(--b2)", borderTopColor: "var(--red)",
+              animation: "spin 0.8s linear infinite",
+            }} />
           </div>
         ) : projects.length === 0 ? (
-          <div className="rounded-md border border-[#30363d] bg-[#161b22]">
+          <div className="cl-card">
             <EmptyState
               icon={
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-text-tertiary"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
                 </svg>
               }
               title="No projects assigned yet"
@@ -130,7 +105,7 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.85rem" }}>
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}
@@ -146,9 +121,7 @@ export default function FreelancerDashboard({ user }: FreelancerDashboardProps) 
                       : project.status,
                   updatedAt: new Date(project.created_at).toLocaleDateString(),
                 }}
-                onClick={() =>
-                  router.push(`/dashboard/projects/${project.id}`)
-                }
+                onClick={() => router.push(`/dashboard/projects/${project.id}`)}
               />
             ))}
           </div>

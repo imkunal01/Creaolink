@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
+import { invalidateProject } from "@/lib/invalidation";
 
 // ── PATCH /api/projects/:id/status — Update project status ──
 export async function PATCH(
@@ -35,6 +36,10 @@ export async function PATCH(
     await db.query("UPDATE projects SET status = $1, updated_at = NOW() WHERE id = $2", [status, id]);
 
     const { rows } = await db.query("SELECT * FROM projects WHERE id = $1", [id]);
+
+    // Invalidate project detail + all member project-list caches
+    await invalidateProject(id, rows[0]?.created_by).catch(() => {});
+
     return NextResponse.json({ project: rows[0] });
   } catch (err) {
     console.error("Status update error:", err);

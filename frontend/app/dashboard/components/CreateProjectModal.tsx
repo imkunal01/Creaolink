@@ -35,23 +35,19 @@ export default function CreateProjectModal({
       setError("Project title is required");
       return;
     }
-
     setLoading(true);
     setError("");
-
     try {
       const emails = freelancerEmails
         .split(",")
         .map((e) => e.trim())
         .filter(Boolean);
-
       const { project } = await apiCreateProject({
         title: title.trim(),
         description: description.trim(),
         deadline,
         freelancerEmails: emails,
       });
-
       onClose();
       const createdProject = project as { id: string };
       if (onCreated) {
@@ -66,114 +62,179 @@ export default function CreateProjectModal({
     }
   };
 
+  const inputStyle = {
+    width: "100%",
+    height: 40,
+    padding: "0 11px",
+    background: "var(--s3)",
+    border: "1px solid var(--b2)",
+    borderRadius: "var(--r)",
+    fontSize: "0.81rem",
+    color: "var(--white)",
+    outline: "none",
+    fontFamily: "var(--fb)",
+    transition: "border-color 0.15s",
+  } as React.CSSProperties;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 50,
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div
+        onClick={onClose}
+        style={{
+          position: "absolute", inset: 0,
+          background: "rgba(0,0,0,0.65)",
+          backdropFilter: "blur(6px)",
+        }}
+      />
 
       {/* Modal */}
-      <div className="relative bg-bg-secondary border border-border rounded-xl w-full max-w-[480px] mx-4 p-5 sm:p-8 shadow-2xl max-h-[90dvh] overflow-y-auto">
+      <div style={{
+        position: "relative",
+        width: "100%", maxWidth: 500,
+        margin: "0 1rem",
+        background: "var(--s1)",
+        border: "1px solid var(--b2)",
+        borderRadius: "var(--rxl)",
+        boxShadow: "0 40px 80px rgba(0,0,0,0.55)",
+        maxHeight: "90dvh",
+        overflowY: "auto",
+      }}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-text-primary">Create Project</h2>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "1.1rem 1.4rem",
+          borderBottom: "1px solid var(--b2)",
+        }}>
+          <div>
+            <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--white)" }}>
+              Create Project
+            </div>
+            <div style={{ fontSize: "0.75rem", color: "var(--m1)", marginTop: "0.1rem" }}>
+              Set up a new workspace and invite collaborators
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+            style={{
+              width: 30, height: 30, borderRadius: "var(--r)",
+              background: "var(--s3)", border: "1px solid var(--b2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "var(--m2)", cursor: "pointer", flexShrink: 0,
+            }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
-        {error && (
-          <div className="mb-4 px-3 py-2 bg-error/10 border border-error/20 rounded-lg text-sm text-error">
-            {error}
-          </div>
-        )}
+        <div style={{ padding: "1.25rem 1.4rem" }}>
+          {error && (
+            <div style={{
+              marginBottom: "1rem", padding: "0.6rem 0.85rem",
+              background: "var(--rs)", border: "1px solid var(--rg)",
+              borderRadius: "var(--r)", fontSize: "0.79rem", color: "var(--red)",
+            }}>
+              {error}
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5">Project Title</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Website Redesign"
-              className="w-full px-3 py-2.5 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-hover transition-colors"
-            />
-          </div>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+            {/* Title */}
+            <div>
+              <label className="cl-label">Project Title <span style={{ color: "var(--red)" }}>*</span></label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Brand Video Campaign"
+                style={inputStyle}
+              />
+            </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief project description..."
-              rows={3}
-              className="w-full px-3 py-2.5 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-hover transition-colors resize-none"
-            />
-          </div>
+            {/* Description */}
+            <div>
+              <label className="cl-label">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Brief project overview…"
+                rows={3}
+                style={{
+                  ...inputStyle,
+                  height: "auto",
+                  padding: "0.55rem 0.75rem",
+                  resize: "none",
+                }}
+              />
+            </div>
 
-          {/* Deadline */}
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5">Deadline</label>
-            <input
-              type="date"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className="w-full px-3 py-2.5 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-border-hover transition-colors [color-scheme:dark]"
-            />
-          </div>
+            {/* Deadline */}
+            <div>
+              <label className="cl-label">Deadline</label>
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                style={{ ...inputStyle, colorScheme: "dark" } as React.CSSProperties}
+              />
+            </div>
 
-          {/* Freelancer Emails */}
-          <div>
-            <label className="block text-sm text-text-secondary mb-1.5">
-              Assign Freelancers <span className="text-text-tertiary">(comma-separated emails)</span>
-            </label>
-            <input
-              type="text"
-              value={freelancerEmails}
-              onChange={(e) => setFreelancerEmails(e.target.value)}
-              placeholder="dev@email.com, designer@email.com"
-              className="w-full px-3 py-2.5 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-hover transition-colors"
-            />
-            <p className="text-xs text-text-tertiary mt-1">
-              Freelancers must have an account to be added.
-            </p>
-          </div>
+            {/* Freelancer Emails */}
+            <div>
+              <label className="cl-label">
+                Invite Freelancers{" "}
+                <span style={{ color: "var(--m1)", fontWeight: 400 }}>(comma-separated emails)</span>
+              </label>
+              <input
+                type="text"
+                value={freelancerEmails}
+                onChange={(e) => setFreelancerEmails(e.target.value)}
+                placeholder="dev@email.com, designer@email.com"
+                style={inputStyle}
+              />
+              <div style={{ fontSize: "0.71rem", color: "var(--m1)", marginTop: "0.3rem" }}>
+                Freelancers must have an existing CreaoLink account.
+              </div>
+            </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-5 py-2.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Creating...
-                </span>
-              ) : (
-                "Create Project"
-              )}
-            </button>
-          </div>
-        </form>
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "0.5rem", paddingTop: "0.35rem" }}>
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-g btn-lg"
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-p btn-lg"
+                style={{ flex: 1 }}
+              >
+                {loading ? (
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{
+                      width: 14, height: 14, borderRadius: "50%",
+                      border: "2px solid rgba(255,255,255,0.3)",
+                      borderTopColor: "#fff",
+                      animation: "spin 0.8s linear infinite",
+                      display: "inline-block",
+                    }} />
+                    Creating…
+                  </span>
+                ) : "Create project →"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

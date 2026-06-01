@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 import { v4 as uuid } from "uuid";
+import { readThroughCache, feedbackKey, FEEDBACK_CACHE_TTL } from "@/lib/cache";
+import { invalidateFeedback } from "@/lib/invalidation";
 
 // ── POST /api/projects/:id/feedback — Add feedback ──
 export async function POST(
@@ -60,6 +62,9 @@ export async function POST(
 
     await db.query("UPDATE projects SET updated_at = NOW() WHERE id = $1", [id]);
 
+    // Invalidate feedback cache + project list (open_feedback count changes)
+    await invalidateFeedback(id).catch(() => {});
+
     const { rows: fbRows } = await db.query("SELECT * FROM feedback WHERE id = $1", [feedbackId]);
     return NextResponse.json({ feedback: fbRows[0] }, { status: 201 });
   } catch (err) {
@@ -89,17 +94,25 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { rows: feedbackList } = await db.query(
-      `SELECT f.*, u.name as creator_name, v.version_name
-       FROM feedback f
-       INNER JOIN users u ON u.id = f.created_by
-       INNER JOIN versions v ON v.id = f.version_id
-       WHERE f.project_id = $1
-       ORDER BY f.created_at DESC`,
-      [id]
-    );
+    const feedback = await readThroughCache({
+      key: feedbackKey(id),
+      ttlSeconds: FEEDBACK_CACHE_TTL,
+      source: "api/projects/[id]/feedback",
+      compute: async () => {
+        const { rows } = await db.query(
+          `SELECT f.*, u.name as creator_name, v.version_name
+           FROM feedback f
+           INNER JOIN users u ON u.id = f.created_by
+           INNER JOIN versions v ON v.id = f.version_id
+           WHERE f.project_id = $1
+           ORDER BY f.created_at DESC`,
+          [id]
+        );
+        return rows;
+      },
+    });
 
-    return NextResponse.json({ feedback: feedbackList });
+    return NextResponse.json({ feedback });
   } catch (err) {
     console.error("List feedback error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

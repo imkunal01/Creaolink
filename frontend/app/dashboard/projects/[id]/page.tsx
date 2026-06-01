@@ -19,6 +19,31 @@ import ProjectChatRoom from "./components/ProjectChatRoom";
 type ProjectData = Awaited<ReturnType<typeof apiGetProject>>;
 type FeedbackItem = Awaited<ReturnType<typeof apiGetFeedback>>["feedback"][number];
 
+type Tab = "overview" | "chat" | "feedback";
+
+function statusTag(status: string) {
+  if (status === "active") return <span className="tag tag-a">● Active</span>;
+  if (status === "pending") return <span className="tag tag-r">⏳ Review</span>;
+  if (status === "approved") return <span className="tag tag-d">✓ Approved</span>;
+  return <span className="tag tag-n">{status}</span>;
+}
+
+const PRIORITY_COLORS: Record<string, string> = {
+  High: "rgba(239,68,68,.12)",
+  Medium: "rgba(251,191,36,.12)",
+  Low: "rgba(74,222,128,.12)",
+};
+const PRIORITY_TEXT: Record<string, string> = {
+  High: "#f87171",
+  Medium: "#fbbf24",
+  Low: "#4ade80",
+};
+const PRIORITY_BORDER: Record<string, string> = {
+  High: "rgba(239,68,68,.25)",
+  Medium: "rgba(251,191,36,.25)",
+  Low: "rgba(74,222,128,.25)",
+};
+
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -30,18 +55,11 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<"overview" | "chat" | "feedback">("overview");
-
-  // Status dropdown
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showStatusMenu, setShowStatusMenu] = useState(false);
-
-  // Version creation
   const [showVersionForm, setShowVersionForm] = useState(false);
   const [versionNotes, setVersionNotes] = useState("");
   const [creatingVersion, setCreatingVersion] = useState(false);
-
-  // Feedback form
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [fbType, setFbType] = useState("Revision");
   const [fbPriority, setFbPriority] = useState("Medium");
@@ -49,7 +67,6 @@ export default function ProjectDetailPage() {
   const [fbDescription, setFbDescription] = useState("");
   const [addingFeedback, setAddingFeedback] = useState(false);
 
-  // We are removing the strict restriction so everyone can see the button for now
   const isClient = user?.role === "client" || user?.role === "admin";
 
   const fetchProject = useCallback(async () => {
@@ -78,18 +95,14 @@ export default function ProjectDetailPage() {
     fetchFeedback();
   }, [fetchProject, fetchFeedback]);
 
-  // ── Status Update ──
   const handleStatusChange = async (status: string) => {
     setShowStatusMenu(false);
     try {
       await apiUpdateStatus(projectId, status as ProjectStatus);
       fetchProject();
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   };
 
-  // ── Version Create ──
   const handleCreateVersion = async () => {
     setCreatingVersion(true);
     try {
@@ -97,488 +110,621 @@ export default function ProjectDetailPage() {
       setVersionNotes("");
       setShowVersionForm(false);
       fetchProject();
-    } catch {
-      // ignore
-    } finally {
-      setCreatingVersion(false);
-    }
+    } catch { /* ignore */ }
+    finally { setCreatingVersion(false); }
   };
 
-  // ── Feedback Add ──
   const handleAddFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fbDescription.trim()) return;
     setAddingFeedback(true);
     try {
       await apiAddFeedback(projectId, {
-        type: fbType,
-        priority: fbPriority,
-        timestamp: fbTimestamp,
-        description: fbDescription.trim(),
+        type: fbType, priority: fbPriority,
+        timestamp: fbTimestamp, description: fbDescription.trim(),
       });
-      setFbDescription("");
-      setFbTimestamp("");
-      setShowFeedbackForm(false);
+      setFbDescription(""); setFbTimestamp(""); setShowFeedbackForm(false);
       fetchFeedback();
-    } catch {
-      // ignore
-    } finally {
-      setAddingFeedback(false);
-    }
+    } catch { /* ignore */ }
+    finally { setAddingFeedback(false); }
   };
 
-  // ── Feedback Resolve ──
   const handleResolve = async (feedbackId: string) => {
     try {
       await apiResolveFeedback(feedbackId);
       fetchFeedback();
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-5 h-5 border-2 border-text-tertiary border-t-accent rounded-full animate-spin" />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+        <div style={{
+          width: 20, height: 20, borderRadius: "50%",
+          border: "2px solid var(--b2)", borderTopColor: "var(--red)",
+          animation: "spin 0.8s linear infinite",
+        }} />
       </div>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="text-center py-20">
-        <p className="text-sm text-error mb-4">{error || "Project not found"}</p>
-        <button
-          onClick={() => router.push("/dashboard/projects")}
-          className="text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-        >
+      <div className="mc" style={{ textAlign: "center", paddingTop: "4rem" }}>
+        <p style={{ color: "var(--red)", fontSize: "0.9rem", marginBottom: "1rem" }}>
+          {error || "Project not found"}
+        </p>
+        <button className="btn btn-g" onClick={() => router.push("/dashboard/projects")}>
           ← Back to Projects
         </button>
       </div>
     );
   }
 
-  const statusColors: Record<string, string> = {
-    active: "bg-success/15 text-success",
-    completed: "bg-text-tertiary/15 text-text-secondary",
-    approved: "bg-blue-500/15 text-blue-400",
-    pending: "bg-amber-500/15 text-amber-400",
-  };
-
-  const priorityColors: Record<string, string> = {
-    High: "text-error",
-    Medium: "text-amber-400",
-    Low: "text-text-secondary",
-  };
+  const openFeedback = feedback.filter((f) => f.status === "open");
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="space-y-6">
-      {/* Back link */}
-      <button
-        onClick={() => router.push("/dashboard/projects")}
-        className="text-sm text-text-tertiary hover:text-text-primary transition-colors cursor-pointer flex items-center gap-1"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-        Back to Projects
-      </button>
-
-      {/* ━━━ Top Section: Title + Status + Sync Code ━━━ */}
-      <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-semibold text-text-primary truncate">{project.title}</h1>
-            <p className="text-sm text-text-tertiary mt-1">
-              Created {new Date(project.created_at).toLocaleDateString()}
-            </p>
-          </div>
-
-          {/* Status badge / dropdown */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push(`/dashboard/projects/${projectId}/link`)}
-              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-[#00ffff] to-[#00bfff] text-black px-4 py-2 rounded-xl text-sm font-bold shadow-[0_0_15px_rgba(0,255,255,0.4)] hover:shadow-[0_0_25px_rgba(0,255,255,0.6)] transition-all cursor-pointer tracking-wide"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-              </svg>
-              CONNECT PREMIERE PRO
-            </button>
-
-            <div className="relative">
-              {isClient ? (
-                <button
-                  onClick={() => setShowStatusMenu((v) => !v)}
-                  className={`text-xs font-medium px-3 py-1.5 rounded-full cursor-pointer ${statusColors[project.status] || statusColors.active}`}
-                >
-                  {project.status.charAt(0).toUpperCase() + project.status.slice(1)} ▾
-                </button>
-              ) : (
-                <span className={`text-xs font-medium px-3 py-1.5 rounded-full ${statusColors[project.status] || statusColors.active}`}>
-                  {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-                </span>
-              )}
-              {showStatusMenu && (
-                <div className="absolute right-0 top-full mt-1 bg-bg-tertiary border border-border rounded-lg shadow-xl z-10 min-w-[140px]">
-                  {["active", "pending", "completed", "approved"].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => handleStatusChange(s)}
-                      className="w-full text-left px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-border/30 transition-colors first:rounded-t-lg last:rounded-b-lg cursor-pointer"
-                    >
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Project header bar */}
+      <div style={{
+        padding: "0.85rem 1.75rem",
+        borderBottom: "1px solid var(--b2)",
+        background: "var(--s1)",
+        display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0,
+      }}>
+        {/* Breadcrumb */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.77rem", color: "var(--m1)" }}>
+          <button
+            onClick={() => router.push("/dashboard/projects")}
+            style={{ color: "var(--m2)", background: "none", border: "none", cursor: "pointer", fontSize: "0.77rem" }}
+          >
+            Projects
+          </button>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+          <span style={{ color: "var(--white)" }}>{project.title}</span>
         </div>
 
-        {/* Mobile Connect Button */}
+        <div style={{ flex: 1 }} />
+
+        {/* Actions */}
         <button
+          className="btn btn-g btn-sm"
           onClick={() => router.push(`/dashboard/projects/${projectId}/link`)}
-          className="mt-4 sm:hidden w-full flex justify-center items-center gap-2 bg-gradient-to-r from-[#00ffff] to-[#00bfff] text-black px-4 py-2.5 rounded-xl text-sm font-bold shadow-[0_0_15px_rgba(0,255,255,0.4)] active:scale-95 transition-all cursor-pointer tracking-wide"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
           </svg>
-          CONNECT PREMIERE PRO
+          Premiere Pro
         </button>
+
+        {isClient && (
+          <button
+            className="btn btn-g btn-sm"
+            onClick={() => setShowVersionForm(true)}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+            </svg>
+            Invite
+          </button>
+        )}
+
+        {statusTag(project.status)}
+
+        {isClient && (
+          <button className="btn btn-p btn-sm" onClick={() => setShowVersionForm(true)}>
+            + New version
+          </button>
+        )}
       </div>
 
-      {/* ━━━ Tabs ━━━ */}
-      <div className="flex gap-1 border-b border-border">
+      {/* Project title + meta */}
+      <div style={{
+        padding: "0.75rem 1.75rem 0",
+        background: "var(--s1)",
+        borderBottom: "1px solid var(--b2)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.35rem" }}>
+          <div style={{ fontSize: "1.15rem", fontWeight: 600, color: "var(--white)" }}>{project.title}</div>
+        </div>
+        <div style={{ fontSize: "0.72rem", color: "var(--m1)", display: "flex", alignItems: "center", gap: "0.5rem", paddingBottom: "0.5rem" }}>
+          <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
+          <span>·</span>
+          <span>{project.members?.length || 0} members</span>
+          {project.currentVersion && (
+            <>
+              <span>·</span>
+              <span>Current: <b style={{ color: "var(--red)" }}>{project.currentVersion.version_name}</b></span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="proj-tab-bar">
         {(["overview", "chat", "feedback"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer border-b-2 -mb-px ${
-              activeTab === tab
-                ? "text-text-primary border-accent"
-                : "text-text-tertiary border-transparent hover:text-text-secondary"
-            }`}
+            className={`proj-tab${activeTab === tab ? " active" : ""}`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            {tab === "feedback" && feedback.length > 0 && (
-              <span className="ml-2 text-xs text-text-tertiary">({feedback.filter((f) => f.status === "open").length})</span>
+            {tab === "feedback" && openFeedback.length > 0 && (
+              <span className="proj-tab-count">{openFeedback.length}</span>
             )}
           </button>
         ))}
       </div>
 
-      {/* ━━━ Overview Tab ━━━ */}
-      {activeTab === "overview" && (
-        <div className="space-y-6">
+      {/* Tab content */}
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 280px", flex: 1, overflow: "hidden" }}>
 
-          {/* Timeline View */}
-          <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
-            <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-4">Premiere Pro Sequence</h3>
-            {project.currentVersion?.timeline_data ? (
-              <TimelineViewer data={project.currentVersion.timeline_data as Parameters<typeof TimelineViewer>[0]["data"]} />
-            ) : (
-               <div className="w-full h-32 bg-[#1e1e1e] border border-[#333] rounded-lg flex items-center justify-center text-xs text-text-tertiary">
-                 No timeline data synced yet. Use the plugin to sync.
-               </div>
-            )}
-          </div>
-
-          {/* Description + Deadline */}
-          <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6 space-y-4">
+        {/* ── OVERVIEW TAB ── */}
+        {activeTab === "overview" && (
+          <div style={{ padding: "1.5rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            {/* Premiere Pro */}
             <div>
-              <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">Description</h3>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                {project.description || "No description provided."}
-              </p>
+              <div className="sec-title">Premiere Pro Sequence</div>
+              {project.currentVersion?.timeline_data ? (
+                <TimelineViewer data={project.currentVersion.timeline_data as Parameters<typeof TimelineViewer>[0]["data"]} />
+              ) : (
+                <div style={{
+                  background: "var(--s3)", border: "1px dashed var(--b2)",
+                  borderRadius: "var(--r)", padding: "2rem",
+                  textAlign: "center", color: "var(--m1)", fontSize: "0.79rem",
+                }}>
+                  No timeline data synced yet.
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <button
+                      className="btn btn-g btn-sm"
+                      onClick={() => router.push(`/dashboard/projects/${projectId}/link`)}
+                    >
+                      Connect Premiere Pro plugin →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            {project.deadline && (
+
+            {/* Description + Deadline */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem" }}>
               <div>
-                <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-2">Deadline</h3>
-                <p className="text-sm text-text-secondary">
-                  {new Date(project.deadline).toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Current Version + Version History */}
-          <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-              <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider">Versions</h3>
-              <button
-                onClick={() => setShowVersionForm((v) => !v)}
-                className="text-xs text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-              >
-                + New Version
-              </button>
-            </div>
-
-            {/* New version form */}
-            {showVersionForm && (
-              <div className="mb-4 p-4 bg-bg-tertiary border border-border rounded-lg space-y-3">
-                <textarea
-                  value={versionNotes}
-                  onChange={(e) => setVersionNotes(e.target.value)}
-                  placeholder="Version notes (optional)"
-                  rows={2}
-                  className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-hover resize-none"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleCreateVersion}
-                    disabled={creatingVersion}
-                    className="px-4 py-2 bg-accent text-bg rounded-lg text-xs font-medium hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {creatingVersion ? "Creating..." : "Create Version"}
-                  </button>
-                  <button
-                    onClick={() => setShowVersionForm(false)}
-                    className="px-4 py-2 text-xs text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
+                <div className="sec-title">Description</div>
+                <div style={{
+                  background: "var(--s3)", border: "1px solid var(--b1)",
+                  borderRadius: "var(--r)", padding: "0.8rem 1rem",
+                  fontSize: "0.8rem", color: "var(--m2)", lineHeight: 1.55,
+                }}>
+                  {project.description || "No description provided."}
                 </div>
               </div>
-            )}
-
-            {/* Current */}
-            {project.currentVersion && (
-              <div className="flex items-center gap-3 mb-3 px-3 py-2.5 bg-bg-tertiary border border-border rounded-lg">
-                <div className="w-2 h-2 rounded-full bg-success" />
-                <span className="text-sm font-medium text-text-primary">
-                  {project.currentVersion.version_name}
-                </span>
-                <span className="text-xs text-text-tertiary">— Current</span>
-                {project.currentVersion.notes && (
-                  <span className="text-xs text-text-tertiary ml-auto truncate max-w-[120px] sm:max-w-[200px] hidden sm:inline">
-                    {project.currentVersion.notes}
-                  </span>
-                )}
+              <div>
+                <div className="sec-title">Deadline</div>
+                <div style={{
+                  background: "var(--s3)", border: "1px solid var(--b1)",
+                  borderRadius: "var(--r)", padding: "0.8rem 1rem",
+                  fontSize: "0.8rem", color: "var(--m2)",
+                }}>
+                  {project.deadline ? (
+                    <>
+                      <div style={{ fontSize: "0.7rem", color: "var(--m1)", marginBottom: "0.25rem" }}>Target date</div>
+                      <div style={{ fontWeight: 500, color: "var(--white)" }}>
+                        {new Date(project.deadline).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                      </div>
+                      {new Date(project.deadline) < new Date() && (
+                        <div style={{ fontSize: "0.7rem", color: "var(--red)", marginTop: "0.25rem" }}>⚠ Deadline has passed</div>
+                      )}
+                    </>
+                  ) : (
+                    <span style={{ color: "var(--m1)" }}>No deadline set</span>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
 
-            {/* History */}
-            {project.versions.length > 1 && (
-              <div className="space-y-1.5">
+            {/* Versions */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+                <div className="sec-title" style={{ margin: 0 }}>Versions</div>
+                <button className="btn btn-g btn-sm" onClick={() => setShowVersionForm((v) => !v)}>
+                  + New version
+                </button>
+              </div>
+
+              {/* New version form */}
+              {showVersionForm && (
+                <div style={{
+                  marginBottom: "0.85rem",
+                  padding: "0.85rem 1rem",
+                  background: "var(--s3)", border: "1px solid var(--b2)",
+                  borderRadius: "var(--r)",
+                  display: "flex", flexDirection: "column", gap: "0.6rem",
+                }}>
+                  <textarea
+                    value={versionNotes}
+                    onChange={(e) => setVersionNotes(e.target.value)}
+                    placeholder="Version notes (optional)"
+                    rows={2}
+                    style={{
+                      width: "100%", padding: "0.5rem 0.75rem",
+                      background: "var(--s2)", border: "1px solid var(--b2)",
+                      borderRadius: "var(--r)", fontSize: "0.81rem",
+                      color: "var(--white)", outline: "none", resize: "none",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button className="btn btn-p btn-sm" onClick={handleCreateVersion} disabled={creatingVersion}>
+                      {creatingVersion ? "Creating…" : "Create Version"}
+                    </button>
+                    <button className="btn btn-g btn-sm" onClick={() => setShowVersionForm(false)}>Cancel</button>
+                  </div>
+                </div>
+              )}
+
+              {/* Version timeline */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                {project.currentVersion && (
+                  <div className="vt-item">
+                    <div className="vt-line" />
+                    <div className="vt-dot current">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="3">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--white)", marginBottom: "0.15rem" }}>
+                        {project.currentVersion.version_name} — Current{" "}
+                        <span style={{ color: "var(--m1)", fontWeight: 400 }}>
+                          · {new Date(project.currentVersion.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {project.currentVersion.notes && (
+                        <div className="vt-note">{project.currentVersion.notes}</div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {project.versions
                   .filter((v) => v.id !== project.currentVersion?.id)
                   .reverse()
                   .map((v) => (
-                    <div key={v.id} className="flex items-center gap-3 px-3 py-2 text-text-tertiary">
-                      <div className="w-1.5 h-1.5 rounded-full bg-text-tertiary/50" />
-                      <span className="text-sm">{v.version_name}</span>
-                      {v.notes && (
-                        <span className="text-xs truncate max-w-[200px]">{v.notes}</span>
-                      )}
-                      <span className="text-xs ml-auto">
-                        {new Date(v.created_at).toLocaleDateString()}
-                      </span>
+                    <div className="vt-item" key={v.id}>
+                      <div className="vt-dot" />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--white)", marginBottom: "0.15rem" }}>
+                          {v.version_name}{" "}
+                          <span style={{ color: "var(--m1)", fontWeight: 400 }}>
+                            · {new Date(v.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {v.notes && <div className="vt-note">{v.notes}</div>}
+                      </div>
                     </div>
                   ))}
+                {project.versions.length === 0 && (
+                  <div style={{ fontSize: "0.8rem", color: "var(--m1)" }}>No versions yet.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CHAT TAB ── */}
+        {activeTab === "chat" && (
+          <div style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            <ProjectChatRoom projectId={projectId} />
+          </div>
+        )}
+
+        {/* ── FEEDBACK TAB ── */}
+        {activeTab === "feedback" && (
+          <div style={{ padding: "1.25rem 1.5rem", overflowY: "auto" }}>
+            {/* Filter + add */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.1rem", flexWrap: "wrap" }}>
+              <button className="filter-chip active">All <span style={{ fontSize: "0.62rem", background: "var(--s4)", borderRadius: 3, padding: "0 5px" }}>{feedback.length}</span></button>
+              <button className="filter-chip">Open <span style={{ fontSize: "0.62rem", background: "var(--s4)", borderRadius: 3, padding: "0 5px" }}>{openFeedback.length}</span></button>
+              <button className="filter-chip">Resolved <span style={{ fontSize: "0.62rem", background: "var(--s4)", borderRadius: 3, padding: "0 5px" }}>{feedback.filter(f => f.status !== "open").length}</span></button>
+              <div style={{ marginLeft: "auto" }}>
+                {isClient && (
+                  <button className="btn btn-p btn-sm" onClick={() => setShowFeedbackForm((v) => !v)}>
+                    + Add feedback
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Feedback form */}
+            {showFeedbackForm && (
+              <form onSubmit={handleAddFeedback} style={{
+                background: "var(--s1)", border: "1px solid var(--b2)",
+                borderRadius: "var(--rl)", padding: "1rem 1.1rem",
+                marginBottom: "0.85rem", display: "flex", flexDirection: "column", gap: "0.75rem",
+              }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
+                  <div>
+                    <label className="sec-title" style={{ display: "block" }}>Type</label>
+                    <select
+                      value={fbType}
+                      onChange={(e) => setFbType(e.target.value)}
+                      style={{
+                        width: "100%", height: 36, padding: "0 10px",
+                        background: "var(--s3)", border: "1px solid var(--b2)",
+                        borderRadius: "var(--r)", fontSize: "0.8rem", color: "var(--white)",
+                        outline: "none", colorScheme: "dark",
+                      }}
+                    >
+                      <option value="Revision">Revision</option>
+                      <option value="Bug">Bug</option>
+                      <option value="Enhancement">Enhancement</option>
+                      <option value="General">General</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="sec-title" style={{ display: "block" }}>Priority</label>
+                    <select
+                      value={fbPriority}
+                      onChange={(e) => setFbPriority(e.target.value)}
+                      style={{
+                        width: "100%", height: 36, padding: "0 10px",
+                        background: "var(--s3)", border: "1px solid var(--b2)",
+                        borderRadius: "var(--r)", fontSize: "0.8rem", color: "var(--white)",
+                        outline: "none", colorScheme: "dark",
+                      }}
+                    >
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="sec-title" style={{ display: "block" }}>Timestamp</label>
+                  <input
+                    type="text"
+                    value={fbTimestamp}
+                    onChange={(e) => setFbTimestamp(e.target.value)}
+                    placeholder="e.g. 00:45"
+                    style={{
+                      width: "100%", height: 36, padding: "0 10px",
+                      background: "var(--s3)", border: "1px solid var(--b2)",
+                      borderRadius: "var(--r)", fontSize: "0.8rem", color: "var(--white)",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="sec-title" style={{ display: "block" }}>Description</label>
+                  <textarea
+                    value={fbDescription}
+                    onChange={(e) => setFbDescription(e.target.value)}
+                    placeholder="Describe the feedback…"
+                    rows={3}
+                    style={{
+                      width: "100%", padding: "0.5rem 0.75rem",
+                      background: "var(--s3)", border: "1px solid var(--b2)",
+                      borderRadius: "var(--r)", fontSize: "0.8rem",
+                      color: "var(--white)", outline: "none", resize: "none",
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button type="submit" className="btn btn-p btn-sm" disabled={addingFeedback}>
+                    {addingFeedback ? "Submitting…" : "Submit feedback"}
+                  </button>
+                  <button type="button" className="btn btn-g btn-sm" onClick={() => setShowFeedbackForm(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Feedback cards */}
+            {feedback.length === 0 ? (
+              <div style={{
+                border: "1px dashed var(--b2)", borderRadius: "var(--rl)",
+                padding: "2rem", textAlign: "center", color: "var(--m1)", fontSize: "0.8rem",
+              }}>
+                No feedback yet. Click <b style={{ color: "var(--white)" }}>+ Add feedback</b> to leave timestamped notes.
+              </div>
+            ) : (
+              feedback.map((item) => (
+                <div key={item.id} className="fb-full-card" style={{ opacity: item.status !== "open" ? 0.65 : 1 }}>
+                  <div className="fb-fc-header">
+                    <div style={{
+                      width: 28, height: 28, borderRadius: "50%",
+                      background: "var(--red)", display: "flex", alignItems: "center",
+                      justifyContent: "center", fontSize: "0.58rem", fontWeight: 700, color: "#fff",
+                    }}>
+                      {item.creator_name?.slice(0, 2).toUpperCase() || "??"}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--white)" }}>{item.creator_name}</div>
+                      <div style={{ fontSize: "0.67rem", color: "var(--m1)" }}>
+                        {item.status === "open" ? "Open" : "Resolved"}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: "0.67rem", color: "var(--m1)", marginLeft: "auto" }}>
+                      {new Date(item.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: "0.85rem 1.1rem" }}>
+                    <div style={{ fontSize: "0.8rem", color: "var(--m2)", lineHeight: 1.6, marginBottom: "0.65rem" }}>
+                      {item.description}
+                    </div>
+
+                    {/* Tags */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.65rem" }}>
+                      <span style={{
+                        background: "rgba(99,102,241,.12)", color: "#a5b4fc",
+                        borderColor: "rgba(99,102,241,.25)",
+                        padding: "2px 8px", borderRadius: 5, fontSize: "0.67rem", fontWeight: 600,
+                        border: "1px solid",
+                      }}>{item.type}</span>
+                      <span style={{
+                        background: PRIORITY_COLORS[item.priority] || "var(--s3)",
+                        color: PRIORITY_TEXT[item.priority] || "var(--m2)",
+                        borderColor: PRIORITY_BORDER[item.priority] || "var(--b2)",
+                        padding: "2px 8px", borderRadius: 5, fontSize: "0.67rem", fontWeight: 600,
+                        border: "1px solid",
+                      }}>{item.priority} priority</span>
+                      {item.timestamp && (
+                        <span className="tag tag-n">@ {item.timestamp}</span>
+                      )}
+                      {item.version_name && (
+                        <span className="tag tag-n">{item.version_name}</span>
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <button className="btn btn-g btn-sm">Reply</button>
+                      {item.status === "open" && (
+                        <button
+                          className="btn btn-sm"
+                          style={{
+                            background: "rgba(74,222,128,.15)", color: "#4ade80",
+                            borderColor: "rgba(74,222,128,.25)",
+                          }}
+                          onClick={() => handleResolve(item.id)}
+                        >
+                          ✓ Mark resolved
+                        </button>
+                      )}
+                      <button className="btn btn-g btn-sm" style={{ marginLeft: "auto" }}>⋯ More</button>
+                    </div>
+                  </div>
+
+                  <div className="fb-open-bar">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    Status:{" "}
+                    <b style={{ color: item.status === "open" ? "var(--red)" : "#4ade80" }}>
+                      {item.status === "open" ? "Open" : "Resolved"}
+                    </b>
+                    {" "}· Add a reply to this feedback thread
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Right metadata panel */}
+        <div style={{
+          borderLeft: "1px solid var(--b2)",
+          background: "var(--s1)", overflowY: "auto",
+          padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem",
+        }}>
+          {/* Project info */}
+          <div>
+            <div className="sec-title">Project info</div>
+            <div className="info-pair">
+              <span className="info-k">Status</span>
+              <span className="info-v">{statusTag(project.status)}</span>
+            </div>
+            <div className="info-pair">
+              <span className="info-k">Created</span>
+              <span className="info-v">{new Date(project.created_at).toLocaleDateString()}</span>
+            </div>
+            <div className="info-pair">
+              <span className="info-k">Visibility</span>
+              <span className="info-v">Public</span>
+            </div>
+            {project.currentVersion && (
+              <div className="info-pair">
+                <span className="info-k">Version</span>
+                <span className="info-v" style={{ color: "var(--red)" }}>{project.currentVersion.version_name}</span>
+              </div>
+            )}
+            {isClient && (
+              <div style={{ marginTop: "0.5rem", position: "relative" }}>
+                <button
+                  className="btn btn-g btn-sm"
+                  style={{ width: "100%" }}
+                  onClick={() => setShowStatusMenu((v) => !v)}
+                >
+                  Change status ▾
+                </button>
+                {showStatusMenu && (
+                  <div style={{
+                    position: "absolute", left: 0, right: 0, top: "calc(100% + 4px)",
+                    background: "var(--s3)", border: "1px solid var(--b2)",
+                    borderRadius: "var(--r)", zIndex: 10, overflow: "hidden",
+                  }}>
+                    {["active", "pending", "completed", "approved"].map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => handleStatusChange(s)}
+                        style={{
+                          width: "100%", textAlign: "left", padding: "7px 11px",
+                          background: "none", border: "none", cursor: "pointer",
+                          fontSize: "0.78rem", color: "var(--m2)", transition: "all 0.1s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--white)"; e.currentTarget.style.background = "var(--s4)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--m2)"; e.currentTarget.style.background = "none"; }}
+                      >
+                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Team Members */}
-          <div className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6">
-            <h3 className="text-xs font-medium text-text-tertiary uppercase tracking-wider mb-4">Team Members</h3>
-            <div className="space-y-3">
-              {project.members.map((member) => (
-                <div key={member.id} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-bg-tertiary border border-border flex items-center justify-center text-xs font-medium text-text-secondary">
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-text-primary truncate">{member.name}</p>
-                    <p className="text-xs text-text-tertiary">{member.email}</p>
-                  </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    member.role === "client"
-                      ? "bg-blue-500/15 text-blue-400"
-                      : member.role === "admin"
-                      ? "bg-purple-500/15 text-purple-400"
-                      : "bg-success/15 text-success"
-                  }`}>
-                    {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
-                  </span>
-                </div>
-              ))}
+          {/* Team */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.6rem" }}>
+              <div className="sec-title" style={{ margin: 0 }}>Team</div>
+              <button className="btn btn-g btn-sm">+ Add</button>
             </div>
+            {project.members.map((member) => (
+              <div key={member.id} style={{
+                display: "flex", alignItems: "center", gap: "0.6rem",
+                padding: "0.5rem 0", borderBottom: "1px solid var(--b1)",
+              }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: "50%",
+                  background: member.role === "client" ? "var(--red)" : "#7dd3fc",
+                  color: member.role === "client" ? "#fff" : "#0d0f0e",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "0.54rem", fontWeight: 700, flexShrink: 0,
+                }}>
+                  {member.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)" }}>{member.name}</div>
+                  <div style={{ fontSize: "0.68rem", color: "var(--m1)" }}>{member.email}</div>
+                </div>
+                <span className="tag tag-n" style={{ fontSize: "0.6rem", textTransform: "uppercase" }}>
+                  {member.role}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Settings panel (preserved) */}
+          <ProjectSettingsPanel
+            projectId={projectId}
+            project={project}
+            user={user}
+            onProjectUpdated={fetchProject}
+          />
+
+          {/* CTAs */}
+          <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+            <button className="btn btn-p btn-full" onClick={() => setShowVersionForm(true)}>
+              + Submit new version
+            </button>
+            <button className="btn btn-g btn-full">Request approval</button>
           </div>
         </div>
-      )}
-
-      {/* ━━━ Feedback Tab ━━━ */}
-      {activeTab === "chat" && (
-        <ProjectChatRoom projectId={projectId} />
-      )}
-
-      {activeTab === "feedback" && (
-        <div className="space-y-4">
-          {/* Add feedback button (client only) */}
-          {isClient && (
-            <div className="flex justify-end">
-              <button
-                onClick={() => setShowFeedbackForm((v) => !v)}
-                className="px-4 py-2 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors cursor-pointer"
-              >
-                + Add Feedback
-              </button>
-            </div>
-          )}
-
-          {/* Feedback form */}
-          {showFeedbackForm && (
-            <form onSubmit={handleAddFeedback} className="bg-bg-secondary border border-border rounded-xl p-4 sm:p-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-text-tertiary mb-1.5">Type</label>
-                  <select
-                    value={fbType}
-                    onChange={(e) => setFbType(e.target.value)}
-                    className="w-full px-3 py-2 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-border-hover [color-scheme:dark]"
-                  >
-                    <option value="Revision">Revision</option>
-                    <option value="Bug">Bug</option>
-                    <option value="Enhancement">Enhancement</option>
-                    <option value="General">General</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-text-tertiary mb-1.5">Priority</label>
-                  <select
-                    value={fbPriority}
-                    onChange={(e) => setFbPriority(e.target.value)}
-                    className="w-full px-3 py-2 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary focus:outline-none focus:border-border-hover [color-scheme:dark]"
-                  >
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-text-tertiary mb-1.5">Timestamp</label>
-                <input
-                  type="text"
-                  value={fbTimestamp}
-                  onChange={(e) => setFbTimestamp(e.target.value)}
-                  placeholder="e.g. 00:45"
-                  className="w-full px-3 py-2 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-hover"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-text-tertiary mb-1.5">Description</label>
-                <textarea
-                  value={fbDescription}
-                  onChange={(e) => setFbDescription(e.target.value)}
-                  placeholder="Describe the feedback..."
-                  rows={3}
-                  className="w-full px-3 py-2 bg-bg-tertiary border border-border rounded-lg text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-hover resize-none"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={addingFeedback}
-                  className="px-4 py-2 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {addingFeedback ? "Submitting..." : "Submit Feedback"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowFeedbackForm(false)}
-                  className="px-4 py-2 text-sm text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Feedback List */}
-          {feedback.length === 0 ? (
-            <div className="bg-bg-secondary border border-border rounded-xl py-16 text-center">
-              <p className="text-sm text-text-tertiary">No feedback yet.</p>
-              {isClient && (
-                <p className="text-xs text-text-tertiary mt-1">Add feedback to guide the freelancer.</p>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {feedback.map((item) => (
-                <div
-                  key={item.id}
-                  className={`bg-bg-secondary border rounded-xl p-4 sm:p-5 ${
-                    item.status === "resolved" ? "border-border/50 opacity-70" : "border-border"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-bg-tertiary text-text-secondary">
-                        {item.type}
-                      </span>
-                      <span className={`text-xs font-medium ${priorityColors[item.priority] || "text-text-secondary"}`}>
-                        {item.priority}
-                      </span>
-                      {item.timestamp && (
-                        <span className="text-xs text-text-tertiary">@ {item.timestamp}</span>
-                      )}
-                      <span className="text-xs text-text-tertiary">
-                        {item.version_name}
-                      </span>
-                    </div>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${
-                        item.status === "open"
-                          ? "bg-amber-500/15 text-amber-400"
-                          : "bg-success/15 text-success"
-                      }`}
-                    >
-                      {item.status === "open" ? "Open" : "Resolved"}
-                    </span>
-                  </div>
-                  <p className="text-sm text-text-primary leading-relaxed mb-2">
-                    {item.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-text-tertiary">
-                      {item.creator_name} · {new Date(item.created_at).toLocaleDateString()}
-                    </span>
-                    {/* Freelancer can resolve open feedback */}
-                    {!isClient && item.status === "open" && (
-                      <button
-                        onClick={() => handleResolve(item.id)}
-                        className="text-xs text-success hover:text-success/80 transition-colors cursor-pointer"
-                      >
-                        ✓ Mark Resolved
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
       </div>
-
-      <ProjectSettingsPanel
-        projectId={projectId}
-        project={project}
-        user={user}
-        onProjectUpdated={fetchProject}
-      />
     </div>
   );
 }

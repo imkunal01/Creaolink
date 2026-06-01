@@ -6,6 +6,42 @@ import { apiGetProject } from "@/lib/api";
 
 type ProjectData = Awaited<ReturnType<typeof apiGetProject>>;
 
+const STEPS = [
+  {
+    num: 1,
+    title: "Open Premiere Pro",
+    desc: "Launch Adobe Premiere Pro and open the sequence you want to sync.",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <path d="M8 21h8M12 17v4" />
+      </svg>
+    ),
+  },
+  {
+    num: 2,
+    title: "Launch Plugin",
+    desc: "Go to Window → Extensions → CreaoLink in the Premiere Pro top menu bar.",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+      </svg>
+    ),
+  },
+  {
+    num: 3,
+    title: "Paste the Code",
+    desc: "Enter the sync code from above into the plugin field and click Connect.",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="9" y="9" width="13" height="13" rx="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+      </svg>
+    ),
+  },
+];
+
 export default function LinkPremierePage() {
   const params = useParams();
   const router = useRouter();
@@ -14,6 +50,7 @@ export default function LinkPremierePage() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const fetchProject = async () => {
     try {
@@ -30,22 +67,39 @@ export default function LinkPremierePage() {
     fetchProject();
   }, [projectId]);
 
+  const handleCopy = () => {
+    if (!project?.sync_code) return;
+    navigator.clipboard.writeText(project.sync_code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  /* ── Loading ── */
   if (loading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-r-transparent"></div>
+      <div className="mc" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 400 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: "50%",
+          border: "2.5px solid var(--b2)", borderTopColor: "var(--red)",
+          animation: "spin 0.8s linear infinite",
+        }} />
       </div>
     );
   }
 
+  /* ── Error ── */
   if (error || !project) {
     return (
-      <div className="flex flex-col items-center justify-center h-[400px] space-y-4">
-        <p className="text-error">{error || "Project not found"}</p>
-        <button
-          onClick={() => router.push(`/dashboard/projects/${projectId}`)}
-          className="text-sm text-text-tertiary hover:text-text-primary"
-        >
+      <div className="mc" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 400, gap: "1rem" }}>
+        <div style={{
+          padding: "0.65rem 1rem", background: "var(--rs)", border: "1px solid var(--rg)",
+          borderRadius: "var(--r)", fontSize: "0.82rem", color: "var(--red)",
+        }}>
+          {error || "Project not found"}
+        </div>
+        <button onClick={() => router.push(`/dashboard/projects/${projectId}`)} style={{
+          fontSize: "0.78rem", color: "var(--m1)", background: "none", border: "none", cursor: "pointer",
+        }}>
           ← Back to Project
         </button>
       </div>
@@ -53,84 +107,232 @@ export default function LinkPremierePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <div>
-        <button
-          onClick={() => router.push(`/dashboard/projects/${projectId}`)}
-          className="text-sm text-text-tertiary hover:text-text-primary transition-colors cursor-pointer flex items-center gap-1 mb-6"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Back to {project.title}
-        </button>
-        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-text-primary to-text-tertiary">
-          Connect to Premiere Pro
-        </h1>
-        <p className="text-text-secondary mt-2">
-          Link your Adobe Premiere Pro project to this platform to sync your timeline, sequences, and collaborate in real-time.
-        </p>
+    <div className="mc" style={{ maxWidth: 760, paddingBottom: "3rem" }}>
+      {/* Back link */}
+      <button
+        onClick={() => router.push(`/dashboard/projects/${projectId}`)}
+        style={{
+          display: "flex", alignItems: "center", gap: 6,
+          fontSize: "0.77rem", color: "var(--m1)", background: "none",
+          border: "none", cursor: "pointer", marginBottom: "1.5rem",
+          fontFamily: "var(--fb)", transition: "color 0.15s",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--m2)")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--m1)")}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to {project.title}
+      </button>
+
+      {/* Hero section */}
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+        {/* PR logo badge */}
+        <div style={{
+          width: 52, height: 52, borderRadius: "var(--rl)",
+          background: "linear-gradient(135deg, #9999ff22, #9999ff11)",
+          border: "1px solid #9999ff44",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          <span style={{ fontFamily: "var(--fd)", fontSize: "1.05rem", fontWeight: 700, color: "#a78bfa", fontStyle: "italic" }}>Pr</span>
+        </div>
+        <div>
+          <div style={{ fontFamily: "var(--fd)", fontSize: "1.5rem", color: "var(--white)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+            Connect to Premiere Pro
+          </div>
+          <div style={{ fontSize: "0.8rem", color: "var(--m1)", marginTop: "0.25rem", lineHeight: 1.6 }}>
+            Sync your Adobe Premiere Pro timeline with <strong style={{ color: "var(--m2)" }}>{project.title}</strong> in real time.
+          </div>
+        </div>
       </div>
 
+      {/* Code card */}
       {project.sync_code ? (
-        <div className="bg-bg-secondary border border-border flex flex-col items-center justify-center p-12 rounded-2xl shadow-xl space-y-6">
-          <div className="h-16 w-16 bg-accent/20 flex items-center justify-center rounded-2xl mb-2">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-accent">
-              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-            </svg>
-          </div>
-          
-          <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-text-primary">Your Plugin Link Code</h3>
-            <p className="text-sm text-text-tertiary max-w-md mx-auto">
-              Open the Creaolink extension in Adobe Premiere Pro and paste this code to establish a secure connection.
-            </p>
+        <div style={{
+          background: "var(--s1)",
+          border: "1px solid var(--b2)",
+          borderRadius: "var(--rxl)",
+          overflow: "hidden",
+          marginBottom: "1.5rem",
+          boxShadow: "0 0 0 1px rgba(167,139,250,0.06), 0 20px 60px rgba(0,0,0,0.3)",
+        }}>
+          {/* Card top bar */}
+          <div style={{
+            padding: "0.85rem 1.5rem",
+            borderBottom: "1px solid var(--b2)",
+            background: "linear-gradient(to right, rgba(167,139,250,0.06), transparent)",
+            display: "flex", alignItems: "center", gap: "0.6rem",
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", animation: "pulse-dot 2s ease-in-out infinite" }} />
+            <span style={{ fontSize: "0.78rem", fontWeight: 500, color: "var(--m2)" }}>Plugin sync code ready</span>
+            <span style={{ marginLeft: "auto", fontSize: "0.68rem", color: "var(--m1)" }}>Project: {project.title}</span>
           </div>
 
-          <div className="w-full max-w-sm mt-4">
-            <div className="bg-bg-tertiary border border-border p-4 rounded-xl flex items-center justify-between group">
-              <code className="text-2xl font-mono tracking-widest text-text-primary">{project.sync_code}</code>
+          <div style={{ padding: "2.5rem 1.5rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1.25rem" }}>
+            {/* Plug icon */}
+            <div style={{
+              width: 64, height: 64, borderRadius: "var(--rxl)",
+              background: "rgba(167,139,250,0.1)",
+              border: "1px solid rgba(167,139,250,0.25)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#a78bfa",
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+            </div>
+
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.35rem" }}>
+                Your Plugin Sync Code
+              </div>
+              <div style={{ fontSize: "0.79rem", color: "var(--m1)", maxWidth: 360, lineHeight: 1.6 }}>
+                Open the CreaoLink extension inside Adobe Premiere Pro and paste this code to establish a secure connection.
+              </div>
+            </div>
+
+            {/* Code display */}
+            <div style={{
+              display: "flex", alignItems: "center",
+              background: "var(--s3)", border: "1px solid var(--b3)",
+              borderRadius: "var(--rl)", padding: "0.85rem 1.25rem",
+              gap: "1.25rem", width: "100%", maxWidth: 380,
+            }}>
+              <code style={{
+                flex: 1, fontSize: "1.6rem", fontWeight: 700,
+                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                letterSpacing: "0.22em", color: "var(--white)",
+                textAlign: "center",
+              }}>
+                {project.sync_code}
+              </code>
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(project.sync_code!);
-                  alert("Code copied to clipboard!");
+                onClick={handleCopy}
+                title="Copy code"
+                style={{
+                  width: 40, height: 40, borderRadius: "var(--r)", flexShrink: 0,
+                  background: copied ? "rgba(74,222,128,0.12)" : "var(--s4)",
+                  border: `1px solid ${copied ? "rgba(74,222,128,0.3)" : "var(--b2)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: copied ? "#4ade80" : "var(--m2)",
+                  cursor: "pointer", transition: "all 0.2s",
                 }}
-                className="p-3 bg-accent/10 hover:bg-accent/20 text-accent rounded-lg transition-colors cursor-pointer"
-                title="Copy to clipboard"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
+                {copied ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                )}
               </button>
+            </div>
+
+            {copied && (
+              <div style={{
+                fontSize: "0.75rem", color: "#4ade80",
+                display: "flex", alignItems: "center", gap: 5,
+                animation: "fade-in 0.2s ease",
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Copied to clipboard!
+              </div>
+            )}
+
+            <div style={{ fontSize: "0.7rem", color: "var(--m1)", textAlign: "center", lineHeight: 1.55 }}>
+              This code is unique to this project and does not expire.<br />
+              Keep it private — it provides write access to your timeline sync.
             </div>
           </div>
         </div>
       ) : (
-        <div className="bg-bg-secondary border border-border p-8 rounded-xl text-center space-y-4">
-          <p className="text-error">No connection code available for this project.</p>
+        <div style={{
+          padding: "2rem",
+          background: "var(--rs)", border: "1px solid var(--rg)",
+          borderRadius: "var(--rxl)", textAlign: "center",
+          fontSize: "0.82rem", color: "var(--red)", marginBottom: "1.5rem",
+        }}>
+          No sync code is available for this project.
         </div>
       )}
 
-      {/* Instructions */}
-      <div className="space-y-4 pt-6">
-        <h2 className="text-lg font-semibold text-text-primary">How to connect</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="bg-bg-secondary border border-border p-5 rounded-xl space-y-3">
-            <div className="h-8 w-8 bg-text-primary text-bg-primary rounded-full flex items-center justify-center font-bold text-sm">1</div>
-            <h4 className="font-medium text-text-primary">Open Premiere Pro</h4>
-            <p className="text-sm text-text-tertiary">Launch Adobe Premiere Pro and open your sequence.</p>
+      {/* How to connect */}
+      <div>
+        <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--m1)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.85rem" }}>
+          How to connect
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: "0.85rem" }}>
+          {STEPS.map((step) => (
+            <div key={step.num} style={{
+              background: "var(--s2)",
+              border: "1px solid var(--b2)",
+              borderRadius: "var(--rl)",
+              padding: "1.1rem 1.15rem",
+              transition: "border-color 0.15s",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginBottom: "0.65rem" }}>
+                <div style={{
+                  width: 30, height: 30, borderRadius: "var(--r)",
+                  background: "rgba(167,139,250,0.1)", border: "1px solid rgba(167,139,250,0.2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#a78bfa", flexShrink: 0,
+                }}>
+                  {step.icon}
+                </div>
+                <div style={{
+                  width: 20, height: 20, borderRadius: "50%",
+                  background: "var(--s4)", border: "1px solid var(--b2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "0.65rem", fontWeight: 700, color: "var(--m1)",
+                }}>
+                  {step.num}
+                </div>
+              </div>
+              <div style={{ fontSize: "0.84rem", fontWeight: 500, color: "var(--white)", marginBottom: "0.35rem" }}>
+                {step.title}
+              </div>
+              <div style={{ fontSize: "0.74rem", color: "var(--m1)", lineHeight: 1.6 }}>
+                {step.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Plugin download hint */}
+      <div style={{
+        marginTop: "1.25rem",
+        padding: "0.85rem 1.1rem",
+        background: "var(--s2)", border: "1px solid var(--b2)",
+        borderRadius: "var(--rl)",
+        display: "flex", alignItems: "center", gap: "0.85rem",
+      }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: "var(--r)",
+          background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.18)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#a78bfa", flexShrink: 0,
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)", marginBottom: "0.15rem" }}>
+            Don&apos;t have the plugin yet?
           </div>
-          <div className="bg-bg-secondary border border-border p-5 rounded-xl space-y-3">
-            <div className="h-8 w-8 bg-text-primary text-bg-primary rounded-full flex items-center justify-center font-bold text-sm">2</div>
-            <h4 className="font-medium text-text-primary">Launch Plugin</h4>
-            <p className="text-sm text-text-tertiary">Go to Window {">"} Extensions {">"} Creaolink in the top menu.</p>
-          </div>
-          <div className="bg-bg-secondary border border-border p-5 rounded-xl space-y-3">
-            <div className="h-8 w-8 bg-text-primary text-bg-primary rounded-full flex items-center justify-center font-bold text-sm">3</div>
-            <h4 className="font-medium text-text-primary">Paste Code</h4>
-            <p className="text-sm text-text-tertiary">Paste the code above into the plugin to instantly connect.</p>
+          <div style={{ fontSize: "0.72rem", color: "var(--m1)" }}>
+            Download the CreaoLink UXP plugin for Adobe Premiere Pro from your workspace settings or the Adobe Exchange marketplace.
           </div>
         </div>
       </div>

@@ -27,6 +27,18 @@ interface ClientDashboardProps {
   user: User;
 }
 
+function Spinner() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "4rem" }}>
+      <div style={{
+        width: 22, height: 22, borderRadius: "50%",
+        border: "2px solid var(--b2)", borderTopColor: "var(--red)",
+        animation: "spin 0.8s linear infinite",
+      }} />
+    </div>
+  );
+}
+
 export default function ClientDashboard({ user }: ClientDashboardProps) {
   const router = useRouter();
   const [projects, setProjects] = useState<ApiProject[]>([]);
@@ -52,106 +64,74 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
   }, [fetchProjects]);
 
   const activeCount = projects.filter((p) => p.status === "active").length;
-  const completedCount = projects.filter(
-    (p) => p.status === "completed" || p.status === "approved"
-  ).length;
-  const pendingFeedback = projects.reduce(
-    (sum, p) => sum + (p.openFeedback || 0),
-    0
-  );
+  const completedCount = projects.filter((p) => p.status === "completed" || p.status === "approved").length;
+  const pendingFeedback = projects.reduce((sum, p) => sum + (p.openFeedback || 0), 0);
 
   const clientStats = [
     { label: "Active Projects", value: activeCount },
     { label: "Completed", value: completedCount },
-    { label: "Pending Feedback", value: pendingFeedback },
+    { label: "Pending Feedback", value: pendingFeedback, accent: pendingFeedback > 0 },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mc" style={{ paddingBottom: "2rem" }}>
+      {/* Page header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap",
+      }}>
         <div>
-          <h1 className="text-xl font-semibold text-[#f0f6fc]">Overview</h1>
-          <p className="mt-1 text-sm text-[#8b949e]">
-            Welcome back, {user.name}
-          </p>
+          <div style={{ fontFamily: "var(--fd)", fontSize: "1.3rem", color: "var(--white)", letterSpacing: "-0.02em" }}>
+            Overview
+          </div>
+          <div style={{ fontSize: "0.8rem", color: "var(--m1)", marginTop: "0.15rem" }}>
+            Welcome back, <span style={{ color: "var(--m2)", fontWeight: 500 }}>{user.name}</span>
+          </div>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="w-full rounded-md border border-[#238636] bg-[#238636] px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-[#2ea043] sm:w-auto cursor-pointer"
-        >
-          New project
+        <button onClick={() => setShowCreateModal(true)} className="btn btn-p">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: 6 }}>
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          New Project
         </button>
       </div>
 
-      {/* Stats */}
+      {/* KPI Stats */}
       <StatsCards stats={clientStats} />
 
-      {/* Projects Section */}
-      <div>
-        <div className="mb-3 flex items-center justify-between border-b border-[#30363d] pb-3">
-          <h2 className="text-sm font-medium text-[#f0f6fc]">My Projects</h2>
+      {/* Projects grid */}
+      <div style={{ marginTop: "1.5rem" }}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: "0.75rem", paddingBottom: "0.65rem", borderBottom: "1px solid var(--b2)",
+        }}>
+          <span style={{ fontSize: "0.84rem", fontWeight: 500, color: "var(--white)" }}>My Projects</span>
           {projects.length > 0 && (
-            <span className="text-xs text-[#8b949e]">
+            <span style={{ fontSize: "0.73rem", color: "var(--m1)" }}>
               {projects.length} project{projects.length !== 1 ? "s" : ""}
             </span>
           )}
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <svg
-              className="animate-spin h-6 w-6 text-text-tertiary"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
-            </svg>
-          </div>
+          <Spinner />
         ) : projects.length === 0 ? (
-          <div className="rounded-md border border-[#30363d] bg-[#161b22]">
+          <div className="cl-card">
             <EmptyState
               icon={
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-text-tertiary"
-                >
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                  <path d="M3 7V5a2 2 0 0 1 2-2h4" />
-                  <path d="M3 17v2a2 2 0 0 0 2 2h4" />
-                  <path d="M13 7l-4 5 4 5" />
-                  <line x1="9" y1="12" x2="21" y2="12" />
+                  <path d="M3 7V5a2 2 0 0 1 2-2h4" /><path d="M3 17v2a2 2 0 0 0 2 2h4" />
+                  <path d="M13 7l-4 5 4 5" /><line x1="9" y1="12" x2="21" y2="12" />
                 </svg>
               }
               title="No projects yet"
               description="Create your first project to get started. Manage deliverables, track progress, and collaborate with freelancers."
-              action={{
-                label: "Create Project",
-                onClick: () => setShowCreateModal(true),
-              }}
+              action={{ label: "Create Project", onClick: () => setShowCreateModal(true) }}
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.85rem" }}>
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}
@@ -167,16 +147,13 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
                       : project.status,
                   updatedAt: new Date(project.created_at).toLocaleDateString(),
                 }}
-                onClick={() =>
-                  router.push(`/dashboard/projects/${project.id}`)
-                }
+                onClick={() => router.push(`/dashboard/projects/${project.id}`)}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Create Project Modal */}
       <CreateProjectModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}

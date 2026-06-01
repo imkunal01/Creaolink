@@ -1,20 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { getCachedJson, setCachedJson, buildCacheKey } from "@/lib/cache";
 
-// ── GET /api/plugin/link — Link Premiere Pro Plugin to Project ──
-// Expects: ?code=LNK-XXXXXX
+/**
+ * GET /api/plugin/link?code=LNK-XXXXXX
+ *
+ * Cached in Redis for 5 minutes — sync codes don't change once assigned.
+ * The Premiere Pro plugin calls this on every session start; without caching
+ * it hits the DB on every plugin open.
+ */
+const PLUGIN_LINK_TTL = 300; // 5 minutes
+
+function pluginLinkKey(code: string) {
+  return buildCacheKey("plugin-link", code.toUpperCase());
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const code = searchParams.get("code");
+    const code = (searchParams.get("code") || "").trim().toUpperCase();
 
     if (!code) {
       return NextResponse.json({ error: "Sync code is required" }, { status: 400 });
     }
 
+    // Try Redis cache first
+    const cached = await getCachedJson<{
+      projectId: string;
+      projectName: string;
+      currentVersionId: string | null;
+    }>(pluginLinkKey(code));
+
+    if (cached) {
+      return NextResponse.json(
+        {
+          success: true,
+          ...cached,
+          message: "Plugin successfully linked to project!",
+          cached: true,
+        },
+        {
+          status: 200,
+          headers: { "Cache-Control": "private, max-age=300" },
+        }
+      );
+    }
+
     const db = await getPool();
 
-    // Find the project with this sync_code
     const { rows: projectRows } = await db.query(
       "SELECT id, title, current_version_id FROM projects WHERE sync_code = $1",
       [code]
@@ -25,12 +58,9 @@ export async function GET(request: NextRequest) {
     }
 
     const project = projectRows[0];
-
-    // Find the current version
     let currentVersionId = project.current_version_id;
 
     if (!currentVersionId) {
-      // Fallback: If no current version is set, fetch the latest one created
       const { rows: versionRows } = await db.query(
         "SELECT id FROM versions WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1",
         [project.id]
@@ -40,16 +70,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Optional Extra Safety: We can issue a simple JWT or token here, 
-    // but the sync_code acts as a long-lived API key specifically limited to this project's timeline data.
-    return NextResponse.json({ 
-      success: true,
+    const payload = {
       projectId: project.id,
       projectName: project.title,
-      currentVersionId: currentVersionId,
-      message: "Plugin successfully linked to project!"
-    }, { status: 200 });
+      currentVersionId: currentVersionId ?? null,
+    };
 
+    // Cache the result
+    await setCachedJson(pluginLinkKey(code), payload, PLUGIN_LINK_TTL);
+
+    return NextResponse.json(
+      {
+        success: true,
+        ...payload,
+        message: "Plugin successfully linked to project!",
+        cached: false,
+      },
+      {
+        status: 200,
+        headers: { "Cache-Control": "private, max-age=300" },
+      }
+    );
   } catch (err) {
     console.error("Plugin link error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -33,60 +33,53 @@ export default function LandingNavbar() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-bg/70 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          CreaoLink
+    <header className="landing-nav">
+      <div className="landing-nav-inner">
+        <Link href="/" className="brand-mark">
+          Creao<span>Link</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm text-gray-300 md:flex">
+        <nav className="landing-nav-links" aria-label="Landing navigation">
           <a href="#features" className="transition-colors hover:text-white">
             Features
           </a>
-          <a href="#about" className="transition-colors hover:text-white">
-            About
+          <a href="#how" className="transition-colors hover:text-white">
+            How it works
           </a>
-          <a href="#events" className="transition-colors hover:text-white">
-            Events
+          <a href="#pricing" className="transition-colors hover:text-white">
+            Pricing
           </a>
-          <a href="#contact" className="transition-colors hover:text-white">
-            Contact
+          <a href="#testimonials" className="transition-colors hover:text-white">
+            Reviews
           </a>
         </nav>
 
         {user ? (
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="landing-nav-actions">
             <Link
               href="/dashboard"
-              className="rounded-lg border border-white/20 px-3 py-2 text-sm text-text-secondary transition-colors hover:text-text-primary"
+              className="cl-btn ghost"
             >
               Dashboard
             </Link>
             <Link
               href="/dashboard/profile"
-              className="flex items-center gap-2.5 rounded-lg border border-white/20 bg-black/20 px-2.5 py-1.5 transition-colors hover:border-white/40"
+              className="cl-btn primary"
             >
-              <div className="text-right hidden sm:block">
-                <p className="text-sm leading-tight text-text-primary">{user.name}</p>
-              </div>
-              <div className="h-8 w-8 rounded-full border border-white/20 bg-white/10 flex items-center justify-center">
-                <span className="text-xs font-medium text-text-primary">
-                  {getInitials(user.name)}
-                </span>
-              </div>
+              {getInitials(user.name)}
             </Link>
           </div>
         ) : (
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="landing-nav-actions">
             <Link
               href="/auth/login"
-              className="rounded-lg border border-white/20 px-3 py-2 text-sm text-text-secondary transition-colors hover:text-text-primary"
+              className="cl-btn ghost"
             >
               Sign in
             </Link>
             <Link
               href="/auth/signup"
-              className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-black transition-transform hover:scale-[1.02]"
+              className="cl-btn primary"
             >
               Start free
             </Link>

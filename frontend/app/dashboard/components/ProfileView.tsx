@@ -47,10 +47,10 @@ function initials(name: string) {
     .slice(0, 2);
 }
 
-function statusTone(status: string) {
-  if (status === "pending") return "bg-amber-500/15 text-amber-300";
-  if (status === "completed" || status === "approved") return "bg-slate-500/15 text-slate-300";
-  return "bg-emerald-500/15 text-emerald-300";
+function statusTag(status: string) {
+  if (status === "active") return <span className="tag tag-a">● Active</span>;
+  if (status === "pending") return <span className="tag tag-r">⏳ Review</span>;
+  return <span className="tag tag-d">✓ Done</span>;
 }
 
 export default function ProfileView({ userId, isCurrentUser = false }: ProfileViewProps) {
@@ -67,30 +67,20 @@ export default function ProfileView({ userId, isCurrentUser = false }: ProfileVi
 
   useEffect(() => {
     let cancelled = false;
-
     async function loadProfile() {
       setLoading(true);
       try {
         const nextData = await apiGetUserProfile(userId);
-        if (!cancelled) {
-          setData(nextData);
-          setError("");
-        }
+        if (!cancelled) { setData(nextData); setError(""); }
       } catch (err) {
-        if (!cancelled) {
+        if (!cancelled)
           setError(err instanceof Error ? err.message : "Failed to load profile");
-        }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
-
     loadProfile();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [userId]);
 
   const mutualFollowerExists = useMemo(() => {
@@ -100,7 +90,6 @@ export default function ProfileView({ userId, isCurrentUser = false }: ProfileVi
 
   const handleFollowToggle = async () => {
     if (!data || isCurrentUser || !viewerId) return;
-
     const nextFollowing = !data.isFollowing;
     setFollowPending(true);
     setData((current) =>
@@ -113,22 +102,13 @@ export default function ProfileView({ userId, isCurrentUser = false }: ProfileVi
           }
         : current
     );
-
     try {
-      if (nextFollowing) {
-        await apiFollowUser(userId);
-      } else {
-        await apiUnfollowUser(userId);
-      }
+      if (nextFollowing) await apiFollowUser(userId);
+      else await apiUnfollowUser(userId);
     } catch (err) {
       setData((current) =>
         current
-          ? {
-              ...current,
-              isFollowing: !nextFollowing,
-              isMutual: current.isMutual,
-              followers: current.followers + (nextFollowing ? -1 : 1),
-            }
+          ? { ...current, isFollowing: !nextFollowing, isMutual: current.isMutual, followers: current.followers + (nextFollowing ? -1 : 1) }
           : current
       );
       setError(err instanceof Error ? err.message : "Unable to update follow state");
@@ -139,214 +119,286 @@ export default function ProfileView({ userId, isCurrentUser = false }: ProfileVi
 
   if (loading) {
     return (
-      <div className="rounded-[28px] border border-[#30363d] bg-[#0d1117] px-6 py-16 text-center text-sm text-[#8b949e]">
-        Loading profile...
+      <div className="mc" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200 }}>
+        <div style={{ width: 20, height: 20, borderRadius: "50%", border: "2px solid var(--b2)", borderTopColor: "var(--red)", animation: "spin 0.8s linear infinite" }} />
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="rounded-[28px] border border-red-500/30 bg-red-500/10 px-6 py-6 text-sm text-red-200">
-        {error || "Profile not found"}
+      <div className="mc">
+        <div style={{ background: "var(--rs)", border: "1px solid var(--rg)", borderRadius: "var(--r)", padding: "0.75rem 1rem", fontSize: "0.82rem", color: "var(--red)" }}>
+          {error || "Profile not found"}
+        </div>
       </div>
     );
   }
 
+  const maxContrib = Math.max(...data.activityGraph.map((i) => i.contributions), 1);
+  const avatarColors = ["var(--red)", "#7dd3fc", "#f9a8d4", "#86efac", "#fbbf24"];
+  const avatarColor = avatarColors[data.profile.name.charCodeAt(0) % avatarColors.length];
+
   return (
-    <div className="space-y-6">
+    <div className="mc" style={{ paddingBottom: "2.5rem" }}>
       {error && (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div style={{ background: "var(--rs)", border: "1px solid var(--rg)", borderRadius: "var(--r)", padding: "0.6rem 1rem", fontSize: "0.8rem", color: "var(--red)", marginBottom: "1rem" }}>
           {error}
         </div>
       )}
 
-      <section className="overflow-hidden rounded-[30px] border border-[#30363d] bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.14),_transparent_32%),radial-gradient(circle_at_bottom_left,_rgba(88,166,255,0.18),_transparent_38%),linear-gradient(135deg,_#111827,_#0d1117_58%,_#010409)] p-6 sm:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex items-start gap-5">
-            <div className="flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/10 bg-white/5 text-2xl font-semibold text-[#f0f6fc] backdrop-blur-sm">
+      {/* Profile header card */}
+      <div className="cl-card" style={{ marginBottom: "1.25rem", overflow: "hidden" }}>
+        {/* Cover */}
+        <div className="prof-cover">
+          <div className="prof-av-wrap">
+            <div className="prof-av" style={{ background: avatarColor, color: avatarColor === "var(--red)" ? "#fff" : "#0d0f0e" }}>
               {initials(data.profile.name)}
             </div>
-            <div className="max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-3xl font-semibold tracking-tight text-[#f0f6fc]">{data.profile.name}</h1>
-                <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-[#9fb3c8]">
+          </div>
+        </div>
+
+        {/* Info below cover */}
+        <div style={{ paddingTop: "3.5rem", padding: "3.5rem 1.75rem 1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.55rem", flexWrap: "wrap" }}>
+                <div style={{ fontFamily: "var(--fd)", fontSize: "1.55rem", color: "var(--white)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+                  {data.profile.name}
+                </div>
+                <span style={{ fontSize: "0.73rem", color: "var(--m1)", padding: "2px 9px", borderRadius: 999, background: "var(--s3)", border: "1px solid var(--b2)" }}>
                   @{data.profile.username}
                 </span>
-                <span className="rounded-full border border-white/10 px-3 py-1 text-xs capitalize text-[#9fb3c8]">
+                <span className="tag tag-n" style={{ fontSize: "0.67rem", textTransform: "capitalize" }}>
                   {data.profile.role}
                 </span>
                 {data.isMutual && !isCurrentUser && (
-                  <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs text-emerald-200">
-                    Mutual connection
+                  <span style={{ fontSize: "0.67rem", color: "#4ade80", background: "rgba(74,222,128,.1)", border: "1px solid rgba(74,222,128,.22)", padding: "2px 8px", borderRadius: 5 }}>
+                    Mutual
                   </span>
                 )}
               </div>
-              <p className="mt-2 text-sm font-medium uppercase tracking-[0.2em] text-[#8b949e]">
-                {isCurrentUser ? "Your public profile" : data.profile.headline}
-              </p>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#c9d1d9]">{data.profile.bio}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {data.skills.map((skill) => (
-                  <span key={skill} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#dbe8f5]">
-                    {skill}
-                  </span>
+              {data.profile.headline && (
+                <div style={{ fontSize: "0.8rem", color: "var(--m1)", marginTop: "0.25rem", fontStyle: "italic" }}>
+                  {isCurrentUser ? "Your public profile" : data.profile.headline}
+                </div>
+              )}
+              {data.profile.bio && (
+                <div style={{ fontSize: "0.82rem", color: "var(--m2)", lineHeight: 1.65, marginTop: "0.6rem", maxWidth: 480 }}>
+                  {data.profile.bio}
+                </div>
+              )}
+
+              {/* Skills */}
+              {data.skills.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", marginTop: "0.75rem" }}>
+                  {data.skills.map((skill) => (
+                    <span key={skill} className="tag tag-n" style={{ fontSize: "0.67rem" }}>{skill}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Actions + stats */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", minWidth: 160 }}>
+              {!isCurrentUser && (
+                <button
+                  onClick={handleFollowToggle}
+                  disabled={followPending}
+                  className={`btn btn-lg ${data.isFollowing ? "btn-g" : "btn-p"}`}
+                  style={{ width: "100%" }}
+                >
+                  {followPending ? "Updating…" : data.isFollowing ? "Following" : "Follow"}
+                </button>
+              )}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                {[
+                  { label: "Followers", value: data.followers },
+                  { label: "Following", value: data.following },
+                  { label: "Projects", value: data.portfolio.length },
+                  { label: "Reputation", value: data.reputation },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{
+                    background: "var(--s3)", border: "1px solid var(--b1)",
+                    borderRadius: "var(--r)", padding: "0.6rem 0.75rem", textAlign: "center",
+                  }}>
+                    <div style={{ fontFamily: "var(--fd)", fontSize: "1.3rem", color: "var(--white)", lineHeight: 1 }}>{value}</div>
+                    <div style={{ fontSize: "0.64rem", color: "var(--m1)", marginTop: "0.15rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 290px", gap: "1.1rem", alignItems: "start" }}>
+        {/* Left */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          {/* Activity graph */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Activity graph</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--m1)" }}>12-week view</span>
+            </div>
+            <div style={{ padding: "1.1rem 1.1rem 0.75rem" }}>
+              <div className="contrib-graph">
+                {data.activityGraph.map((item) => (
+                  <div key={item.week} className="cg-col">
+                    <div className="cg-bar-wrap">
+                      <div
+                        className="cg-bar"
+                        style={{
+                          height: `${Math.max(8, (item.contributions / maxContrib) * 80)}%`,
+                          background: item.contributions > 0
+                            ? `linear-gradient(to top, var(--red), rgba(232,57,46,0.4))`
+                            : "transparent",
+                        }}
+                      />
+                    </div>
+                    <span style={{ fontSize: "0.54rem", color: "var(--m1)", marginTop: "0.2rem" }}>W{item.week}</span>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="w-full max-w-sm space-y-3">
-            {!isCurrentUser && (
-              <button
-                onClick={handleFollowToggle}
-                disabled={followPending}
-                className={`w-full rounded-full px-5 py-3 text-sm font-medium transition-colors ${
-                  data.isFollowing
-                    ? "border border-[#30363d] bg-[#0d1117] text-[#c9d1d9] hover:border-[#58a6ff]/40"
-                    : "border border-[#1f6feb] bg-[#1f6feb] text-white hover:bg-[#388bfd]"
-                } disabled:cursor-not-allowed disabled:opacity-60`}
-              >
-                {followPending ? "Updating..." : data.isFollowing ? "Following" : "Follow user"}
-              </button>
-            )}
-            <div className="grid grid-cols-2 gap-3">
-              <StatCard label="Followers" value={data.followers} />
-              <StatCard label="Following" value={data.following} />
-              <StatCard label="Public projects" value={data.portfolio.length} />
-              <StatCard label="Reputation" value={data.reputation} />
+          {/* Portfolio */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Public portfolio</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--m1)" }}>{data.portfolio.length} project{data.portfolio.length !== 1 ? "s" : ""}</span>
+            </div>
+            <div style={{ padding: "0.85rem 1.1rem" }}>
+              {data.portfolio.length === 0 ? (
+                <div style={{ border: "1px dashed var(--b2)", borderRadius: "var(--r)", padding: "1.5rem", textAlign: "center", fontSize: "0.8rem", color: "var(--m1)" }}>
+                  No public projects yet.
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                  {data.portfolio.map((project) => (
+                    <div key={project.id} style={{
+                      background: "var(--s3)", border: "1px solid var(--b1)",
+                      borderRadius: "var(--r)", padding: "0.85rem",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem", marginBottom: "0.4rem" }}>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 500, color: "var(--white)", lineHeight: 1.3 }}>{project.title}</div>
+                        {statusTag(project.status)}
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--m1)", lineHeight: 1.55, marginBottom: "0.5rem" }}>
+                        {project.description || "A public case study from this creator's portfolio."}
+                      </div>
+                      <div style={{ fontSize: "0.66rem", color: "var(--m1)" }}>
+                        Updated {new Date(project.updated_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-6">
-          <section className="rounded-[24px] border border-[#30363d] bg-[#0d1117] p-5 sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-[#8b949e]">Contribution graph</p>
-                <h2 className="mt-2 text-xl font-semibold text-[#f0f6fc]">Activity rhythm</h2>
-              </div>
-              <span className="rounded-full border border-[#30363d] px-3 py-1 text-xs text-[#8b949e]">
-                12 week view
-              </span>
+        {/* Right */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          {/* Followers */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Followers</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--m1)" }}>{data.followers} total</span>
             </div>
-
-            <div className="mt-6 grid grid-cols-12 gap-2">
-              {data.activityGraph.map((item) => (
-                <div key={item.week} className="flex flex-col items-center gap-2">
-                  <div className="flex h-32 w-full items-end rounded-2xl border border-[#21262d] bg-[#010409] p-2">
-                    <div
-                      className="w-full rounded-xl bg-gradient-to-t from-[#1f6feb] via-[#58a6ff] to-[#7ee787]"
-                      style={{ height: `${Math.max(12, item.contributions * 12)}px` }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-[#6e7681]">W{item.week}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="rounded-[24px] border border-[#30363d] bg-[#0d1117] p-5 sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-[#8b949e]">Portfolio</p>
-                <h2 className="mt-2 text-xl font-semibold text-[#f0f6fc]">Public projects</h2>
-              </div>
-              <span className="rounded-full border border-[#30363d] px-3 py-1 text-xs text-[#8b949e]">
-                {data.portfolio.length} visible
-              </span>
-            </div>
-
-            <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {data.portfolio.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-[#30363d] bg-[#010409]/40 px-4 py-8 text-sm text-[#6e7681]">
-                  No public projects yet. As soon as this user shares public workspaces, they will appear here.
-                </div>
+            <div style={{ padding: "0.25rem 0" }}>
+              {data.followersList.length === 0 ? (
+                <div style={{ padding: "0.85rem 1.1rem", fontSize: "0.79rem", color: "var(--m1)" }}>No followers yet.</div>
               ) : (
-                data.portfolio.map((project) => (
-                  <div key={project.id} className="rounded-2xl border border-[#21262d] bg-[#010409]/80 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-[#f0f6fc]">{project.title}</p>
-                      <span className={`rounded-full px-2 py-1 text-[11px] ${statusTone(project.status)}`}>
-                        {project.status}
-                      </span>
+                data.followersList.map((person) => (
+                  <Link key={person.id} href={`/dashboard/profile/${person.id}`} style={{ textDecoration: "none" }}>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: "0.55rem",
+                      padding: "0.55rem 1.1rem", borderBottom: "1px solid var(--b1)",
+                      transition: "background 0.1s", cursor: "pointer",
+                    }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--s2)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                    >
+                      <div style={{
+                        width: 26, height: 26, borderRadius: "50%",
+                        background: "var(--s4)", border: "1px solid var(--b2)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "0.54rem", fontWeight: 700, color: "var(--m2)", flexShrink: 0,
+                      }}>
+                        {person.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.78rem", fontWeight: 500, color: "var(--white)" }}>{person.name}</div>
+                        <div style={{ fontSize: "0.67rem", color: "var(--m1)", textTransform: "capitalize" }}>{person.role}</div>
+                      </div>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-[#8b949e]">
-                      {project.description || "A public case study that is part of this creator's portfolio."}
-                    </p>
-                    <p className="mt-4 text-xs text-[#6e7681]">Updated {new Date(project.updated_at).toLocaleDateString()}</p>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>
-          </section>
-        </div>
+          </div>
 
-        <div className="space-y-6">
-          <section className="rounded-[24px] border border-[#30363d] bg-[#0d1117] p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-[#8b949e]">Connections</p>
-            <h2 className="mt-2 text-xl font-semibold text-[#f0f6fc]">Followers</h2>
-            <div className="mt-5 space-y-3">
-              {data.followersList.length === 0 ? (
-                <ConnectionEmpty copy="No followers yet." />
-              ) : (
-                data.followersList.map((person) => <ConnectionRow key={person.id} person={person} />)
-              )}
+          {/* Following */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Following</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--m1)" }}>{data.following} total</span>
             </div>
-          </section>
-
-          <section className="rounded-[24px] border border-[#30363d] bg-[#0d1117] p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-[#8b949e]">Connections</p>
-            <h2 className="mt-2 text-xl font-semibold text-[#f0f6fc]">Following</h2>
-            <div className="mt-5 space-y-3">
+            <div style={{ padding: "0.25rem 0" }}>
               {data.followingList.length === 0 ? (
-                <ConnectionEmpty copy="This user is not following anyone yet." />
+                <div style={{ padding: "0.85rem 1.1rem", fontSize: "0.79rem", color: "var(--m1)" }}>
+                  {isCurrentUser ? "You're not following anyone yet." : "Not following anyone yet."}
+                </div>
               ) : (
-                data.followingList.map((person) => <ConnectionRow key={person.id} person={person} />)
+                data.followingList.map((person) => (
+                  <Link key={person.id} href={`/dashboard/profile/${person.id}`} style={{ textDecoration: "none" }}>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: "0.55rem",
+                      padding: "0.55rem 1.1rem", borderBottom: "1px solid var(--b1)",
+                      transition: "background 0.1s", cursor: "pointer",
+                    }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--s2)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                    >
+                      <div style={{
+                        width: 26, height: 26, borderRadius: "50%",
+                        background: "var(--s4)", border: "1px solid var(--b2)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "0.54rem", fontWeight: 700, color: "var(--m2)", flexShrink: 0,
+                      }}>
+                        {person.name.slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: "0.78rem", fontWeight: 500, color: "var(--white)" }}>{person.name}</div>
+                        <div style={{ fontSize: "0.67rem", color: "var(--m1)", textTransform: "capitalize" }}>{person.role}</div>
+                      </div>
+                    </div>
+                  </Link>
+                ))
               )}
             </div>
-          </section>
+          </div>
 
-          <section className="rounded-[24px] border border-[#30363d] bg-[#0d1117] p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-[#8b949e]">Profile visibility</p>
-            <h2 className="mt-2 text-xl font-semibold text-[#f0f6fc]">Public sharing status</h2>
-            <p className="mt-4 text-sm leading-7 text-[#8b949e]">
-              This profile is currently visible to the workspace community so followers can discover public portfolio items,
-              reputation, and contribution trends.
-            </p>
-          </section>
+          {/* Visibility */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Profile visibility</span>
+            </div>
+            <div style={{ padding: "0.75rem 1.1rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", animation: "pulse-dot 2s ease-in-out infinite" }} />
+                <span style={{ fontSize: "0.78rem", color: "var(--white)", fontWeight: 500 }}>Public</span>
+              </div>
+              <div style={{ fontSize: "0.75rem", color: "var(--m1)", lineHeight: 1.6 }}>
+                This profile is visible to the community. Followers can discover portfolio items, reputation, and activity trends.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-center backdrop-blur-sm">
-      <p className="text-xs uppercase tracking-[0.2em] text-[#8b949e]">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-[#f0f6fc]">{value}</p>
-    </div>
-  );
-}
-
-function ConnectionRow({ person }: { person: UserListItem }) {
-  return (
-    <Link
-      href={`/dashboard/profile/${person.id}`}
-      className="flex items-center justify-between gap-3 rounded-2xl border border-[#21262d] bg-[#010409]/80 px-4 py-3 transition-colors hover:border-[#58a6ff]/50"
-    >
-      <div>
-        <p className="text-sm font-medium text-[#f0f6fc]">{person.name}</p>
-        <p className="mt-1 text-xs capitalize text-[#8b949e]">{person.role}</p>
-      </div>
-      <span className="text-xs text-[#79c0ff]">Open</span>
-    </Link>
-  );
-}
-
-function ConnectionEmpty({ copy }: { copy: string }) {
-  return <div className="rounded-2xl border border-dashed border-[#30363d] bg-[#010409]/40 px-4 py-6 text-sm text-[#6e7681]">{copy}</div>;
 }

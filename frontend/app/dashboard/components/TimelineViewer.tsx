@@ -62,8 +62,18 @@ const colorMap: Record<string, string> = {
 export default function TimelineViewer({ data, pixelsPerSecond = 20 }: TimelineViewerProps) {
   if (!data || !data.sequence) {
     return (
-      <div className="w-full h-64 bg-[#1e1e1e] border border-[#333] rounded-lg flex items-center justify-center text-gray-500">
-        Waiting for timeline sync...
+      <div style={{
+        width: "100%", height: 200,
+        background: "var(--s2)", border: "1px solid var(--b2)",
+        borderRadius: "var(--rl)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexDirection: "column", gap: "0.5rem",
+        color: "var(--m1)", fontSize: "0.81rem",
+      }}>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.5 }}>
+          <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
+        </svg>
+        Waiting for Premiere Pro timeline sync…
       </div>
     );
   }
@@ -98,7 +108,7 @@ export default function TimelineViewer({ data, pixelsPerSecond = 20 }: TimelineV
   const RULER_HEIGHT = 28;
 
   return (
-    <div className="bg-[#1e1e1e] border border-[#333] rounded-lg overflow-hidden flex flex-col font-sans text-xs text-gray-300 w-full shadow-2xl">
+    <div style={{ borderRadius: "var(--rl)", overflow: "hidden", border: "1px solid var(--b2)" }} className="bg-[#1e1e1e] flex flex-col font-sans text-xs text-gray-300 w-full shadow-2xl">
       {/* Header */}
       <div className="bg-[#252525] p-3 border-b border-[#333] flex justify-between items-center">
         <div className="font-semibold text-gray-100 flex items-center gap-2">

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 import { v4 as uuid } from "uuid";
+import { readThroughCache, teamKey, TEAM_CACHE_TTL } from "@/lib/cache";
+import { invalidateTeam } from "@/lib/invalidation";
 
 async function assertProjectAdmin(projectId: string, userId: string) {
   const db = await getPool();
@@ -30,14 +32,22 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { rows: members } = await db.query(
-      `SELECT u.id, u.name, u.email, u.username, u.role, pm.permission
-       FROM project_members pm
-       INNER JOIN users u ON u.id = pm.user_id
-       WHERE pm.project_id = $1
-       ORDER BY u.name ASC`,
-      [id]
-    );
+    const members = await readThroughCache({
+      key: teamKey(id),
+      ttlSeconds: TEAM_CACHE_TTL,
+      source: "api/projects/[id]/team",
+      compute: async () => {
+        const { rows } = await db.query(
+          `SELECT u.id, u.name, u.email, u.username, u.role, pm.permission
+           FROM project_members pm
+           INNER JOIN users u ON u.id = pm.user_id
+           WHERE pm.project_id = $1
+           ORDER BY u.name ASC`,
+          [id]
+        );
+        return rows;
+      },
+    });
 
     return NextResponse.json({ members });
   } catch (err) {
@@ -101,6 +111,9 @@ export async function POST(
 
     await db.query("UPDATE projects SET updated_at = NOW() WHERE id = $1", [id]);
 
+    // Invalidate team cache + project detail (members embedded)
+    await invalidateTeam(id).catch(() => {});
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("Add freelancer error:", err);
@@ -136,6 +149,8 @@ export async function PATCH(
       [permission, id, userId]
     );
     await db.query("UPDATE projects SET updated_at = NOW() WHERE id = $1", [id]);
+
+    await invalidateTeam(id).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -176,6 +191,8 @@ export async function DELETE(
     await db.query("DELETE FROM freelancer_presence WHERE project_id = $1 AND user_id = $2", [id, userId]);
     await db.query("DELETE FROM project_members WHERE project_id = $1 AND user_id = $2", [id, userId]);
     await db.query("UPDATE projects SET updated_at = NOW() WHERE id = $1", [id]);
+
+    await invalidateTeam(id).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (err) {

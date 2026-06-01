@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUser, type User } from "@/lib/auth";
 import { apiFetch } from "@/lib/api-client";
-import { apiGetFeed, type FeedActivityItem, type FeedNetworkItem, type FeedPostItem, type FeedProjectItem } from "@/lib/api";
+import { apiGetFeed, type FeedActivityItem, type FeedNetworkItem } from "@/lib/api";
 
 interface ProjectRow {
   id: string;
@@ -13,20 +13,50 @@ interface ProjectRow {
   created_at: string;
 }
 
+function statusTag(status: string) {
+  if (status === "active")
+    return <span className="tag tag-a">● Active</span>;
+  if (status === "pending")
+    return <span className="tag tag-r">⏳ Review</span>;
+  return <span className="tag tag-d">✓ Done</span>;
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now.getTime() - d.getTime()) / 1000;
+  if (diff < 86400) return "Today";
+  if (diff < 172800) return "Yesterday";
+  return d.toLocaleDateString();
+}
+
+function activityIcon(item: FeedActivityItem) {
+  const styles: Record<string, { bg: string; color: string; letter: string }> = {
+    version: { bg: "var(--rs)", color: "var(--red)", letter: "v" },
+    join: { bg: "rgba(74,222,128,.1)", color: "#4ade80", letter: "✓" },
+    feedback: { bg: "rgba(251,191,36,.1)", color: "#fbbf24", letter: "!" },
+    create: { bg: "var(--s3)", color: "var(--m2)", letter: "+" },
+  };
+  const key = item.status?.toLowerCase() || "create";
+  const s = styles[key] || styles.create;
+  return (
+    <div style={{
+      width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: "0.66rem", fontWeight: 700, border: "1px solid var(--b2)",
+      background: s.bg, color: s.color,
+    }}>
+      {s.letter}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
-  const [loadingFeed, setLoadingFeed] = useState(true);
-
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"recent" | "alphabetical" | "status">("recent");
-
   const [activity, setActivity] = useState<FeedActivityItem[]>([]);
-  const [discover, setDiscover] = useState<FeedProjectItem[]>([]);
-  const [featured, setFeatured] = useState<FeedProjectItem[]>([]);
-  const [posts, setPosts] = useState<FeedPostItem[]>([]);
   const [network, setNetwork] = useState<FeedNetworkItem[]>([]);
 
   useEffect(() => {
@@ -37,207 +67,269 @@ export default function DashboardPage() {
       return;
     }
 
-    const fetchProjects = async () => {
-      try {
-        const res = await apiFetch("/api/projects");
-        if (!res.ok) return;
-        const data = await res.json();
-        setProjects(data.projects || []);
-      } catch {
-        // ignore
-      } finally {
-        setLoadingProjects(false);
-      }
-    };
+    apiFetch("/api/projects")
+      .then((r) => r.json())
+      .then((d) => setProjects(d.projects || []))
+      .catch(() => {})
+      .finally(() => setLoadingProjects(false));
 
-    const fetchFeed = async () => {
-      try {
-        const data = await apiGetFeed();
-        setActivity(data.activity || []);
-        setDiscover(data.discover || []);
-        setFeatured(data.featured || []);
-        setPosts(data.posts || []);
-        setNetwork(data.network || []);
-      } catch {
-        // ignore
-      } finally {
-        setLoadingFeed(false);
-      }
-    };
-
-    fetchProjects();
-    fetchFeed();
+    apiGetFeed()
+      .then((d) => {
+        setActivity(d.activity || []);
+        setNetwork(d.network || []);
+      })
+      .catch(() => {});
   }, [router]);
-
-  const filteredProjects = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    let list = projects.filter((project) =>
-      q ? project.title.toLowerCase().includes(q) : true
-    );
-
-    if (sortBy === "alphabetical") {
-      list = [...list].sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sortBy === "status") {
-      list = [...list].sort((a, b) => a.status.localeCompare(b.status));
-    } else {
-      list = [...list].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
-    }
-
-    return list;
-  }, [projects, search, sortBy]);
 
   if (!user) return null;
 
+  const openFeedback = 0; // placeholder — would come from API
+  const currentVersion = projects[0] ? "v1" : "—";
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)_320px]">
-      <section className="space-y-4 rounded-xl border border-[#30363d] bg-[#111827] p-4">
+    <div className="mc">
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.25rem", gap: "1rem" }}>
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b949e]">Projects</h2>
-          <p className="mt-1 text-sm text-[#c9d1d9]">Tree view with quick actions and filters.</p>
+          <div style={{ fontFamily: "var(--fd)", fontSize: "1.55rem", color: "var(--white)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+            Good morning, {user.name?.split(" ")[0] || "there"}.
+          </div>
+          <div style={{ fontSize: "0.8rem", color: "var(--m2)", marginTop: "0.2rem" }}>
+            Here&apos;s what&apos;s happening across your projects today.
+          </div>
         </div>
+        <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
+          <button className="btn btn-g btn-sm">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="14" y2="12" /><line x1="4" y1="18" x2="9" y2="18" />
+            </svg>
+            Activity log
+          </button>
+          <button className="btn btn-p btn-sm" onClick={() => router.push("/dashboard/projects")}>
+            + New project
+          </button>
+        </div>
+      </div>
 
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search projects"
-          className="w-full rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc]"
-        />
+      {/* KPI row */}
+      <div className="kpi-grid">
+        <div className="kpi-card">
+          <div className="kpi-num accent">{projects.length}</div>
+          <div className="kpi-label">Active projects</div>
+          <div className="kpi-trend up">↑ {projects.length} total</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-num">{openFeedback}</div>
+          <div className="kpi-label">Open feedback</div>
+          <div className="kpi-trend dn">↑ {openFeedback} unresolved</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-num">{currentVersion}</div>
+          <div className="kpi-label">Latest version</div>
+          <div className="kpi-trend up">↑ {projects[0]?.title || "—"}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-num">11</div>
+          <div className="kpi-label">Reputation score</div>
+          <div className="kpi-trend up">↑ All time</div>
+        </div>
+      </div>
 
-        <select
-          value={sortBy}
-          onChange={(event) => setSortBy(event.target.value as "recent" | "alphabetical" | "status")}
-          className="w-full rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc]"
-        >
-          <option value="recent">Sort: Recent</option>
-          <option value="alphabetical">Sort: Alphabetical</option>
-          <option value="status">Sort: Status</option>
-        </select>
-
-        <div className="space-y-2">
-          {loadingProjects ? (
-            <p className="text-sm text-[#8b949e]">Loading projects...</p>
-          ) : filteredProjects.length === 0 ? (
-            <p className="rounded-md border border-dashed border-[#30363d] px-3 py-4 text-sm text-[#8b949e]">No projects found.</p>
-          ) : (
-            filteredProjects.map((project) => (
-              <div key={project.id} className="rounded-md border border-[#30363d] bg-[#0d1117] p-3">
+      {/* Main grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 290px", gap: "1.1rem" }}>
+        {/* Left column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          {/* Projects table */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Recent Projects</span>
+              <a href="/dashboard/projects" style={{ fontSize: "0.72rem", color: "var(--m1)" }}>
+                All projects →
+              </a>
+            </div>
+            {/* Table head */}
+            <div style={{
+              display: "grid", gridTemplateColumns: "minmax(0,1fr) 100px 95px 90px",
+              gap: "0.6rem", padding: "0.55rem 1.1rem", borderBottom: "1px solid var(--b2)",
+              fontSize: "0.63rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--m1)",
+            }}>
+              <span>Project</span><span>Owner</span><span>Status</span><span>Updated</span>
+            </div>
+            {loadingProjects ? (
+              <div style={{ padding: "1.5rem 1.1rem", fontSize: "0.8rem", color: "var(--m1)" }}>Loading…</div>
+            ) : projects.length === 0 ? (
+              <div style={{ padding: "2rem 1.1rem", textAlign: "center", fontSize: "0.8rem", color: "var(--m1)" }}>
+                No projects yet.{" "}
                 <button
-                  onClick={() => router.push(`/dashboard/projects/${project.id}`)}
-                  className="flex w-full items-center gap-2 text-left"
+                  onClick={() => router.push("/dashboard/projects")}
+                  style={{ color: "var(--red)", background: "none", border: "none", cursor: "pointer", fontSize: "0.8rem" }}
                 >
-                  <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${
-                      project.status === "active"
-                        ? "bg-emerald-400"
-                        : project.status === "pending"
-                        ? "bg-amber-400"
-                        : "bg-slate-500"
-                    }`}
-                  />
-                  <span className="truncate text-sm text-[#f0f6fc]">{project.title}</span>
+                  Create one →
                 </button>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <button className="rounded border border-[#30363d] px-2 py-0.5 text-[11px] text-[#8b949e]">Pin</button>
-                  <button className="rounded border border-[#30363d] px-2 py-0.5 text-[11px] text-[#8b949e]">Archive</button>
-                  <button
-                    onClick={() => router.push(`/dashboard/projects/${project.id}`)}
-                    className="rounded border border-[#30363d] px-2 py-0.5 text-[11px] text-[#8b949e]"
-                  >
-                    Settings
-                  </button>
-                </div>
               </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b949e]">Activity Feed</h2>
-          <div className="mt-3 space-y-2">
-            {loadingFeed ? (
-              <p className="text-sm text-[#8b949e]">Loading activity...</p>
-            ) : activity.length === 0 ? (
-              <p className="rounded-md border border-dashed border-[#30363d] px-3 py-4 text-sm text-[#8b949e]">No updates yet.</p>
             ) : (
-              activity.map((item) => (
-                <div key={item.id} className="rounded-md border border-[#30363d] bg-[#0d1117] p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-[#f0f6fc]">{item.title}</p>
-                    <span className="rounded-full bg-[#1f2937] px-2 py-0.5 text-[11px] text-[#8b949e]">{item.status}</span>
+              projects.slice(0, 5).map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => router.push(`/dashboard/projects/${p.id}`)}
+                  style={{
+                    display: "grid", gridTemplateColumns: "minmax(0,1fr) 100px 95px 90px",
+                    gap: "0.6rem", padding: "0.7rem 1.1rem", borderBottom: "1px solid var(--b1)",
+                    fontSize: "0.78rem", alignItems: "center", cursor: "pointer",
+                    background: "none", border: "none", width: "100%", textAlign: "left",
+                    transition: "background 0.12s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--s2)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                >
+                  <div>
+                    <div style={{ fontWeight: 500, color: "var(--white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
+                    <div style={{ fontSize: "0.68rem", color: "var(--m1)", marginTop: 1 }}>Project</div>
                   </div>
-                  <p className="mt-1 text-xs text-[#8b949e]">Updated by {item.owner_name}</p>
-                </div>
+                  <div style={{ color: "var(--m2)" }}>{user.name?.split(" ")[0] || "You"}</div>
+                  <div>{statusTag(p.status)}</div>
+                  <div style={{ color: "var(--m1)" }}>{formatDate(p.created_at)}</div>
+                </button>
               ))
             )}
           </div>
-        </div>
 
-        <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b949e]">Discover</h2>
-          <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {discover.slice(0, 6).map((item) => (
-              <div key={item.id} className="rounded-md border border-[#30363d] bg-[#0d1117] p-3">
-                <p className="text-sm font-medium text-[#f0f6fc]">{item.title}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-[#8b949e]">{item.description || "Discover this community project."}</p>
-                <p className="mt-2 text-[11px] text-[#6e7681]">Owner: {item.owner_name}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b949e]">Project Updates Feed</h2>
-          <div className="mt-3 space-y-2">
-            {posts.length === 0 ? (
-              <p className="rounded-md border border-dashed border-[#30363d] px-3 py-4 text-sm text-[#8b949e]">No posts yet.</p>
-            ) : (
-              posts.map((post) => (
-                <div key={post.id} className="rounded-md border border-[#30363d] bg-[#0d1117] p-3">
-                  <p className="text-sm font-medium text-[#f0f6fc]">{post.title}</p>
-                  <p className="mt-1 line-clamp-2 text-xs text-[#8b949e]">{post.content}</p>
-                  <p className="mt-2 text-[11px] text-[#6e7681]">{post.author_name} • {post.reactions} likes • {post.comments} comments</p>
+          {/* Activity feed */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Activity feed</span>
+              <span style={{ fontSize: "0.72rem", color: "var(--m1)" }}>See all →</span>
+            </div>
+            <div style={{ padding: "0.2rem 0" }}>
+              {activity.length === 0 ? (
+                <div style={{ padding: "1.25rem 1.1rem", fontSize: "0.8rem", color: "var(--m1)" }}>
+                  No recent activity yet.
                 </div>
-              ))
-            )}
+              ) : (
+                activity.slice(0, 5).map((item) => (
+                  <div key={item.id} style={{
+                    display: "flex", gap: "0.75rem", padding: "0.75rem 1.1rem",
+                    borderBottom: "1px solid var(--b1)", alignItems: "flex-start",
+                  }}>
+                    {activityIcon(item)}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: "0.78rem", color: "var(--m2)", lineHeight: 1.45 }}>
+                        <strong style={{ color: "var(--white)", fontWeight: 500 }}>{item.owner_name}</strong>{" "}
+                        {item.title}
+                      </div>
+                      <div style={{ fontSize: "0.66rem", color: "var(--m1)", marginTop: "0.18rem" }}>
+                        {formatDate(item.created_at || new Date().toISOString())}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </section>
 
-      <section className="space-y-4">
-        <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b949e]">Featured Projects</h2>
-          <div className="mt-3 space-y-2">
-            {featured.slice(0, 5).map((item) => (
+        {/* Right column */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+          {/* Open feedback */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Open feedback</span>
+              <span className="tag tag-a" style={{ fontSize: "0.6rem" }}>{openFeedback} open</span>
+            </div>
+            <div style={{ padding: "0.65rem 1.1rem" }}>
+              {openFeedback === 0 ? (
+                <div style={{ fontSize: "0.76rem", color: "var(--m1)", textAlign: "center", padding: "0.5rem 0" }}>
+                  No open feedback. All clear!
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Quick actions */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Quick actions</span>
+            </div>
+            {[
+              {
+                label: "Create new project",
+                icon: <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />,
+                onClick: () => router.push("/dashboard/projects"),
+              },
+              {
+                label: "View all projects",
+                icon: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></>,
+                onClick: () => router.push("/dashboard/projects"),
+              },
+              {
+                label: "Edit profile",
+                icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></>,
+                onClick: () => router.push("/dashboard/profile"),
+              },
+            ].map((action) => (
               <button
-                key={item.id}
-                onClick={() => router.push(`/dashboard/projects/${item.id}`)}
-                className="w-full rounded-md border border-[#30363d] bg-[#0d1117] p-3 text-left"
+                key={action.label}
+                onClick={action.onClick}
+                style={{
+                  display: "flex", alignItems: "center", gap: "0.65rem",
+                  padding: "0.6rem 1.1rem", borderBottom: "1px solid var(--b1)",
+                  fontSize: "0.78rem", color: "var(--m2)", cursor: "pointer",
+                  transition: "all 0.12s", background: "none", border: "none", width: "100%",
+                  textAlign: "left",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--white)";
+                  e.currentTarget.style.background = "var(--s2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--m2)";
+                  e.currentTarget.style.background = "none";
+                }}
               >
-                <p className="text-sm text-[#f0f6fc]">{item.title}</p>
-                <p className="mt-1 text-[11px] text-[#8b949e]">{item.collaborators || item.member_count || 0} collaborators</p>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.6 }}>
+                  {action.icon}
+                </svg>
+                {action.label}
               </button>
             ))}
           </div>
-        </div>
 
-        <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b949e]">Your Network</h2>
-          <div className="mt-3 space-y-2">
-            {network.length === 0 ? (
-              <p className="rounded-md border border-dashed border-[#30363d] px-3 py-4 text-sm text-[#8b949e]">Follow users to build your network stream.</p>
-            ) : (
-              network.map((person) => (
-                <div key={person.following_id} className="rounded-md border border-[#30363d] bg-[#0d1117] p-3">
-                  <p className="text-sm text-[#f0f6fc]">{person.name}</p>
-                  <p className="mt-1 text-[11px] text-[#8b949e]">{person.project_count} public projects</p>
+          {/* Network */}
+          <div className="cl-card">
+            <div className="cl-card-head">
+              <span className="cl-card-title">Network</span>
+            </div>
+            <div style={{ padding: "0.65rem 1.1rem" }}>
+              {network.length === 0 ? (
+                <div style={{ fontSize: "0.75rem", color: "var(--m1)", padding: "0.35rem 0" }}>
+                  No connections yet. Follow users to build your network.
                 </div>
-              ))
-            )}
+              ) : (
+                network.slice(0, 3).map((person) => (
+                  <div key={person.following_id} style={{
+                    display: "flex", alignItems: "center", gap: "0.6rem",
+                    padding: "0.45rem 0", borderBottom: "1px solid var(--b1)",
+                  }}>
+                    <div style={{
+                      width: 26, height: 26, borderRadius: "50%",
+                      background: "#7dd3fc", color: "#0d0f0e",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.56rem", fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {person.name?.slice(0, 2).toUpperCase() || "??"}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "0.78rem", fontWeight: 500, color: "var(--white)" }}>{person.name}</div>
+                      <div style={{ fontSize: "0.67rem", color: "var(--m1)" }}>{person.project_count} projects</div>
+                    </div>
+                    <button className="btn btn-g btn-sm">Open</button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

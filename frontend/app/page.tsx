@@ -1,519 +1,440 @@
 import Link from "next/link";
-import ColorBends from "./components/ColorBends";
+import type { ReactNode } from "react";
 import LandingNavbar from "./components/LandingNavbar";
 
 const stats = [
-  { label: "Active workspaces", value: "12,500+" },
-  { label: "Projects shipped", value: "48,000+" },
-  { label: "Avg. feedback resolution", value: "3.2 hrs" },
-  { label: "Client satisfaction", value: "98.4%" },
+  { value: "12,500+", label: "Active workspaces" },
+  { value: "48k+", label: "Projects shipped" },
+  { value: "3.2 hrs", label: "Avg. feedback resolution" },
+  { value: "98.4%", label: "Client satisfaction rate" },
 ];
 
-const milestones = [
+const features = [
   {
-    title: "Project room creation",
+    icon: "01",
+    title: "Role-based dashboards",
     description:
-      "Spin up project spaces with goals, owners, scope, and delivery timelines in under two minutes.",
+      "Clients see what they need to approve. Freelancers see what they need to deliver. No information overload.",
   },
   {
-    title: "Freelancer-first collaboration",
+    icon: "02",
+    title: "Version-safe collaboration",
     description:
-      "Assign contributors, share versions, and keep communication contextual so momentum never breaks.",
+      "Push new versions without losing previous context. Every file keeps a timestamped trail with linked feedback.",
   },
   {
-    title: "Structured feedback lifecycle",
+    icon: "03",
+    title: "Feedback that resolves",
     description:
-      "Convert comments into actions, assign ownership, and track each item from open to resolved.",
+      "Comments become trackable tasks with an owner, a due date, and a clear resolved state.",
+  },
+  {
+    icon: "04",
+    title: "Structured project rooms",
+    description:
+      "Spin up scoped workspaces with goals, delivery timelines, and stakeholder assignments in minutes.",
+  },
+  {
+    icon: "05",
+    title: "Progress dashboards",
+    description:
+      "Track velocity, closure rates, and revision loops across projects before delays compound.",
+  },
+  {
+    icon: "06",
+    title: "Approval checkpoints",
+    description:
+      "Build formal review stages into every project so clients approve and freelancers know what is next.",
   },
 ];
 
-const values = [
+const steps = [
   {
-    title: "Clear communication",
-    text: "We design for clarity first so every person understands what to do next.",
+    title: "Create a project room",
+    description:
+      "Define scope, goals, and delivery timelines. Assign clients and freelancers with role-specific access from the start.",
   },
   {
-    title: "Ownership over noise",
-    text: "Teams should spend energy delivering outcomes, not chasing scattered feedback threads.",
+    title: "Collaborate in context",
+    description:
+      "Upload versions, leave feedback directly on deliverables, and keep communication tied to the exact work.",
   },
   {
-    title: "Progress you can trust",
-    text: "Every version, comment, and status update is visible to the right people at the right time.",
-  },
-];
-
-const events = [
-  {
-    name: "CreaoLink Community Townhall",
-    date: "May 15, 2026",
-    mode: "Live virtual",
-    detail: "Roadmap reveal, Q&A with founders, and workflow demos from top agencies.",
-  },
-  {
-    name: "SaaS Workflow Summit",
-    date: "June 22, 2026",
-    mode: "Bengaluru",
-    detail: "A full-day meetup on faster client collaboration, approvals, and version control.",
-  },
-  {
-    name: "Freelancer Growth Lab",
-    date: "July 10, 2026",
-    mode: "Hybrid",
-    detail: "Hands-on sessions for freelancers to improve delivery systems and client visibility.",
+    title: "Close the loop",
+    description:
+      "Convert feedback to tasks, get sign-off through structured approvals, and ship with version history intact.",
   },
 ];
 
 const outcomes = [
   {
-    segment: "Agency teams",
-    metric: "31% faster approvals",
-    detail:
-      "Agencies reduce client wait cycles with versioned reviews, status checkpoints, and resolved feedback threads.",
+    tag: "Agency teams",
+    value: "31%",
+    label: "Faster approvals",
+    description:
+      "Versioned reviews and structured sign-off stages cut client wait cycles dramatically.",
   },
   {
-    segment: "Freelancer pods",
-    metric: "2.4x clearer handoffs",
-    detail:
-      "Contributors move work with less context loss using role-based briefs, owner tags, and delivery notes.",
+    tag: "Freelancer pods",
+    value: "2.4x",
+    label: "Clearer handoffs",
+    description:
+      "Role-based briefs and owner tags mean contributors always know exactly what is next.",
   },
   {
-    segment: "Product studios",
-    metric: "42% fewer revision loops",
-    detail:
-      "Structured review templates and mandatory acceptance criteria cut repetitive back-and-forth.",
+    tag: "Product studios",
+    value: "42%",
+    label: "Fewer revision loops",
+    description:
+      "Mandatory acceptance criteria and templates reduce repetitive back-and-forth.",
   },
 ];
 
-const onboardingPlan = [
-  { week: "Week 1", title: "Workspace setup", detail: "Import projects, create roles, define review stages." },
-  { week: "Week 2", title: "Team onboarding", detail: "Invite clients and freelancers, set permissions, and align rituals." },
-  { week: "Week 3", title: "Delivery baseline", detail: "Activate versioning, feedback SLAs, and progress dashboards." },
-  { week: "Week 4", title: "Scale and optimize", detail: "Track closure velocity, automate updates, and improve cycle time." },
+const testimonials = [
+  {
+    initials: "AM",
+    name: "Arjun Mehra",
+    role: "Creative Director, BlueOrbit Studio",
+    quote:
+      "Finally a tool that separates what clients see from what my team sees. We stopped getting file-status messages within a week.",
+  },
+  {
+    initials: "SR",
+    name: "Simran Rao",
+    role: "Freelance UX Lead",
+    quote:
+      "The feedback-to-task conversion alone saved us hours every week. No more rebuilding task lists from chat threads.",
+  },
+  {
+    initials: "KD",
+    name: "Kavya Dalal",
+    role: "Head of Product, PixelCraft Labs",
+    quote:
+      "We onboarded a remote team in days. The role setup is intuitive and the version history saved context during review.",
+  },
 ];
 
 const plans = [
   {
     name: "Starter",
     price: "Free",
-    target: "Small teams validating workflow",
+    period: "No card required",
+    description: "For small teams validating creative workflow.",
     points: ["Up to 3 active projects", "Basic feedback tracking", "Client and freelancer roles", "Email support"],
+    featured: false,
   },
   {
     name: "Growth",
-    price: "$29 / workspace",
-    target: "Growing teams with active delivery",
-    points: ["Unlimited projects", "Version-safe approvals", "Custom review templates", "Priority support"],
+    price: "$23",
+    period: "per workspace / month",
+    description: "For growing teams with active delivery pipelines.",
+    points: ["Unlimited projects", "Version-safe approvals", "Custom review templates", "Priority support", "Analytics dashboard"],
+    featured: true,
   },
   {
     name: "Scale",
     price: "Custom",
-    target: "High-volume operations and agencies",
+    period: "Volume pricing available",
+    description: "For high-volume agencies and multi-team operations.",
     points: ["Multi-team governance", "Advanced analytics", "SSO and audit controls", "Dedicated success manager"],
+    featured: false,
   },
 ];
 
-const faqs = [
-  {
-    question: "How is CreaoLink different from general task tools?",
-    answer:
-      "CreaoLink is purpose-built for client plus freelancer delivery with version-aware approvals and feedback closure workflows, not just generic task tracking.",
-  },
-  {
-    question: "Can clients and freelancers see different information?",
-    answer:
-      "Yes. Role-based dashboards keep each user focused on relevant tasks, updates, and feedback responsibilities.",
-  },
-  {
-    question: "Does CreaoLink support project version history?",
-    answer:
-      "Every version is stored with notes, timestamps, and linked feedback to preserve delivery context and reduce confusion.",
-  },
-  {
-    question: "What is a typical rollout timeline?",
-    answer:
-      "Most teams complete setup and first live workflow within 2 to 4 weeks, depending on team size and migration scope.",
-  },
-];
+function SectionHeader({
+  label,
+  title,
+  children,
+  centered = false,
+}: {
+  label: string;
+  title: ReactNode;
+  children?: ReactNode;
+  centered?: boolean;
+}) {
+  return (
+    <div className={centered ? "landing-section-head center" : "landing-section-head"}>
+      <p className="landing-section-label">{label}</p>
+      <h2 className="landing-section-title">{title}</h2>
+      {children ? <p className="landing-section-copy">{children}</p> : null}
+    </div>
+  );
+}
+
+function DashboardPreview() {
+  const rows = [
+    ["Brand identity guide", "Sara M.", "v4.1", "In review"],
+    ["Homepage redesign", "Kunal A.", "v2.0", "Active"],
+    ["Social media kit", "Priya R.", "v1.3", "Done"],
+    ["Motion guidelines", "Dev T.", "v1.0", "Active"],
+  ];
+
+  return (
+    <div className="preview-shell">
+      <div className="preview-glow" />
+      <div className="preview-card">
+        <div className="preview-topbar">
+          <span className="preview-dot red" />
+          <span className="preview-dot yellow" />
+          <span className="preview-dot green" />
+          <div className="preview-url">app.creaolink.com/workspace/nova-rebrand</div>
+        </div>
+        <div className="preview-body">
+          <aside className="preview-sidebar">
+            <div className="preview-logo">
+              Creao<span>Link</span>
+            </div>
+            {["Projects", "Feedback", "Versions", "Team", "Analytics"].map((item, index) => (
+              <div className={index === 0 ? "preview-nav active" : "preview-nav"} key={item}>
+                <span className="preview-nav-icon" />
+                {item}
+                {index === 0 ? <span className="preview-nav-pulse" /> : null}
+              </div>
+            ))}
+            <div className="preview-note">4 feedback items need resolution</div>
+          </aside>
+          <div className="preview-main">
+            <div className="preview-main-head">
+              <p>Nova Rebrand - Active Projects</p>
+              <span>Live</span>
+            </div>
+            <div className="preview-stats">
+              {[
+                ["12", "Open tasks"],
+                ["3", "In review"],
+                ["8", "Versions"],
+                ["94%", "On track"],
+              ].map(([value, label], index) => (
+                <div className="preview-stat" key={label}>
+                  <strong className={index === 0 ? "accent" : ""}>{value}</strong>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="preview-grid preview-grid-head">
+              <span>Deliverable</span>
+              <span>Assignee</span>
+              <span>Version</span>
+              <span>Status</span>
+            </div>
+            {rows.map(([name, assignee, version, status]) => (
+              <div className="preview-grid preview-row" key={name}>
+                <strong>{name}</strong>
+                <span>{assignee}</span>
+                <span>{version}</span>
+                <span className={`preview-status ${status.toLowerCase().replace(" ", "-")}`}>{status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-bg text-text-primary">
+    <div className="landing-page">
       <LandingNavbar />
 
       <main>
-        <section className="relative isolate overflow-hidden border-b border-white/10">
-          <div className="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_20%_20%,rgba(255,92,122,0.25),transparent_40%),radial-gradient(circle_at_80%_0%,rgba(0,255,209,0.2),transparent_35%),linear-gradient(145deg,#050507_0%,#0a0b13_45%,#120816_100%)]" />
-          <div className="pointer-events-none absolute inset-0 -z-10 opacity-80">
-            <ColorBends
-              colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
-              rotation={0}
-              speed={0.2}
-              scale={1}
-              frequency={1}
-              warpStrength={1}
-              mouseInfluence={1}
-              parallax={0.5}
-              noise={0.1}
-              transparent
-              autoRotate={0}
-              color=""
-            />
+        <section className="landing-hero">
+          <div className="hero-badge">
+            <span />
+            New - role-based dashboards now in beta
+          </div>
+          <h1 className="hero-title">
+            One workspace for
+            <br />
+            <em>clients, freelancers,</em>
+            <br />
+            and every version.
+          </h1>
+          <p className="hero-copy">
+            Stop losing work to scattered files, missed feedback, and unclear ownership. CreaoLink keeps every
+            project moving from brief to shipped.
+          </p>
+          <div className="hero-actions">
+            <Link href="/auth/signup" className="cl-btn primary large">
+              Create free workspace
+            </Link>
+            <Link href="/auth/login" className="cl-btn ghost large">
+              <span className="play-icon" aria-hidden="true" />
+              Watch demo
+            </Link>
+          </div>
+          <div className="hero-proof">
+            <div className="avatar-stack" aria-hidden="true">
+              {["AK", "SR", "MP", "JL"].map((avatar, index) => (
+                <span className={`avatar avatar-${index + 1}`} key={avatar}>
+                  {avatar}
+                </span>
+              ))}
+            </div>
+            <p>
+              Trusted by <strong>500+ teams</strong> across agencies and studios
+            </p>
           </div>
 
-          <div className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-28">
-            <div className="space-y-7 reveal-up">
-              <p className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.16em] text-text-secondary">
-                Client to freelancer workflow, unified
-              </p>
-              <h1 className="text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-                Build with momentum.
-                <br />
-                Deliver without workflow chaos.
-              </h1>
-              <p className="max-w-xl text-base leading-relaxed text-gray-300 sm:text-lg">
-                CreaoLink brings project planning, freelancer collaboration, approvals,
-                versioning, and feedback resolution into one clean operating system for modern teams.
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Link
-                  href="/auth/signup"
-                  className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition-transform hover:-translate-y-0.5"
-                >
-                  Create workspace
-                </Link>
-                <Link
-                  href="/auth/login"
-                  className="rounded-xl border border-white/25 bg-black/30 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-black/45"
-                >
-                  Book a live demo
-                </Link>
-              </div>
-              <div className="grid max-w-2xl grid-cols-2 gap-3 pt-3 sm:grid-cols-4">
-                {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-                    <p className="text-lg font-semibold text-white sm:text-xl">{stat.value}</p>
-                    <p className="mt-1 text-xs leading-snug text-gray-300">{stat.label}</p>
+          <DashboardPreview />
+        </section>
+
+        <section className="stats-band" aria-label="CreaoLink performance metrics">
+          {stats.map((stat) => (
+            <div className="stat-tile" key={stat.label}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+            </div>
+          ))}
+        </section>
+
+        <section className="landing-section" id="features">
+          <SectionHeader label="Features" title={<>Everything a modern delivery team needs</>}>
+            Built for the gap between loose docs and rigid ticketing. CreaoLink fits the way creative teams actually
+            work.
+          </SectionHeader>
+          <div className="features-grid">
+            {features.map((feature) => (
+              <article className="feature-card" key={feature.title}>
+                <span className="feature-icon">{feature.icon}</span>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="landing-section" id="how">
+          <SectionHeader label="How it works" title={<>Three steps to <em>zero</em> workflow chaos</>}>
+            A simple operating rhythm for agencies, studios, and freelancer pods.
+          </SectionHeader>
+          <div className="how-grid">
+            <div className="how-steps">
+              {steps.map((step, index) => (
+                <article className="how-step" key={step.title}>
+                  <span>{`Step 0${index + 1}`}</span>
+                  <h3>{step.title}</h3>
+                  <p>{step.description}</p>
+                </article>
+              ))}
+            </div>
+            <div className="feedback-panel">
+              <p className="panel-label">Live feedback thread - Nova Rebrand</p>
+              {[
+                ["SL", "Sarah L.", "Client", "The hero color feels too warm. Can we try the cooler palette from v2.1?", "Convert to task"],
+                ["KA", "Kunal A.", "Designer", "On it. Uploading v4.2 with the cooler palette applied across all hero variants.", ""],
+                ["PR", "Priya R.", "PM", "Feedback task created and assigned. Approval checkpoint set for Friday 5 PM.", "Resolved"],
+              ].map(([initials, name, role, message, action], index) => (
+                <div className="feedback-item" key={name}>
+                  <span className={`feedback-avatar avatar-${index + 1}`}>{initials}</span>
+                  <div>
+                    <div className="feedback-meta">
+                      <strong>{name}</strong>
+                      <span>{role}</span>
+                    </div>
+                    <p>{message}</p>
+                    {action ? <button type="button">{action}</button> : null}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="animate-float-soft rounded-2xl border border-white/15 bg-black/45 p-5 backdrop-blur-xl sm:p-6">
-              <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">
-                What teams love
-              </p>
-              <div className="mt-5 space-y-4">
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-sm font-medium text-white">Role-based dashboards</p>
-                  <p className="mt-1 text-sm text-gray-300">
-                    Clients and freelancers get focused views with only the tools they need.
-                  </p>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-sm font-medium text-white">Version-safe collaboration</p>
-                  <p className="mt-1 text-sm text-gray-300">
-                    Push project versions confidently while preserving context and history.
-                  </p>
-                </div>
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-sm font-medium text-white">Feedback that closes loops</p>
-                  <p className="mt-1 text-sm text-gray-300">
-                    Turn comments into resolved actions and keep every stakeholder aligned.
-                  </p>
-                </div>
-                <div className="rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-4">
-                  <p className="text-sm font-medium text-emerald-100">This week on CreaoLink</p>
-                  <p className="mt-1 text-sm text-emerald-50/90">
-                    942 feedback tasks closed, 1,120 versions submitted, 87 projects shipped.
-                  </p>
-                </div>
+              ))}
+              <div className="version-note">
+                <strong>v4.2</strong> uploaded by Kunal A. - 2 files - pending review
               </div>
             </div>
           </div>
         </section>
 
-        <section className="border-b border-white/10 bg-[#07080f]">
-          <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-            <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Trusted by product teams, agencies, and scaling studios</p>
-            <div className="marquee-strip mt-4 overflow-hidden whitespace-nowrap text-sm text-gray-300/90">
-              <span className="marquee-content inline-flex gap-10 pr-10">
-                <span>NovoForge Studio</span>
-                <span>BlueOrbit Digital</span>
-                <span>PixelCraft Labs</span>
-                <span>Northlane Products</span>
-                <span>MetricMint Agency</span>
-                <span>CloudPillar Ventures</span>
-                <span>NovaNest Collective</span>
-              </span>
-              <span className="marquee-content inline-flex gap-10 pr-10" aria-hidden>
-                <span>NovoForge Studio</span>
-                <span>BlueOrbit Digital</span>
-                <span>PixelCraft Labs</span>
-                <span>Northlane Products</span>
-                <span>MetricMint Agency</span>
-                <span>CloudPillar Ventures</span>
-                <span>NovaNest Collective</span>
-              </span>
-            </div>
+        <section className="landing-section">
+          <SectionHeader label="Outcomes" title={<>Numbers teams actually care about</>} />
+          <div className="outcomes-grid">
+            {outcomes.map((outcome) => (
+              <article className="outcome-card" key={outcome.label}>
+                <span>{outcome.tag}</span>
+                <strong>{outcome.value}</strong>
+                <h3>{outcome.label}</h3>
+                <p>{outcome.description}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section id="features" className="border-b border-white/10 bg-[linear-gradient(180deg,#090b14_0%,#090b10_100%)]">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-            <div className="mb-10 max-w-3xl reveal-up">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Platform flow</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                A simple system for complex delivery work
-              </h2>
-              <p className="mt-3 text-gray-300">
-                Teams move faster when planning, execution, and review live in one connected timeline.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {milestones.map((item, index) => (
-                <article
-                  key={item.title}
-                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-6"
-                  style={{ animationDelay: `${index * 120}ms` }}
-                >
-                  <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">Step {index + 1}</p>
-                  <h3 className="mt-3 text-lg font-semibold text-white">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-300">{item.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="border-b border-white/10 bg-[#070b10]">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-            <div className="mb-8 max-w-3xl reveal-up">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Measured outcomes</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                Delivery impact teams can measure
-              </h2>
-              <p className="mt-3 text-gray-300">
-                Teams using CreaoLink report faster approvals, fewer revision cycles, and clearer ownership across every project phase.
-              </p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {outcomes.map((item, index) => (
-                <article
-                  key={item.segment}
-                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-6"
-                  style={{ animationDelay: `${index * 120}ms` }}
-                >
-                  <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">{item.segment}</p>
-                  <h3 className="mt-2 text-2xl font-semibold text-emerald-200">{item.metric}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-gray-300">{item.detail}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="border-b border-white/10 bg-[linear-gradient(180deg,#08090c_0%,#080d14_100%)]">
-          <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1fr] lg:px-8 lg:py-20">
-            <div className="reveal-up">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Implementation</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                First-value rollout in 4 weeks
-              </h2>
-              <p className="mt-3 text-gray-300">
-                A practical onboarding rhythm to launch quickly without disrupting active project delivery.
-              </p>
-            </div>
-            <div className="space-y-3">
-              {onboardingPlan.map((step, index) => (
-                <div
-                  key={step.week}
-                  className="reveal-up rounded-xl border border-white/10 bg-white/[0.03] p-4"
-                  style={{ animationDelay: `${index * 120}ms` }}
-                >
-                  <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">{step.week}</p>
-                  <p className="mt-1 text-sm font-semibold text-white">{step.title}</p>
-                  <p className="mt-1 text-sm text-gray-300">{step.detail}</p>
+        <section className="landing-section" id="testimonials">
+          <SectionHeader label="Reviews" title={<>What teams say after switching</>} />
+          <div className="testimonials-grid">
+            {testimonials.map((testimonial, index) => (
+              <article className="testimonial-card" key={testimonial.name}>
+                <p className="stars">5/5</p>
+                <blockquote>{testimonial.quote}</blockquote>
+                <div className="testimonial-author">
+                  <span className={`avatar avatar-${index + 1}`}>{testimonial.initials}</span>
+                  <div>
+                    <strong>{testimonial.name}</strong>
+                    <p>{testimonial.role}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </article>
+            ))}
           </div>
         </section>
 
-        <section id="about" className="border-b border-white/10 bg-[#07070b]">
-          <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-20">
-            <div className="reveal-up">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">About us</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                We started CreaoLink to remove delivery friction
-              </h2>
-              <p className="mt-4 text-base leading-relaxed text-gray-300">
-                Our team experienced the same recurring pain across agencies and product teams: scattered files,
-                unclear ownership, delayed feedback, and status confusion. CreaoLink was built to fix that pattern
-                with a workspace where every role can move in sync.
-              </p>
-              <p className="mt-4 text-base leading-relaxed text-gray-300">
-                Our motive is simple: help creators and clients collaborate with confidence, visibility, and speed,
-                so great work ships more often and with less stress.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {values.map((value, index) => (
-                <div
-                  key={value.title}
-                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-5"
-                  style={{ animationDelay: `${index * 120}ms` }}
-                >
-                  <h3 className="text-base font-semibold text-white">{value.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-300">{value.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="events" className="border-b border-white/10 bg-[linear-gradient(130deg,#080912_0%,#0b0a09_100%)]">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-            <div className="mb-8 max-w-2xl reveal-up">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Events</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Meet us in upcoming sessions</h2>
-              <p className="mt-3 text-gray-300">
-                Join product leaders, freelancers, and agency operators learning better collaboration systems.
-              </p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              {events.map((event, index) => (
-                <article
-                  key={event.name}
-                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-5"
-                  style={{ animationDelay: `${index * 140}ms` }}
-                >
-                  <p className="text-xs uppercase tracking-[0.16em] text-emerald-200">{event.date}</p>
-                  <h3 className="mt-2 text-lg font-semibold text-white">{event.name}</h3>
-                  <p className="mt-1 text-sm text-gray-400">{event.mode}</p>
-                  <p className="mt-3 text-sm leading-relaxed text-gray-300">{event.detail}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="pricing" className="border-b border-white/10 bg-[#07080c]">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-            <div className="mb-8 max-w-3xl reveal-up">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Pricing</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                Plans that scale with your delivery volume
-              </h2>
-              <p className="mt-3 text-gray-300">
-                Start free, standardize your process, and upgrade when your collaboration volume grows.
-              </p>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              {plans.map((plan, index) => (
-                <article
-                  key={plan.name}
-                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-6"
-                  style={{ animationDelay: `${index * 120}ms` }}
-                >
-                  <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">{plan.name}</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{plan.price}</p>
-                  <p className="mt-2 text-sm text-gray-300">{plan.target}</p>
-                  <ul className="mt-4 space-y-2 text-sm text-gray-300">
-                    {plan.points.map((point) => (
-                      <li key={point}>• {point}</li>
-                    ))}
-                  </ul>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="faq" className="border-b border-white/10 bg-[#08080b]">
-          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-            <div className="mb-8 max-w-3xl reveal-up">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">FAQ</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                Common questions from delivery teams
-              </h2>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {faqs.map((faq, index) => (
-                <article
-                  key={faq.question}
-                  className="reveal-up rounded-2xl border border-white/10 bg-white/[0.03] p-5"
-                  style={{ animationDelay: `${index * 120}ms` }}
-                >
-                  <h3 className="text-base font-semibold text-white">{faq.question}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-gray-300">{faq.answer}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="contact" className="border-b border-white/10 bg-[#07080d]">
-          <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-20">
-            <div className="reveal-up">
-              <p className="text-xs uppercase tracking-[0.2em] text-text-secondary">Contact</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                Talk to our team
-              </h2>
-              <p className="mt-3 max-w-xl text-gray-300">
-                Whether you are scaling a freelance network or operating a product team, we can help you design a smoother delivery flow.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href="/auth/signup"
-                  className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition-transform hover:-translate-y-0.5"
-                >
-                  Start free trial
+        <section className="landing-section" id="pricing">
+          <SectionHeader centered label="Pricing" title={<>Simple pricing, no surprises</>}>
+            Start free, standardize your process, and scale when your delivery volume grows.
+          </SectionHeader>
+          <div className="pricing-grid">
+            {plans.map((plan) => (
+              <article className={plan.featured ? "price-card featured" : "price-card"} key={plan.name}>
+                <p className="price-name">{plan.name}</p>
+                <strong className="price-value">{plan.price}</strong>
+                <span className="price-period">{plan.period}</span>
+                <p className="price-desc">{plan.description}</p>
+                <ul>
+                  {plan.points.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
+                <Link href="/auth/signup" className={plan.featured ? "cl-btn primary full" : "cl-btn ghost full"}>
+                  {plan.featured ? "Start free trial" : "Get started"}
                 </Link>
-                <a
-                  href="mailto:hello@creaolink.com"
-                  className="rounded-xl border border-white/25 bg-black/20 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-black/40"
-                >
-                  hello@creaolink.com
-                </a>
-              </div>
-            </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">Head office</p>
-                <p className="mt-2 text-sm leading-relaxed text-gray-300">44 Product Lane, Koramangala, Bengaluru, Karnataka 560034</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">Phone</p>
-                <p className="mt-2 text-sm text-gray-300">+91 80 4422 1108</p>
-                <p className="mt-2 text-sm text-gray-400">Mon-Fri, 9:00 AM to 6:00 PM IST</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:col-span-2">
-                <p className="text-xs uppercase tracking-[0.16em] text-text-secondary">Support</p>
-                <p className="mt-2 text-sm leading-relaxed text-gray-300">
-                  Need onboarding support? Write to support@creaolink.com and we will help you set up your first workspace.
-                </p>
-              </div>
+        <section className="landing-section cta-section">
+          <div className="cta-wrap">
+            <h2>
+              Ship more. <em>Chase less.</em>
+              <br />
+              Start in 2 minutes.
+            </h2>
+            <p>No card required. Cancel whenever. First workspace is free forever.</p>
+            <div className="hero-actions">
+              <Link href="/auth/signup" className="cl-btn primary large">
+                Create free workspace
+              </Link>
+              <Link href="/auth/login" className="cl-btn ghost large">
+                Book a demo
+              </Link>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="bg-[#050609]">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-gray-400 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <p>© {new Date().getFullYear()} CreaoLink. Built for teams that ship together.</p>
-          <div className="flex flex-wrap gap-4">
-            <a href="#features" className="transition-colors hover:text-white">Features</a>
-            <a href="#about" className="transition-colors hover:text-white">About</a>
-            <a href="#pricing" className="transition-colors hover:text-white">Pricing</a>
-            <a href="#faq" className="transition-colors hover:text-white">FAQ</a>
-            <a href="#events" className="transition-colors hover:text-white">Events</a>
-            <a href="#contact" className="transition-colors hover:text-white">Contact</a>
-          </div>
+      <footer className="landing-footer">
+        <div>
+          <Link href="/" className="footer-logo">
+            Creao<span>Link</span>
+          </Link>
+          <p>The operating system for client-freelancer delivery teams.</p>
         </div>
+        <nav>
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#testimonials">Reviews</a>
+        </nav>
+        <p>(c) {new Date().getFullYear()} CreaoLink. Built for teams that ship together.</p>
       </footer>
     </div>
   );
