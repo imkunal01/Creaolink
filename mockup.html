@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CreaoLink — Complete App Redesign v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0d0c;--s1:#131513;--s2:#191c1a;--s3:#1f2220;--s4:#252825;
+  --white:#fff;--m1:#5c6862;--m2:#8c9a95;--m3:#b5c4be;
+  --b1:rgba(255,255,255,.055);--b2:rgba(255,255,255,.1);--b3:rgba(255,255,255,.17);
+  --red:#e8392e;--red2:#bf2d23;--rs:rgba(232,57,46,.12);--rg:rgba(232,57,46,.25);
+  --r:7px;--rl:13px;--rxl:20px;
+  --fd:'Instrument Serif',Georgia,serif;--fb:'DM Sans',system-ui,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--fb);background:var(--bg);color:var(--white);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.28;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E")}
+
+/* ─── PAGE NAV ─── */
+.pnav{position:sticky;top:0;z-index:200;background:var(--s1);border-bottom:1px solid var(--b2);padding:.7rem 1.5rem;display:flex;align-items:center;gap:1.25rem;overflow-x:auto;white-space:nowrap}
+.pnav-logo{font-family:var(--fd);font-size:1rem;color:var(--white)}
+.pnav-logo b{color:var(--red)}
+.pnav a{font-size:.76rem;color:var(--m2);text-decoration:none;padding:.3rem .7rem;border-radius:5px;transition:all .15s}
+.pnav a:hover{color:var(--white);background:var(--s3)}
+.pnav a.cur{color:var(--white);background:var(--s3)}
+.page-divider{padding:.6rem 1.5rem;background:var(--s1);border-top:1px solid var(--b2);border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:.6rem;margin-top:3.5rem}
+.page-divider span{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--m1);font-weight:600}
+.page-divider::after{content:'';flex:1;height:1px;background:var(--b1)}
+.chips{display:flex;gap:.4rem;flex-wrap:wrap;padding:1rem 1.5rem .25rem}
+.chip{font-size:.7rem;padding:2px 9px;border-radius:99px;border:1px solid var(--b2)}
+.chip-g{color:#4ade80;border-color:rgba(74,222,128,.22);background:rgba(74,222,128,.07)}
+.chip-y{color:#fbbf24;border-color:rgba(251,191,36,.22);background:rgba(251,191,36,.07)}
+.chip-r{color:var(--red);border-color:var(--rg);background:var(--rs)}
+.chip-n{color:var(--m2);background:var(--s3)}
+
+/* ─── SHARED ─── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 16px;height:36px;border-radius:var(--r);border:1px solid transparent;font-size:.81rem;font-weight:500;cursor:pointer;font-family:var(--fb);transition:all .15s;text-decoration:none;white-space:nowrap}
+.btn-p{background:var(--red);color:#fff;border-color:var(--red)}.btn-p:hover{background:var(--red2);box-shadow:0 0 24px var(--rg)}
+.btn-g{background:transparent;color:var(--m2);border-color:var(--b2)}.btn-g:hover{color:var(--white);border-color:var(--b3)}
+.btn-s{background:var(--s3);color:var(--m3);border-color:var(--b2)}.btn-s:hover{color:var(--white)}
+.btn-lg{height:44px;padding:0 24px;font-size:.9rem}
+.btn-sm{height:30px;padding:0 10px;font-size:.74rem}
+.tag{display:inline-flex;align-items:center;gap:4px;border-radius:5px;padding:2px 8px;font-size:.67rem;font-weight:600;letter-spacing:.03em;border:1px solid var(--b1)}
+.tag-a{background:var(--rs);color:var(--red);border-color:var(--rg)}
+.tag-r{background:rgba(251,191,36,.1);color:#fbbf24;border-color:rgba(251,191,36,.22)}
+.tag-d{background:rgba(74,222,128,.1);color:#4ade80;border-color:rgba(74,222,128,.22)}
+.tag-n{background:var(--s3);color:var(--m2)}
+input,textarea,select{font-family:var(--fb)}
+
+/* ─── SHELL ─── */
+.shell{display:grid;grid-template-rows:52px 1fr;height:100vh;max-height:960px;border:1px solid var(--b2);border-radius:var(--rxl);overflow:hidden;margin:.75rem}
+
+/* TOPBAR */
+.topbar{background:var(--s1);border-bottom:1px solid var(--b2);display:flex;align-items:center;padding:0 1.25rem;gap:.85rem}
+.tb-logo{font-family:var(--fd);font-size:1.15rem;color:var(--white);text-decoration:none;margin-right:.5rem}
+.tb-logo b{color:var(--red)}
+.tb-search{flex:1;max-width:340px;height:32px;display:flex;align-items:center;gap:7px;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r);padding:0 11px}
+.tb-search input{background:transparent;border:none;outline:none;font-size:.79rem;color:var(--white);width:100%}
+.tb-search input::placeholder{color:var(--m1)}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:.6rem}
+.tb-notif{width:32px;height:32px;border-radius:var(--r);background:var(--s3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;color:var(--m2);position:relative;cursor:pointer}
+.tb-notif .dot{position:absolute;top:5px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--red);border:1.5px solid var(--s1)}
+.tb-user{display:flex;align-items:center;gap:.55rem;padding:3px 9px 3px 3px;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r);cursor:pointer}
+.av{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700;color:#fff;flex-shrink:0}
+
+/* SIDEBAR */
+.body{display:grid;grid-template-columns:220px 1fr;height:100%;overflow:hidden}
+.sidebar{background:var(--s1);border-right:1px solid var(--b2);display:flex;flex-direction:column;overflow-y:auto;padding:.75rem 0}
+.sl{font-size:.63rem;letter-spacing:.14em;text-transform:uppercase;color:var(--m1);font-weight:600;padding:.5rem .9rem .35rem}
+.si{display:flex;align-items:center;gap:.65rem;padding:.45rem .75rem;margin:1px .5rem;border-radius:6px;font-size:.8rem;color:var(--m2);cursor:pointer;transition:all .12s;text-decoration:none}
+.si:hover{background:var(--s3);color:var(--white)}
+.si.on{background:var(--s3);color:var(--white);border:1px solid var(--b2)}
+.si.on svg{color:var(--red)}
+.si svg{opacity:.7;flex-shrink:0}
+.si-badge{margin-left:auto;background:var(--rs);color:var(--red);border:1px solid var(--rg);border-radius:4px;font-size:.6rem;font-weight:700;padding:1px 5px}
+.si-divider{height:1px;background:var(--b1);margin:.5rem 0}
+.si-proj{display:flex;align-items:center;gap:.55rem;padding:.35rem .75rem .35rem 1.1rem;font-size:.76rem;color:var(--m1);cursor:pointer;transition:color .12s}
+.si-proj:hover{color:var(--m3)}
+.si-proj .pdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.sb-bottom{margin-top:auto;padding:.65rem .5rem .25rem}
+.sb-user{display:flex;align-items:center;gap:.55rem;padding:.6rem .75rem;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);cursor:pointer}
+.sb-user-name{font-size:.78rem;font-weight:500;color:var(--white)}
+.sb-user-role{font-size:.67rem;color:var(--m1)}
+
+/* MAIN */
+.main{overflow-y:auto;background:var(--s2)}
+.mc{padding:1.5rem 1.75rem}
+.mh{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;gap:1rem}
+.mh-t{font-family:var(--fd);font-size:1.55rem;color:var(--white);letter-spacing:-.02em;line-height:1.1}
+.mh-s{font-size:.8rem;color:var(--m2);margin-top:.2rem}
+.mh-actions{display:flex;gap:.5rem;flex-shrink:0}
+.card{background:var(--s1);border:1px solid var(--b2);border-radius:var(--rl)}
+.card-head{padding:.8rem 1.1rem;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m1);font-weight:600}
+
+/* ════════════════════════════════════════════
+   PAGE 1: DASHBOARD
+════════════════════════════════════════════ */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:1.25rem}
+.kpi{background:var(--s1);border:1px solid var(--b2);border-radius:var(--rl);padding:1.1rem 1.25rem}
+.kpi-n{font-family:var(--fd);font-size:2rem;line-height:1;letter-spacing:-.03em;color:var(--white)}
+.kpi-n.r{color:var(--red)}
+.kpi-l{font-size:.75rem;color:var(--m2);margin-top:.25rem}
+.kpi-t{font-size:.68rem;margin-top:.4rem;display:flex;align-items:center;gap:3px}
+.kpi-t.up{color:#4ade80}.kpi-t.dn{color:var(--red)}
+.dash-grid{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:1.1rem}
+.proj-thead{display:grid;grid-template-columns:minmax(0,1fr) 100px 95px 90px;gap:.6rem;padding:.55rem 1.1rem;border-bottom:1px solid var(--b2);font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m1)}
+.proj-row{display:grid;grid-template-columns:minmax(0,1fr) 100px 95px 90px;gap:.6rem;padding:.7rem 1.1rem;border-bottom:1px solid var(--b1);font-size:.78rem;align-items:center;transition:background .12s;cursor:pointer}
+.proj-row:last-child{border-bottom:none}
+.proj-row:hover{background:var(--s2)}
+.pr-name{font-weight:500;color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-sub{font-size:.68rem;color:var(--m1);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pr-who{color:var(--m2)}
+.pr-date{color:var(--m1)}
+.act-list{padding:.2rem 0}
+.act-item{display:flex;gap:.75rem;padding:.75rem 1.1rem;border-bottom:1px solid var(--b1);align-items:flex-start}
+.act-item:last-child{border-bottom:none}
+.act-ico{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.66rem;font-weight:700;border:1px solid var(--b2)}
+.act-body{flex:1;min-width:0}
+.act-t{font-size:.78rem;color:var(--m2);line-height:1.45}
+.act-t strong{color:var(--white);font-weight:500}
+.act-time{font-size:.66rem;color:var(--m1);margin-top:.18rem}
+.right-col{display:flex;flex-direction:column;gap:.85rem}
+.fb-item{display:flex;gap:.6rem;padding:.7rem 1.1rem;border-bottom:1px solid var(--b1);align-items:flex-start}
+.fb-item:last-child{border-bottom:none}
+.fb-txt{font-size:.75rem;color:var(--m2);line-height:1.45}
+.fb-txt strong{color:var(--white);font-weight:500}
+.fb-cta{font-size:.66rem;color:var(--red);font-weight:600;margin-top:.25rem;cursor:pointer}
+.qa-btn{display:flex;align-items:center;gap:.65rem;padding:.6rem 1.1rem;border-bottom:1px solid var(--b1);font-size:.78rem;color:var(--m2);cursor:pointer;transition:all .12s}
+.qa-btn:last-child{border-bottom:none}
+.qa-btn:hover{color:var(--white);background:var(--s2)}
+.qa-btn svg{opacity:.6}
+
+/* ════════════════════════════════════════════
+   PAGE 2: PROJECTS LIST
+════════════════════════════════════════════ */
+.filter-bar{display:flex;align-items:center;gap:.5rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.fchip{display:flex;align-items:center;gap:5px;padding:5px 11px;border:1px solid var(--b2);border-radius:var(--r);font-size:.76rem;color:var(--m2);cursor:pointer;background:var(--s3);transition:all .12s}
+.fchip:hover,.fchip.on{color:var(--white);border-color:var(--b3);background:var(--s4)}
+.fchip .cnt{font-size:.62rem;background:var(--s4);border-radius:3px;padding:0 5px}
+.fsearch{display:flex;align-items:center;gap:7px;padding:0 11px;height:34px;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r);font-size:.79rem;color:var(--white);margin-left:auto}
+.fsearch input{background:transparent;border:none;outline:none;font-size:.79rem;color:var(--white);width:160px}
+.fsearch input::placeholder{color:var(--m1)}
+.pcards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.pc{background:var(--s1);border:1px solid var(--b2);border-radius:var(--rl);padding:1.25rem;cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+.pc:hover{border-color:var(--b3);transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+.pc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);opacity:0;transition:opacity .18s}
+.pc:hover::before{opacity:1}
+.pc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.65rem}
+.pc-title{font-size:.95rem;font-weight:500;color:var(--white);margin-bottom:.3rem;line-height:1.3}
+.pc-desc{font-size:.77rem;color:var(--m1);line-height:1.6;margin-bottom:.9rem}
+.pc-prog{margin-bottom:.9rem}
+.pc-prog-lbl{display:flex;justify-content:space-between;font-size:.67rem;color:var(--m1);margin-bottom:.35rem}
+.pc-prog-bar{height:3px;background:var(--b2);border-radius:99px;overflow:hidden}
+.pc-prog-fill{height:100%;background:var(--red);border-radius:99px;transition:width .4s}
+.pc-foot{display:flex;align-items:center;justify-content:space-between}
+.av-stack{display:flex}
+.av-stack .av{margin-right:-6px;border:1.5px solid var(--s1)}
+.pc-date{font-size:.68rem;color:var(--m1)}
+.empty-state{background:var(--s1);border:1px dashed var(--b2);border-radius:var(--rl);padding:4rem 2rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.75rem}
+.es-icon{width:56px;height:56px;border-radius:var(--rl);background:var(--s3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;color:var(--m1)}
+.es-title{font-size:1rem;font-weight:500;color:var(--white)}
+.es-sub{font-size:.82rem;color:var(--m1);max-width:280px;line-height:1.6}
+
+/* ════════════════════════════════════════════
+   PAGE 3: PROJECT DETAIL — OVERVIEW
+════════════════════════════════════════════ */
+.proj-header-bar{padding:.85rem 1.75rem;border-bottom:1px solid var(--b2);background:var(--s1);display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+.breadcrumb{font-size:.77rem;color:var(--m1);display:flex;align-items:center;gap:.4rem}
+.breadcrumb a{color:var(--m2);text-decoration:none}.breadcrumb a:hover{color:var(--white)}
+.proj-title-row{display:flex;align-items:center;gap:.8rem;flex:1}
+.proj-title{font-size:1.15rem;font-weight:600;color:var(--white)}
+.proj-meta-row{font-size:.72rem;color:var(--m1);display:flex;align-items:center;gap:.5rem}
+.proj-tabs{border-bottom:1px solid var(--b2);background:var(--s1);display:flex;padding:0 1.75rem;flex-shrink:0}
+.ptab{padding:.7rem 1rem;font-size:.8rem;font-weight:500;color:var(--m1);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:.4rem}
+.ptab:hover{color:var(--m3)}
+.ptab.on{color:var(--white);border-bottom-color:var(--red)}
+.ptab-cnt{background:var(--rs);color:var(--red);border-radius:4px;font-size:.6rem;font-weight:700;padding:1px 5px;border:1px solid var(--rg)}
+.pd-body{display:grid;grid-template-columns:minmax(0,1fr) 280px;flex:1;overflow:hidden}
+.pd-main{padding:1.5rem;overflow-y:auto;display:flex;flex-direction:column;gap:1.25rem}
+.pd-right{border-left:1px solid var(--b2);background:var(--s1);overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
+.sec-title{font-size:.67rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m1);font-weight:600;margin-bottom:.75rem}
+.vt-wrap{display:flex;flex-direction:column;gap:0}
+.vt-item{display:flex;gap:.8rem;position:relative;padding-bottom:1.1rem}
+.vt-item:last-child{padding-bottom:0}
+.vt-line{position:absolute;left:10px;top:21px;bottom:0;width:1px;background:var(--b2)}
+.vt-item:last-child .vt-line{display:none}
+.vt-dot{width:21px;height:21px;border-radius:50%;border:1.5px solid var(--b2);background:var(--s3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.6rem;z-index:1;margin-top:1px}
+.vt-dot.cur{border-color:var(--red);background:var(--rs)}
+.vt-body{flex:1;min-width:0}
+.vt-label{font-size:.8rem;font-weight:500;color:var(--white);margin-bottom:.15rem}
+.vt-label span{color:var(--m1);font-weight:400}
+.vt-sub{font-size:.71rem;color:var(--m1)}
+.vt-note{background:var(--s3);border:1px solid var(--b1);border-radius:6px;padding:.55rem .8rem;font-size:.74rem;color:var(--m2);line-height:1.55;margin-top:.4rem}
+.fb-card{background:var(--s3);border:1px solid var(--b1);border-radius:var(--r);padding:.85rem 1rem;margin-bottom:.6rem}
+.fbc-head{display:flex;align-items:center;gap:.55rem;margin-bottom:.4rem}
+.fbc-name{font-size:.78rem;font-weight:500;color:var(--white)}
+.fbc-role{font-size:.67rem;color:var(--m1)}
+.fbc-time{font-size:.67rem;color:var(--m1);margin-left:auto}
+.fbc-text{font-size:.77rem;color:var(--m2);line-height:1.55}
+.fbc-foot{display:flex;align-items:center;gap:.45rem;margin-top:.55rem}
+.info-pair{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--b1);font-size:.78rem}
+.info-pair:last-child{border-bottom:none}
+.info-k{color:var(--m1)}
+.info-v{color:var(--white);font-weight:500}
+.tm-item{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--b1)}
+.tm-item:last-child{border-bottom:none}
+.tm-info{flex:1;min-width:0}
+.tm-name{font-size:.79rem;font-weight:500;color:var(--white)}
+.tm-role{font-size:.68rem;color:var(--m1)}
+
+/* ════════════════════════════════════════════
+   PAGE 4: PROJECT DETAIL — CHAT
+════════════════════════════════════════════ */
+.chat-wrap{display:grid;grid-template-rows:1fr auto;height:100%;overflow:hidden}
+.chat-msgs{overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:.65rem}
+.chat-day-sep{text-align:center;font-size:.66rem;color:var(--m1);padding:.25rem 0;position:relative}
+.chat-day-sep::before,.chat-day-sep::after{content:'';position:absolute;top:50%;height:1px;background:var(--b1);width:calc(50% - 60px)}
+.chat-day-sep::before{left:0}.chat-day-sep::after{right:0}
+.msg-row{display:flex;gap:.6rem;max-width:78%}
+.msg-row.me{flex-direction:row-reverse;align-self:flex-end}
+.msg-av{width:26px;height:26px;border-radius:50%;flex-shrink:0;margin-top:2px;font-size:.56rem;font-weight:700;display:flex;align-items:center;justify-content:center;color:#fff}
+.msg-body{display:flex;flex-direction:column;gap:.2rem}
+.msg-meta{font-size:.65rem;color:var(--m1)}
+.msg-row.me .msg-meta{text-align:right}
+.msg-bubble{padding:.55rem .85rem;border-radius:var(--rl);font-size:.8rem;line-height:1.5;color:var(--white);word-break:break-word}
+.msg-bubble.them{background:var(--s3);border:1px solid var(--b2)}
+.msg-bubble.me{background:var(--red);border-radius:var(--rl) var(--rl) 4px var(--rl)}
+.msg-img{border-radius:var(--r);overflow:hidden;border:1px solid var(--b2);max-width:240px}
+.msg-file{display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r);max-width:260px;font-size:.76rem;color:var(--m2)}
+.chat-input-area{padding:.85rem 1.25rem;border-top:1px solid var(--b2);display:flex;align-items:flex-end;gap:.6rem;background:var(--s1)}
+.chat-input-box{flex:1;min-height:40px;max-height:120px;padding:.6rem .9rem;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r);font-size:.81rem;color:var(--white);outline:none;resize:none;font-family:var(--fb);line-height:1.4}
+.chat-input-box::placeholder{color:var(--m1)}
+.chat-meta-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.35rem;font-size:.67rem;color:var(--m1)}
+.chat-online{display:flex;align-items:center;gap:4px}
+.chat-online .dot{width:5px;height:5px;border-radius:50%;background:#4ade80}
+
+/* ════════════════════════════════════════════
+   PAGE 5: PROJECT DETAIL — FEEDBACK
+════════════════════════════════════════════ */
+.fb-filters{display:flex;align-items:center;gap:.5rem;margin-bottom:1.1rem}
+.fb-full-card{background:var(--s1);border:1px solid var(--b2);border-radius:var(--rl);overflow:hidden;margin-bottom:.75rem}
+.fb-fc-header{padding:.85rem 1.1rem;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:.6rem}
+.fb-fc-av{font-size:.58rem;font-weight:700}
+.fb-fc-user{font-size:.8rem;font-weight:500;color:var(--white)}
+.fb-fc-role{font-size:.67rem;color:var(--m1)}
+.fb-fc-time{font-size:.67rem;color:var(--m1);margin-left:auto}
+.fb-fc-body{padding:.85rem 1.1rem}
+.fb-fc-text{font-size:.8rem;color:var(--m2);line-height:1.6;margin-bottom:.65rem}
+.fb-fc-tags{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-bottom:.65rem}
+.fb-fc-foot{display:flex;align-items:center;gap:.5rem}
+.fb-open{padding:.6rem 1.1rem;background:var(--s2);border-top:1px solid var(--b1);font-size:.73rem;color:var(--m1);display:flex;align-items:center;gap:.4rem}
+.reply-preview{background:var(--s3);border-left:2px solid var(--b3);padding:.45rem .7rem;border-radius:0 5px 5px 0;font-size:.73rem;color:var(--m2);margin:.5rem 0;line-height:1.4}
+
+/* ════════════════════════════════════════════
+   PAGE 6: PROFILE
+════════════════════════════════════════════ */
+.profile-shell{max-width:1100px;margin:0 auto}
+.prof-cover{height:130px;border-radius:var(--rxl) var(--rxl) 0 0;background:linear-gradient(135deg,var(--s3) 0%,rgba(232,57,46,.1) 100%);position:relative}
+.prof-av-wrap{position:absolute;bottom:-44px;left:1.75rem}
+.prof-av{width:88px;height:88px;border-radius:50%;border:3px solid var(--s2);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;color:#fff}
+.prof-actions-row{display:flex;justify-content:flex-end;padding:.6rem 1.75rem 0;gap:.5rem}
+.prof-info{padding:3.5rem 1.75rem 1.25rem}
+.prof-name{font-family:var(--fd);font-size:1.55rem;color:var(--white);letter-spacing:-.02em}
+.prof-handle{font-size:.85rem;color:var(--m2);margin-top:.15rem;display:flex;align-items:center;gap:.6rem}
+.prof-bio{font-size:.84rem;color:var(--m2);max-width:540px;line-height:1.7;margin-top:.6rem;font-weight:300}
+.prof-skills{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem}
+.prof-stat-row{display:flex;gap:2rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--b1)}
+.prof-stat-n{font-family:var(--fd);font-size:1.4rem;color:var(--white);line-height:1}
+.prof-stat-l{font-size:.71rem;color:var(--m1);margin-top:.15rem}
+.prof-grid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:1.5rem;padding:0 1.75rem 2rem}
+.pub-proj-card{background:var(--s3);border:1px solid var(--b1);border-radius:var(--r);padding:1rem;margin-bottom:.65rem;cursor:pointer;transition:border-color .15s}
+.pub-proj-card:hover{border-color:var(--b2)}
+.ppc-title{font-size:.86rem;font-weight:500;color:var(--white);margin-bottom:.3rem}
+.ppc-desc{font-size:.75rem;color:var(--m1);line-height:1.55}
+.ppc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:.65rem;font-size:.68rem;color:var(--m1)}
+.contrib-graph{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
+.cg-col{display:flex;flex-direction:column;gap:4px;align-items:center}
+.cg-bar-wrap{flex:1;width:100%;display:flex;flex-direction:column;justify-content:flex-end;background:var(--s3);border-radius:3px;overflow:hidden;height:80px;border:1px solid var(--b1)}
+.cg-bar{width:100%;border-radius:2px;transition:height .3s}
+.cg-label{font-size:.58rem;color:var(--m1);margin-top:3px}
+
+/* ════════════════════════════════════════════
+   AUTH PAGES
+════════════════════════════════════════════ */
+.auth-page{display:grid;grid-template-columns:1fr 1fr;height:600px;border:1px solid var(--b2);border-radius:var(--rxl);overflow:hidden;max-width:860px;margin:.75rem auto}
+.auth-left{background:var(--s1);padding:2.75rem;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--b2);position:relative;overflow:hidden}
+.auth-left::before{content:'';position:absolute;top:-60px;left:-60px;width:280px;height:280px;border-radius:50%;background:radial-gradient(ellipse,rgba(232,57,46,.14),transparent 65%);pointer-events:none}
+.auth-right{background:var(--s2);padding:2.75rem;display:flex;flex-direction:column;justify-content:center}
+.auth-logo{font-family:var(--fd);font-size:1.25rem;color:var(--white);margin-bottom:2.5rem;display:block}
+.auth-logo b{color:var(--red)}
+.auth-h{font-size:1.15rem;font-weight:600;color:var(--white)}
+.auth-sub{font-size:.8rem;color:var(--m2);margin:.2rem 0 1.35rem;line-height:1.6}
+.fg{margin-bottom:.95rem}
+.fl{display:block;font-size:.74rem;font-weight:500;color:var(--m2);margin-bottom:.35rem}
+.fi{width:100%;height:40px;padding:0 11px;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r);font-size:.81rem;color:var(--white);outline:none;transition:border-color .15s;display:flex;align-items:center;gap:7px}
+.fi.real{pointer-events:none}
+.fi input{background:transparent;border:none;outline:none;font-size:.81rem;color:var(--white);width:100%}
+.fi input::placeholder{color:var(--m1)}
+.fi-icon{color:var(--m1);flex-shrink:0}
+.form-or{display:flex;align-items:center;gap:.65rem;margin:1.1rem 0;font-size:.72rem;color:var(--m1)}
+.form-or::before,.form-or::after{content:'';flex:1;height:1px;background:var(--b2)}
+.oauth{width:100%;height:40px;display:flex;align-items:center;justify-content:center;gap:.65rem;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r);font-size:.8rem;color:var(--m2);cursor:pointer;transition:all .15s;margin-bottom:.6rem}
+.oauth:hover{color:var(--white);border-color:var(--b3)}
+.auth-foot{font-size:.77rem;color:var(--m1);text-align:center;margin-top:1rem}
+.auth-foot a{color:var(--m2);font-weight:500}
+.auth-quote{margin-top:2.5rem;padding:1.1rem;background:var(--s3);border:1px solid var(--b1);border-radius:var(--r)}
+.auth-q-text{font-size:.79rem;color:var(--m2);line-height:1.6;font-style:italic;margin-bottom:.65rem}
+.auth-q-author{display:flex;align-items:center;gap:.55rem}
+/* Signup steps */
+.step-bar{display:flex;gap:3px;margin-bottom:.5rem}
+.step-seg{flex:1;height:2px;border-radius:99px;background:var(--b2);transition:background .25s}
+.step-seg.done{background:var(--red)}
+.step-labels{display:flex;justify-content:space-between;font-size:.62rem;color:var(--m1);margin-bottom:1.1rem}
+.step-labels span.active{color:var(--red)}
+.plan-opt{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;border:1px solid var(--b2);border-radius:var(--r);cursor:pointer;transition:all .15s;margin-bottom:.55rem;background:var(--s3)}
+.plan-opt.sel{border-color:var(--red);background:var(--rs)}
+.po-name{font-size:.84rem;font-weight:500;color:var(--white)}
+.po-sub{font-size:.72rem;color:var(--m1);margin-top:.12rem}
+.radio{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--b3);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.radio.sel{border-color:var(--red)}
+.radio-dot{width:7px;height:7px;border-radius:50%;background:var(--red)}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.1rem}
+.role-btn{padding:.6rem;border:1px solid var(--b2);border-radius:var(--r);text-align:center;font-size:.81rem;font-weight:500;cursor:pointer;background:var(--s3);color:var(--m2);transition:all .15s}
+.role-btn.on{background:var(--red);color:#fff;border-color:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- ══ PAGE NAV ══ -->
+<div class="pnav">
+  <span class="pnav-logo"><b>Creao</b>Link — UI Redesign v2</span>
+  <a href="#dash" class="cur">Dashboard</a>
+  <a href="#projects-list">Projects</a>
+  <a href="#proj-detail">Project Detail</a>
+  <a href="#proj-chat">Chat</a>
+  <a href="#proj-feedback">Feedback</a>
+  <a href="#profile">Profile</a>
+  <a href="#auth-login">Login</a>
+  <a href="#auth-signup">Signup</a>
+</div>
+
+
+<!-- ══════════════════════════════════════
+  1. DASHBOARD
+══════════════════════════════════════ -->
+<div class="page-divider" id="dash"><span>Page 1 — Dashboard /dashboard</span></div>
+<div class="chips">
+  <span class="chip chip-g">Stats row replaces empty 3-col layout</span>
+  <span class="chip chip-g">Projects table — no more duplicate sidebar tree</span>
+  <span class="chip chip-g">Activity feed with icons</span>
+  <span class="chip chip-g">Feedback queue + quick actions in right panel</span>
+  <span class="chip chip-r">Removed: scatter Projects/Activity/Discover/Network columns</span>
+</div>
+
+<div class="shell" id="dash-shell">
+  <div class="topbar">
+    <a href="#" class="tb-logo"><b>Creao</b>Link</a>
+    <div class="tb-search">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--m1)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input placeholder="Search users, projects…" readonly>
+    </div>
+    <div class="tb-right">
+      <div class="tb-notif">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="dot"></div>
+      </div>
+      <div class="tb-user">
+        <div class="av" style="width:26px;height:26px;font-size:.56rem;background:var(--red)">KK</div>
+        <div>
+          <div style="font-size:.77rem;font-weight:500;color:var(--white)">KKD</div>
+          <div style="font-size:.64rem;color:var(--m1)">Client</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="sidebar">
+      <div class="sl">Workspace</div>
+      <a href="#" class="si on">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a href="#projects-list" class="si">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Projects
+        <span class="si-badge">3</span>
+      </a>
+      <a href="#" class="si">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Feedback
+        <span class="si-badge">4</span>
+      </a>
+      <a href="#" class="si">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Timeline
+      </a>
+      <div class="si-divider"></div>
+      <div class="sl">Projects</div>
+      <div class="si-proj"><span class="pdot" style="background:var(--red)"></span>KunalTest</div>
+      <div class="si-proj"><span class="pdot" style="background:#fbbf24"></span>Brand Redesign</div>
+      <div class="si-proj"><span class="pdot" style="background:var(--m1)"></span>Portfolio v3</div>
+      <div class="si-divider"></div>
+      <div class="sl">Account</div>
+      <a href="#profile" class="si">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Profile
+      </a>
+      <div class="sb-bottom">
+        <div class="sb-user">
+          <div class="av" style="width:28px;height:28px;font-size:.58rem;background:var(--red)">KK</div>
+          <div style="min-width:0;flex:1">
+            <div class="sb-user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KKD · @kunald</div>
+            <div class="sb-user-role">Client · Starter</div>
+          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--m1)"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="mc">
+        <div class="mh">
+          <div>
+            <div class="mh-t">Good morning, KKD.</div>
+            <div class="mh-s">Here's what's happening across your projects today.</div>
+          </div>
+          <div class="mh-actions">
+            <button class="btn btn-g btn-sm">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="9" y2="18"/></svg>
+              Activity log
+            </button>
+            <button class="btn btn-p btn-sm">+ New project</button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-n r">3</div>
+            <div class="kpi-l">Active projects</div>
+            <div class="kpi-t up">↑ 1 this month</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-n">4</div>
+            <div class="kpi-l">Open feedback</div>
+            <div class="kpi-t dn">↑ 2 unresolved</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-n">v2</div>
+            <div class="kpi-l">Latest version</div>
+            <div class="kpi-t up">↑ KunalTest</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-n">11</div>
+            <div class="kpi-l">Reputation score</div>
+            <div class="kpi-t up">↑ All time</div>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div style="display:flex;flex-direction:column;gap:.85rem">
+            <!-- Projects table -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">Recent Projects</span>
+                <a href="#projects-list" style="font-size:.72rem;color:var(--m1);text-decoration:none">All projects →</a>
+              </div>
+              <div class="proj-thead">
+                <span>Project</span><span>Owner</span><span>Status</span><span>Updated</span>
+              </div>
+              <div class="proj-row">
+                <div><div class="pr-name">KunalTest</div><div class="pr-sub">A public case study project</div></div>
+                <div class="pr-who">KKD</div>
+                <div><span class="tag tag-a">● Active</span></div>
+                <div class="pr-date">Today</div>
+              </div>
+              <div class="proj-row">
+                <div><div class="pr-name">Brand Redesign</div><div class="pr-sub">Logo + visual identity</div></div>
+                <div class="pr-who">KKD</div>
+                <div><span class="tag tag-r">⏳ Review</span></div>
+                <div class="pr-date">Yesterday</div>
+              </div>
+              <div class="proj-row">
+                <div><div class="pr-name">Portfolio v3</div><div class="pr-sub">Personal portfolio redesign</div></div>
+                <div class="pr-who">KKD</div>
+                <div><span class="tag tag-d">✓ Done</span></div>
+                <div class="pr-date">3 days ago</div>
+              </div>
+            </div>
+
+            <!-- Activity -->
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">Activity feed</span>
+                <a href="#" style="font-size:.72rem;color:var(--m1);text-decoration:none">See all →</a>
+              </div>
+              <div class="act-list">
+                <div class="act-item">
+                  <div class="act-ico" style="background:var(--rs);color:var(--red)">v</div>
+                  <div class="act-body">
+                    <div class="act-t"><strong>You</strong> submitted version <strong>v2</strong> on KunalTest — "second draft"</div>
+                    <div class="act-time">Today at 10:58 PM</div>
+                  </div>
+                </div>
+                <div class="act-item">
+                  <div class="act-ico" style="background:rgba(74,222,128,.1);color:#4ade80">✓</div>
+                  <div class="act-body">
+                    <div class="act-t"><strong>kunal2</strong> joined KunalTest as Freelancer · Editor</div>
+                    <div class="act-time">Yesterday at 11:01 PM</div>
+                  </div>
+                </div>
+                <div class="act-item">
+                  <div class="act-ico" style="background:rgba(251,191,36,.1);color:#fbbf24">!</div>
+                  <div class="act-body">
+                    <div class="act-t"><strong>KKD</strong> added feedback on KunalTest — <strong>"Enhancement · High · @00:20"</strong></div>
+                    <div class="act-time">5/31/2026</div>
+                  </div>
+                </div>
+                <div class="act-item">
+                  <div class="act-ico" style="background:var(--s3);color:var(--m2)">+</div>
+                  <div class="act-body">
+                    <div class="act-t"><strong>You</strong> created project <strong>KunalTest</strong> and set visibility to Public</div>
+                    <div class="act-time">5/30/2026 at 10:48 PM</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right column -->
+          <div class="right-col">
+            <div class="card">
+              <div class="card-head">
+                <span class="card-title">Open feedback</span>
+                <span class="tag tag-a" style="font-size:.6rem">4 open</span>
+              </div>
+              <div class="fb-item">
+                <div class="av" style="width:24px;height:24px;font-size:.54rem;background:var(--red)">KK</div>
+                <div style="flex:1;min-width:0">
+                  <div class="fb-txt"><strong>KKD</strong> · KunalTest</div>
+                  <div class="fb-txt">"asdasd" — Enhancement · High · @00:20</div>
+                  <div class="fb-cta">→ View &amp; resolve</div>
+                </div>
+              </div>
+              <div class="fb-item" style="opacity:.6">
+                <div class="av" style="width:24px;height:24px;font-size:.54rem;background:var(--m1)">?</div>
+                <div style="flex:1;min-width:0">
+                  <div class="fb-txt">No other feedback yet</div>
+                  <div class="fb-txt" style="font-size:.68rem">Invite freelancers to get started</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><span class="card-title">Quick actions</span></div>
+              <div class="qa-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                Create new project
+              </div>
+              <div class="qa-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Submit new version
+              </div>
+              <div class="qa-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+                Invite collaborator
+              </div>
+              <div class="qa-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Connect Premiere Pro
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head"><span class="card-title">Network</span></div>
+              <div style="padding:.65rem 1.1rem">
+                <div style="display:flex;align-items:center;gap:.6rem;padding:.45rem 0;border-bottom:1px solid var(--b1)">
+                  <div class="av" style="width:26px;height:26px;font-size:.56rem;background:#7dd3fc;color:#0d0f0e">KD</div>
+                  <div style="flex:1">
+                    <div style="font-size:.78rem;font-weight:500;color:var(--white)">Kunal Dhangar</div>
+                    <div style="font-size:.67rem;color:var(--m1)">Freelancer</div>
+                  </div>
+                  <button class="btn btn-g btn-sm">Open</button>
+                </div>
+                <div style="padding:.65rem 0;font-size:.75rem;color:var(--m1);text-align:center">0 followers · 1 following</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+  2. PROJECTS LIST
+══════════════════════════════════════ -->
+<div class="page-divider" id="projects-list"><span>Page 2 — Projects List /dashboard/projects</span></div>
+<div class="chips">
+  <span class="chip chip-g">Filter bar with status tabs</span>
+  <span class="chip chip-g">Rich cards with progress bars + member stacks</span>
+  <span class="chip chip-g">3-column grid (was 1-col flat list)</span>
+  <span class="chip chip-g">Better empty state with clear CTA</span>
+</div>
+
+<div class="shell" style="height:auto;min-height:700px;max-height:none" id="proj-list-shell">
+  <div class="topbar">
+    <a href="#" class="tb-logo"><b>Creao</b>Link</a>
+    <div class="tb-search">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--m1)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input placeholder="Search users, projects…" readonly>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user">
+        <div class="av" style="width:26px;height:26px;font-size:.56rem;background:var(--red)">KK</div>
+        <div><div style="font-size:.77rem;font-weight:500;color:var(--white)">KKD</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="sidebar">
+      <div class="sl">Workspace</div>
+      <a href="#dash" class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+      <a href="#" class="si on"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects<span class="si-badge">3</span></a>
+      <a href="#" class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Feedback<span class="si-badge">4</span></a>
+      <div class="si-divider"></div>
+      <div class="sl">Projects</div>
+      <div class="si-proj"><span class="pdot" style="background:var(--red)"></span>KunalTest</div>
+      <div class="si-proj"><span class="pdot" style="background:#fbbf24"></span>Brand Redesign</div>
+      <div class="sb-bottom">
+        <div class="sb-user">
+          <div class="av" style="width:28px;height:28px;font-size:.58rem;background:var(--red)">KK</div>
+          <div style="min-width:0;flex:1"><div class="sb-user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KKD · @kunald</div><div class="sb-user-role">Client · Starter</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="mc">
+        <div class="mh">
+          <div><div class="mh-t">Projects</div><div class="mh-s">Manage and track your client delivery projects</div></div>
+          <div class="mh-actions"><button class="btn btn-p">+ New project</button></div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="fchip on">All <span class="cnt">3</span></div>
+          <div class="fchip">Active <span class="cnt">2</span></div>
+          <div class="fchip">In review <span class="cnt">0</span></div>
+          <div class="fchip">Completed <span class="cnt">1</span></div>
+          <div class="fchip">Paused <span class="cnt">0</span></div>
+          <div class="fsearch">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--m1)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input placeholder="Search projects…" readonly>
+          </div>
+        </div>
+
+        <div class="pcards">
+          <!-- Card with data -->
+          <div class="pc">
+            <div class="pc-header">
+              <span class="tag tag-a">● Active</span>
+              <button class="btn btn-g btn-sm" style="border:none;background:transparent;color:var(--m1);padding:0 4px">⋯</button>
+            </div>
+            <div class="pc-title">KunalTest</div>
+            <div class="pc-desc">A public case study that is part of this creator's portfolio. Connected to Premiere Pro timeline.</div>
+            <div class="pc-prog">
+              <div class="pc-prog-lbl"><span>Progress</span><span>45%</span></div>
+              <div class="pc-prog-bar"><div class="pc-prog-fill" style="width:45%"></div></div>
+            </div>
+            <div class="pc-foot">
+              <div class="av-stack">
+                <div class="av" style="width:20px;height:20px;font-size:.5rem;background:var(--red)">KK</div>
+                <div class="av" style="width:20px;height:20px;font-size:.5rem;background:#7dd3fc;color:#0d0f0e">K2</div>
+              </div>
+              <span class="pc-date">Updated today</span>
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div class="pc">
+            <div class="pc-header">
+              <span class="tag tag-r">⏳ In review</span>
+              <button class="btn btn-g btn-sm" style="border:none;background:transparent;color:var(--m1);padding:0 4px">⋯</button>
+            </div>
+            <div class="pc-title">Brand Redesign</div>
+            <div class="pc-desc">Full brand identity refresh including logo, colour palette, typography, and social media kit.</div>
+            <div class="pc-prog">
+              <div class="pc-prog-lbl"><span>Progress</span><span>78%</span></div>
+              <div class="pc-prog-bar"><div class="pc-prog-fill" style="width:78%"></div></div>
+            </div>
+            <div class="pc-foot">
+              <div class="av-stack">
+                <div class="av" style="width:20px;height:20px;font-size:.5rem;background:var(--red)">KK</div>
+                <div class="av" style="width:20px;height:20px;font-size:.5rem;background:#86efac;color:#0d0f0e">KD</div>
+              </div>
+              <span class="pc-date">Yesterday</span>
+            </div>
+          </div>
+          <!-- Card 3 complete -->
+          <div class="pc">
+            <div class="pc-header">
+              <span class="tag tag-d">✓ Approved</span>
+              <button class="btn btn-g btn-sm" style="border:none;background:transparent;color:var(--m1);padding:0 4px">⋯</button>
+            </div>
+            <div class="pc-title">Portfolio v3</div>
+            <div class="pc-desc">Personal portfolio website redesign with 3D scroll interactions and case study template.</div>
+            <div class="pc-prog">
+              <div class="pc-prog-lbl"><span>Progress</span><span>100%</span></div>
+              <div class="pc-prog-bar"><div class="pc-prog-fill" style="width:100%;background:#4ade80"></div></div>
+            </div>
+            <div class="pc-foot">
+              <div class="av-stack">
+                <div class="av" style="width:20px;height:20px;font-size:.5rem;background:var(--red)">KK</div>
+              </div>
+              <span class="pc-date">3 days ago</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state variation -->
+        <div style="margin-top:1.25rem">
+          <div style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--m1);margin-bottom:.75rem;font-weight:600">Empty state (when no projects)</div>
+          <div class="empty-state">
+            <div class="es-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+            </div>
+            <div class="es-title">No projects yet</div>
+            <div class="es-sub">Create your first project to start collaborating with freelancers.</div>
+            <button class="btn btn-p">+ Create first project</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+  3. PROJECT DETAIL — OVERVIEW
+══════════════════════════════════════ -->
+<div class="page-divider" id="proj-detail"><span>Page 3 — Project Detail · Overview /dashboard/projects/[id]</span></div>
+<div class="chips">
+  <span class="chip chip-g">Fixed project header with breadcrumb</span>
+  <span class="chip chip-g">5-tab navigation (Overview/Chat/Feedback/Versions/Settings)</span>
+  <span class="chip chip-g">Version timeline left, project info right</span>
+  <span class="chip chip-g">Settings panel hidden — moved to Settings tab</span>
+  <span class="chip chip-r">Removed: always-visible Settings/Freelancers panel</span>
+  <span class="chip chip-r">Removed: "CONNECT PREMIERE PRO" teal button competing with actions</span>
+</div>
+
+<div class="shell" style="height:auto;min-height:780px;max-height:none" id="proj-detail-shell">
+  <div class="topbar">
+    <a href="#" class="tb-logo"><b>Creao</b>Link</a>
+    <div class="tb-search">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--m1)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input placeholder="Search users, projects…" readonly>
+    </div>
+    <div class="tb-right">
+      <div class="tb-user">
+        <div class="av" style="width:26px;height:26px;font-size:.56rem;background:var(--red)">KK</div>
+        <div><div style="font-size:.77rem;font-weight:500;color:var(--white)">KKD</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="sidebar">
+      <div class="sl">Workspace</div>
+      <a href="#dash" class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+      <a href="#projects-list" class="si on"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects<span class="si-badge">3</span></a>
+      <a href="#" class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Feedback</a>
+      <div class="si-divider"></div>
+      <div class="sl">Projects</div>
+      <div class="si-proj" style="color:var(--white)"><span class="pdot" style="background:var(--red)"></span>KunalTest</div>
+      <div class="si-proj"><span class="pdot" style="background:#fbbf24"></span>Brand Redesign</div>
+      <div class="sb-bottom">
+        <div class="sb-user">
+          <div class="av" style="width:28px;height:28px;font-size:.58rem;background:var(--red)">KK</div>
+          <div style="min-width:0;flex:1"><div class="sb-user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KKD · @kunald</div><div class="sb-user-role">Client</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="main" style="display:flex;flex-direction:column">
+      <!-- Project header -->
+      <div class="proj-header-bar">
+        <div class="breadcrumb">
+          <a href="#projects-list">Projects</a>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <span>KunalTest</span>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <button class="btn btn-g btn-sm">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Connect Premiere
+          </button>
+          <button class="btn btn-g btn-sm">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Invite
+          </button>
+          <span class="tag tag-a">● Active</span>
+          <button class="btn btn-p btn-sm">+ New version</button>
+        </div>
+      </div>
+      <!-- Project title + tabs -->
+      <div style="padding:.75rem 1.75rem .35rem;background:var(--s1);border-bottom:1px solid var(--b2)">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.35rem">
+          <div class="proj-title">KunalTest</div>
+        </div>
+        <div class="proj-meta-row">
+          <span>Created 5/30/2026</span>
+          <span>·</span>
+          <span>3 members</span>
+          <span>·</span>
+          <span>Current: <b style="color:var(--red)">v2</b></span>
+          <span>·</span>
+          <span>Public</span>
+        </div>
+      </div>
+      <div class="proj-tabs">
+        <div class="ptab on">Overview</div>
+        <div class="ptab">Chat</div>
+        <div class="ptab">Feedback <span class="ptab-cnt">1</span></div>
+        <div class="ptab">Versions</div>
+        <div class="ptab">Settings</div>
+      </div>
+      <div class="pd-body" style="flex:1;overflow:hidden;min-height:500px">
+        <div class="pd-main">
+          <!-- Premiere Pro sequence -->
+          <div>
+            <div class="sec-title">Premiere Pro Sequence</div>
+            <div style="background:var(--s3);border:1px dashed var(--b2);border-radius:var(--r);padding:2rem;text-align:center;color:var(--m1);font-size:.79rem">
+              No timeline data synced yet.
+              <div style="margin-top:.5rem"><button class="btn btn-g btn-sm">Connect Premiere Pro plugin →</button></div>
+            </div>
+          </div>
+
+          <!-- Description + Deadline -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
+            <div>
+              <div class="sec-title">Description</div>
+              <div style="background:var(--s3);border:1px solid var(--b1);border-radius:var(--r);padding:.8rem 1rem;font-size:.8rem;color:var(--m2);line-height:1.55">
+                A public case study that is part of this creator's portfolio. Connect the Premiere Pro plugin to sync timeline sequences.
+              </div>
+            </div>
+            <div>
+              <div class="sec-title">Deadline</div>
+              <div style="background:var(--s3);border:1px solid var(--b1);border-radius:var(--r);padding:.8rem 1rem;font-size:.8rem;color:var(--m2)">
+                <div style="font-size:.7rem;color:var(--m1);margin-bottom:.25rem">Target date</div>
+                <div style="font-weight:500;color:var(--white)">Monday, January 12, 2026</div>
+                <div style="font-size:.7rem;color:var(--red);margin-top:.25rem">⚠ Deadline has passed</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Versions -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+              <div class="sec-title" style="margin:0">Versions</div>
+              <button class="btn btn-g btn-sm">+ New version</button>
+            </div>
+            <div class="vt-wrap">
+              <div class="vt-item">
+                <div class="vt-line"></div>
+                <div class="vt-dot cur">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <div class="vt-body">
+                  <div class="vt-label">v2 — Current <span>· KKD · 5/30/2026</span></div>
+                  <div class="vt-note">second draft</div>
+                </div>
+              </div>
+              <div class="vt-item">
+                <div class="vt-dot"></div>
+                <div class="vt-body">
+                  <div class="vt-label">v1 — Initial version <span>· KKD · 5/30/2026</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right metadata panel -->
+        <div class="pd-right">
+          <div>
+            <div class="sec-title">Project info</div>
+            <div class="info-pair"><span class="info-k">Status</span><span class="info-v"><span class="tag tag-a">● Active</span></span></div>
+            <div class="info-pair"><span class="info-k">Created</span><span class="info-v">5/30/2026</span></div>
+            <div class="info-pair"><span class="info-k">Modified</span><span class="info-v">5/30/2026</span></div>
+            <div class="info-pair"><span class="info-k">Visibility</span><span class="info-v">Public</span></div>
+            <div class="info-pair"><span class="info-k">Version</span><span class="info-v" style="color:var(--red)">v2</span></div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+              <div class="sec-title" style="margin:0">Team</div>
+              <button class="btn btn-g btn-sm">+ Add</button>
+            </div>
+            <div class="tm-item">
+              <div class="av" style="width:26px;height:26px;font-size:.54rem;background:var(--red)">KK</div>
+              <div class="tm-info"><div class="tm-name">KKD</div><div class="tm-role">kunald@gmail.com · Admin</div></div>
+              <span class="tag tag-n" style="font-size:.6rem">CLIENT</span>
+            </div>
+            <div class="tm-item">
+              <div class="av" style="width:26px;height:26px;font-size:.54rem;background:#7dd3fc;color:#0d0f0e">KN</div>
+              <div class="tm-info"><div class="tm-name">KUNAL</div><div class="tm-role">kunal@gmail.com · Editor</div></div>
+              <span class="tag tag-n" style="font-size:.6rem">FREELANCER</span>
+            </div>
+            <div class="tm-item">
+              <div class="av" style="width:26px;height:26px;font-size:.54rem;background:#86efac;color:#0d0f0e">K2</div>
+              <div class="tm-info"><div class="tm-name">kunal2</div><div class="tm-role">kunal2@gmail.com · Editor</div></div>
+              <span class="tag tag-n" style="font-size:.6rem">FREELANCER</span>
+            </div>
+          </div>
+
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:.4rem">
+            <button class="btn btn-p" style="width:100%">+ Submit new version</button>
+            <button class="btn btn-g" style="width:100%">Request approval</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+  4. PROJECT DETAIL — CHAT
+══════════════════════════════════════ -->
+<div class="page-divider" id="proj-chat"><span>Page 4 — Project Detail · Chat tab</span></div>
+<div class="chips">
+  <span class="chip chip-g">Proper chat bubble UI with sender avatars</span>
+  <span class="chip chip-g">Day separators for timeline clarity</span>
+  <span class="chip chip-g">File/image attachment preview in thread</span>
+  <span class="chip chip-g">Online indicator showing active members</span>
+  <span class="chip chip-g">Compact right panel (no settings clutter)</span>
+</div>
+
+<div class="shell" style="height:auto;min-height:680px;max-height:none">
+  <div class="topbar">
+    <a href="#" class="tb-logo"><b>Creao</b>Link</a>
+    <div class="tb-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--m1)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search…" readonly></div>
+    <div class="tb-right"><div class="tb-user"><div class="av" style="width:26px;height:26px;font-size:.56rem;background:var(--red)">KK</div><div><div style="font-size:.77rem;font-weight:500;color:var(--white)">KKD</div></div></div></div>
+  </div>
+  <div class="body">
+    <div class="sidebar">
+      <div class="sl">Workspace</div>
+      <a href="#dash" class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+      <a href="#projects-list" class="si on"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <div class="si-divider"></div>
+      <div class="sl">Projects</div>
+      <div class="si-proj" style="color:var(--white)"><span class="pdot" style="background:var(--red)"></span>KunalTest</div>
+      <div class="sb-bottom"><div class="sb-user"><div class="av" style="width:28px;height:28px;font-size:.58rem;background:var(--red)">KK</div><div style="min-width:0;flex:1"><div class="sb-user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KKD</div><div class="sb-user-role">Client</div></div></div></div>
+    </div>
+    <div class="main" style="display:flex;flex-direction:column">
+      <div class="proj-header-bar" style="flex-direction:column;align-items:flex-start;gap:.3rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+          <div>
+            <div class="proj-title" style="font-size:1rem">KunalTest — Chat</div>
+            <div class="chat-meta-row" style="margin-top:.2rem">
+              <div class="chat-online"><div class="dot"></div>3 online</div>
+              <span>·</span>
+              <span>Shared project room · Up to 6 files, 25MB each</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <div class="ptab on" style="border:none;padding:.3rem .7rem;font-size:.78rem">Overview</div>
+            <div class="ptab on" style="padding:.3rem .7rem;font-size:.78rem;color:var(--white);border-bottom:2px solid var(--red)">Chat</div>
+            <div class="ptab" style="padding:.3rem .7rem;font-size:.78rem">Feedback <span class="ptab-cnt">1</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-wrap" style="flex:1;min-height:500px">
+        <div class="chat-msgs">
+          <div class="chat-day-sep">May 30, 2026</div>
+          <div class="msg-row">
+            <div class="msg-av" style="background:#7dd3fc;color:#0d0f0e">K2</div>
+            <div class="msg-body">
+              <div class="msg-meta">kunal2 · May 30, 10:55 PM</div>
+              <div class="msg-bubble them">its in development right now</div>
+            </div>
+          </div>
+          <div class="msg-row">
+            <div class="msg-av" style="background:#86efac;color:#0d0f0e">KN</div>
+            <div class="msg-body">
+              <div class="msg-meta">kunal · May 30, 10:56 PM</div>
+              <div class="msg-bubble them">i am doing work on intro part</div>
+            </div>
+          </div>
+          <div class="msg-row me">
+            <div class="msg-av" style="background:var(--red)">KK</div>
+            <div class="msg-body">
+              <div class="msg-meta" style="text-align:right">You · May 30, 10:56 PM</div>
+              <div class="msg-bubble me">good lets connect after first draft</div>
+            </div>
+          </div>
+          <div class="msg-row me">
+            <div class="msg-av" style="background:var(--red)">KK</div>
+            <div class="msg-body">
+              <div class="msg-meta" style="text-align:right">You · May 30, 10:57 PM</div>
+              <div class="msg-file">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="m7 8 5 5 5-5"/></svg>
+                <div>
+                  <div style="font-size:.74rem;color:var(--white);font-weight:500">ChatGPT Image May 23, 2026.png</div>
+                  <div style="font-size:.66rem;color:var(--m1)">1.5 MB · Image</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-day-sep">Today</div>
+          <div class="msg-row">
+            <div class="msg-av" style="background:#7dd3fc;color:#0d0f0e">K2</div>
+            <div class="msg-body">
+              <div class="msg-meta">kunal2 · Just now</div>
+              <div class="msg-bubble them">Reviewed the image, looks solid! The colours match the brief.</div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <button class="btn btn-g btn-sm" style="flex-shrink:0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </button>
+          <textarea class="chat-input-box" placeholder="Write a message or revision note…" rows="1" readonly></textarea>
+          <div style="font-size:.65rem;color:var(--m1);flex-shrink:0">0/4000</div>
+          <button class="btn btn-p btn-sm" style="flex-shrink:0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+  5. PROJECT DETAIL — FEEDBACK
+══════════════════════════════════════ -->
+<div class="page-divider" id="proj-feedback"><span>Page 5 — Project Detail · Feedback tab</span></div>
+<div class="chips">
+  <span class="chip chip-g">Full-width feedback cards with type + priority tags</span>
+  <span class="chip chip-g">Filter bar (All/Open/Resolved) with counts</span>
+  <span class="chip chip-g">Reply thread preview inline</span>
+  <span class="chip chip-g">Resolve button prominent on each card</span>
+  <span class="chip chip-r">Removed: sparse single-card layout with huge empty space</span>
+</div>
+
+<div class="shell" style="height:auto;min-height:680px;max-height:none">
+  <div class="topbar">
+    <a href="#" class="tb-logo"><b>Creao</b>Link</a>
+    <div class="tb-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--m1)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search…" readonly></div>
+    <div class="tb-right"><div class="tb-user"><div class="av" style="width:26px;height:26px;font-size:.56rem;background:var(--red)">KK</div><div><div style="font-size:.77rem;font-weight:500;color:var(--white)">KKD</div></div></div></div>
+  </div>
+  <div class="body">
+    <div class="sidebar">
+      <div class="sl">Workspace</div>
+      <a href="#dash" class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+      <a href="#projects-list" class="si on"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <div class="si-divider"></div>
+      <div class="sl">Projects</div>
+      <div class="si-proj" style="color:var(--white)"><span class="pdot" style="background:var(--red)"></span>KunalTest</div>
+      <div class="sb-bottom"><div class="sb-user"><div class="av" style="width:28px;height:28px;font-size:.58rem;background:var(--red)">KK</div><div style="min-width:0;flex:1"><div class="sb-user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KKD</div><div class="sb-user-role">Client</div></div></div></div>
+    </div>
+    <div class="main">
+      <div style="padding:.85rem 1.75rem;border-bottom:1px solid var(--b2);background:var(--s1);display:flex;align-items:center;gap:.75rem">
+        <div class="breadcrumb"><a href="#projects-list">Projects</a><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg><a href="#proj-detail">KunalTest</a><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg><span>Feedback</span></div>
+        <div style="flex:1"></div>
+        <button class="btn btn-p btn-sm">+ Add feedback</button>
+      </div>
+      <div style="border-bottom:1px solid var(--b2);background:var(--s1);display:flex;padding:0 1.75rem">
+        <div class="ptab on">Overview</div>
+        <div class="ptab">Chat</div>
+        <div class="ptab on" style="color:var(--white);border-bottom:2px solid var(--red)">Feedback <span class="ptab-cnt">1</span></div>
+        <div class="ptab">Versions</div>
+        <div class="ptab">Settings</div>
+      </div>
+      <div class="mc">
+        <div class="fb-filters">
+          <div class="fchip on">All <span class="cnt">1</span></div>
+          <div class="fchip">Open <span class="cnt">1</span></div>
+          <div class="fchip">Resolved <span class="cnt">0</span></div>
+          <div class="fchip">Enhancement</div>
+          <div class="fchip">Bug</div>
+          <div class="fchip">Revision</div>
+        </div>
+
+        <div class="fb-full-card">
+          <div class="fb-fc-header">
+            <div class="av fb-fc-av" style="width:28px;height:28px;font-size:.56rem;background:var(--red)">KK</div>
+            <div>
+              <div class="fb-fc-user">KKD</div>
+              <div class="fb-fc-role">Client · Admin</div>
+            </div>
+            <div class="fb-fc-time">5/31/2026</div>
+          </div>
+          <div class="fb-fc-body">
+            <div class="fb-fc-text">asdasd</div>
+            <div class="fb-fc-tags">
+              <span class="tag" style="background:rgba(99,102,241,.12);color:#a5b4fc;border-color:rgba(99,102,241,.25)">Enhancement</span>
+              <span class="tag" style="background:rgba(239,68,68,.12);color:#f87171;border-color:rgba(239,68,68,.25)">High priority</span>
+              <span class="tag tag-n">@ 00:20</span>
+              <span class="tag tag-n">v2</span>
+            </div>
+            <div class="fb-fc-foot">
+              <button class="btn btn-g btn-sm">Reply</button>
+              <button class="btn btn-p btn-sm" style="background:rgba(74,222,128,.15);color:#4ade80;border-color:rgba(74,222,128,.25)">✓ Mark resolved</button>
+              <button class="btn btn-g btn-sm" style="margin-left:auto">⋯ More</button>
+            </div>
+          </div>
+          <div class="fb-open">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Status: <b style="color:var(--red)">Open</b> · 0 replies · Add a reply to this feedback thread
+          </div>
+        </div>
+
+        <!-- Placeholder for more feedback -->
+        <div style="border:1px dashed var(--b2);border-radius:var(--rl);padding:2rem;text-align:center;color:var(--m1);font-size:.8rem">
+          No other feedback yet. Click <b style="color:var(--white)">+ Add feedback</b> to leave timestamped notes for your team.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+  6. PROFILE PAGE
+══════════════════════════════════════ -->
+<div class="page-divider" id="profile"><span>Page 6 — Profile /dashboard/profile</span></div>
+<div class="chips">
+  <span class="chip chip-g">Cover photo + large avatar with overlap</span>
+  <span class="chip chip-g">Stats inline (Followers / Following / Projects / Reputation)</span>
+  <span class="chip chip-g">Contribution graph redesigned — cleaner bars with labels</span>
+  <span class="chip chip-g">Public projects as richer cards</span>
+  <span class="chip chip-g">Skills + availability in right side panel</span>
+</div>
+
+<div class="shell" style="height:auto;min-height:860px;max-height:none">
+  <div class="topbar">
+    <a href="#" class="tb-logo"><b>Creao</b>Link</a>
+    <div class="tb-search"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--m1)"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder="Search users, projects…" readonly></div>
+    <div class="tb-right"><div class="tb-user"><div class="av" style="width:26px;height:26px;font-size:.56rem;background:var(--red)">KK</div><div><div style="font-size:.77rem;font-weight:500;color:var(--white)">KKD</div></div></div></div>
+  </div>
+  <div class="body">
+    <div class="sidebar">
+      <div class="sl">Workspace</div>
+      <a href="#dash" class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</a>
+      <a href="#projects-list" class="si"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Projects</a>
+      <a href="#" class="si on"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</a>
+      <div class="si-divider"></div>
+      <div class="sl">Projects</div>
+      <div class="si-proj"><span class="pdot" style="background:var(--red)"></span>KunalTest</div>
+      <div class="sb-bottom"><div class="sb-user"><div class="av" style="width:28px;height:28px;font-size:.58rem;background:var(--red)">KK</div><div style="min-width:0;flex:1"><div class="sb-user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">KKD · @kunald</div><div class="sb-user-role">Client</div></div></div></div>
+    </div>
+    <div class="main">
+      <div class="profile-shell">
+        <!-- Cover -->
+        <div class="prof-cover">
+          <div class="prof-av-wrap">
+            <div class="prof-av" style="background:var(--red)">K</div>
+          </div>
+        </div>
+
+        <!-- Actions row -->
+        <div class="prof-actions-row">
+          <button class="btn btn-g btn-sm">Edit profile</button>
+          <button class="btn btn-g btn-sm">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+        </div>
+
+        <!-- Info -->
+        <div class="prof-info">
+          <div class="prof-name">KKD</div>
+          <div class="prof-handle">
+            <span>@kunald</span>
+            <span style="background:var(--s3);border:1px solid var(--b2);border-radius:4px;font-size:.66rem;padding:1px 7px;color:var(--m2)">Client</span>
+          </div>
+          <div class="prof-bio">KKD runs project strategy, review workflows, and public-facing updates so collaborators always know what shipped and what comes next.</div>
+          <div class="prof-skills">
+            <span class="tag tag-n">Project Planning</span>
+            <span class="tag tag-n">Creative Direction</span>
+            <span class="tag tag-n">Review Systems</span>
+            <span class="tag tag-n">Team Operations</span>
+          </div>
+          <div class="prof-stat-row">
+            <div>
+              <div class="prof-stat-n">0</div>
+              <div class="prof-stat-l">Followers</div>
+            </div>
+            <div>
+              <div class="prof-stat-n">1</div>
+              <div class="prof-stat-l">Following</div>
+            </div>
+            <div>
+              <div class="prof-stat-n">1</div>
+              <div class="prof-stat-l">Public projects</div>
+            </div>
+            <div>
+              <div class="prof-stat-n" style="color:var(--red)">11</div>
+              <div class="prof-stat-l">Reputation</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="prof-grid">
+          <div>
+            <!-- Contribution graph -->
+            <div class="sec-title" style="margin-bottom:.85rem;font-size:.67rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m1);font-weight:600">Contribution graph · 12 week view</div>
+            <div style="background:var(--s1);border:1px solid var(--b2);border-radius:var(--rl);padding:1.25rem 1rem">
+              <div style="font-size:.78rem;font-weight:500;color:var(--white);margin-bottom:.65rem">Activity rhythm</div>
+              <div class="contrib-graph">
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:20%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W1</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:65%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W2</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:45%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W3</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:10%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W4</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:55%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W5</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:40%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W6</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:15%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W7</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:70%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W8</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:25%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W9</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:50%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W10</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:30%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W11</div></div>
+                <div class="cg-col"><div class="cg-bar-wrap"><div class="cg-bar" style="height:80%;background:linear-gradient(to top,#e8392e,rgba(232,57,46,.3))"></div></div><div class="cg-label">W12</div></div>
+              </div>
+            </div>
+
+            <!-- Public projects -->
+            <div class="sec-title" style="margin:1.25rem 0 .75rem;font-size:.67rem;letter-spacing:.13em;text-transform:uppercase;color:var(--m1);font-weight:600">Portfolio · Public projects <span style="color:var(--red);background:var(--rs);border:1px solid var(--rg);border-radius:4px;font-size:.6rem;padding:1px 6px;margin-left:.3rem">1 visible</span></div>
+            <div class="pub-proj-card">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.35rem">
+                <div class="ppc-title">KunalTest</div>
+                <span class="tag tag-a">active</span>
+              </div>
+              <div class="ppc-desc">A public case study that is part of this creator's portfolio.</div>
+              <div class="ppc-foot">
+                <span>Updated 5/31/2026</span>
+                <button class="btn btn-g btn-sm">View →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right side -->
+          <div style="display:flex;flex-direction:column;gap:1rem">
+            <div style="background:var(--s1);border:1px solid var(--b2);border-radius:var(--rl);overflow:hidden">
+              <div class="card-head"><span class="card-title">Connections</span></div>
+              <div style="padding:.75rem 1.1rem">
+                <div style="font-size:.72rem;color:var(--m1);margin-bottom:.5rem">Followers</div>
+                <div style="font-size:.8rem;color:var(--m1);padding:.5rem;background:var(--s3);border-radius:var(--r)">No followers yet.</div>
+                <div style="font-size:.72rem;color:var(--m1);margin:.85rem 0 .5rem">Following</div>
+                <div style="display:flex;align-items:center;gap:.6rem;padding:.5rem;background:var(--s3);border-radius:var(--r)">
+                  <div class="av" style="width:26px;height:26px;font-size:.54rem;background:#7dd3fc;color:#0d0f0e">KD</div>
+                  <div style="flex:1">
+                    <div style="font-size:.78rem;font-weight:500;color:var(--white)">Kunal Dhangar</div>
+                    <div style="font-size:.67rem;color:var(--m1)">Freelancer</div>
+                  </div>
+                  <button class="btn btn-g btn-sm">Open</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="background:var(--s1);border:1px solid var(--b2);border-radius:var(--rl);overflow:hidden">
+              <div class="card-head"><span class="card-title">Profile visibility</span></div>
+              <div style="padding:.75rem 1.1rem">
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+                  <div style="width:7px;height:7px;border-radius:50%;background:#4ade80;flex-shrink:0"></div>
+                  <span style="font-size:.79rem;font-weight:500;color:var(--white)">Public sharing on</span>
+                </div>
+                <div style="font-size:.76rem;color:var(--m1);line-height:1.6">This profile is visible to the workspace community so followers can discover public portfolio items, reputation, and contribution trends.</div>
+                <button class="btn btn-g btn-sm" style="margin-top:.75rem;width:100%">Manage visibility →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+  7. AUTH — LOGIN
+══════════════════════════════════════ -->
+<div class="page-divider" id="auth-login"><span>Page 7 — Login /auth/login</span></div>
+<div class="chips">
+  <span class="chip chip-g">Split layout — brand panel left, form right</span>
+  <span class="chip chip-g">Quote/testimonial in left panel for credibility</span>
+  <span class="chip chip-g">Input icons + show/hide password</span>
+  <span class="chip chip-r">No nav duplication on auth pages</span>
+</div>
+
+<div class="auth-page">
+  <div class="auth-left">
+    <a href="/" class="auth-logo"><b>Creao</b>Link</a>
+    <h2 style="font-family:var(--fd);font-size:1.8rem;color:var(--white);line-height:1.15;letter-spacing:-.02em;margin-bottom:.85rem">Deliver without<br><em style="color:var(--red)">workflow chaos.</em></h2>
+    <p style="font-size:.81rem;color:var(--m2);line-height:1.7;font-weight:300">The operating system for client-freelancer delivery teams. Every version, feedback, and approval in one place.</p>
+    <div class="auth-quote">
+      <div class="auth-q-text">"Version history saved us during a major client dispute. We onboarded our 12-person team in 3 days."</div>
+      <div class="auth-q-author">
+        <div class="av" style="width:28px;height:28px;font-size:.54rem;background:#7dd3fc;color:#0d0f0e">KD</div>
+        <div><div style="font-size:.76rem;font-weight:500;color:var(--white)">Kunal Dhangar</div><div style="font-size:.68rem;color:var(--m1)">Freelancer</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-right">
+    <div class="auth-h">Welcome back</div>
+    <div class="auth-sub">Sign in to your CreaoLink workspace</div>
+    <div class="fg">
+      <label class="fl">Email address</label>
+      <div class="fi real">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="fi-icon"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        <input placeholder="you@company.com" readonly>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Password</label>
+      <div class="fi real">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="fi-icon"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input placeholder="••••••••" type="password" readonly>
+        <span style="font-size:.72rem;color:var(--m1);cursor:pointer;flex-shrink:0;margin-left:auto">Show</span>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:1.1rem"><a href="#" style="font-size:.73rem;color:var(--m1);text-decoration:none">Forgot password?</a></div>
+    <button class="btn btn-p btn-lg" style="width:100%">Sign in →</button>
+    <div class="form-or">or continue with</div>
+    <button class="oauth">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+      Continue with Google
+    </button>
+    <button class="oauth">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5a10.5 10.5 0 00-3.32 20.46c.53.1.72-.23.72-.5v-1.78c-2.95.64-3.57-1.24-3.57-1.24-.48-1.22-1.18-1.54-1.18-1.54-.96-.66.07-.65.07-.65 1.06.07 1.62 1.09 1.62 1.09.94 1.61 2.47 1.14 3.08.87.09-.68.37-1.15.67-1.42-2.36-.27-4.85-1.18-4.85-5.24 0-1.16.41-2.1 1.08-2.84-.11-.27-.47-1.36.1-2.83 0 0 .88-.28 2.88 1.08a9.95 9.95 0 015.24 0c2-1.36 2.88-1.08 2.88-1.08.57 1.47.21 2.56.1 2.83.67.74 1.08 1.68 1.08 2.84 0 4.07-2.5 4.96-4.88 5.22.38.33.72.99.72 2v2.96c0 .27.19.61.73.5A10.5 10.5 0 0012 1.5z"/></svg>
+      Continue with GitHub
+    </button>
+    <div class="auth-foot">Don't have an account? <a href="#auth-signup">Create one free →</a></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+  8. AUTH — SIGNUP
+══════════════════════════════════════ -->
+<div class="page-divider" id="auth-signup"><span>Page 8 — Signup /auth/signup</span></div>
+<div class="chips">
+  <span class="chip chip-g">Named step labels (Plan / Role / Profile / Method / Done)</span>
+  <span class="chip chip-g">Plan cards with pricing + feature hints</span>
+  <span class="chip chip-g">Role selector as prominent toggle</span>
+  <span class="chip chip-r">Removed: anonymous step counter "Step 1 of 4"</span>
+</div>
+
+<div class="auth-page" style="height:580px">
+  <div class="auth-left">
+    <a href="/" class="auth-logo"><b>Creao</b>Link</a>
+    <h2 style="font-family:var(--fd);font-size:1.75rem;color:var(--white);line-height:1.15;margin-bottom:.65rem">Get started in<br><em style="color:var(--red)">2 minutes.</em></h2>
+    <p style="font-size:.8rem;color:var(--m2);line-height:1.7;font-weight:300;margin-bottom:1.5rem">No card required for the Starter plan. Cancel or upgrade anytime.</p>
+    <div style="display:flex;flex-direction:column;gap:.5rem">
+      <div style="display:flex;align-items:center;gap:.6rem;font-size:.78rem;color:var(--m2)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Role-based dashboards for clients &amp; freelancers</div>
+      <div style="display:flex;align-items:center;gap:.6rem;font-size:.78rem;color:var(--m2)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Version control for every deliverable</div>
+      <div style="display:flex;align-items:center;gap:.6rem;font-size:.78rem;color:var(--m2)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Feedback that converts to actionable tasks</div>
+      <div style="display:flex;align-items:center;gap:.6rem;font-size:.78rem;color:var(--m2)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Premiere Pro timeline sync plugin</div>
+    </div>
+  </div>
+  <div class="auth-right" style="overflow-y:auto">
+    <!-- Step bar -->
+    <div class="step-bar">
+      <div class="step-seg done"></div>
+      <div class="step-seg done"></div>
+      <div class="step-seg"></div>
+      <div class="step-seg"></div>
+      <div class="step-seg"></div>
+    </div>
+    <div class="step-labels">
+      <span class="active">Plan</span><span class="active">Role</span><span>Profile</span><span>Method</span><span>Done</span>
+    </div>
+    <div class="auth-h" style="font-size:1.05rem">Choose your plan</div>
+    <div class="auth-sub">Select how you'll use CreaoLink</div>
+
+    <div class="plan-opt sel">
+      <div>
+        <div class="po-name">Starter <span style="background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.2);border-radius:3px;font-size:.6rem;font-weight:600;padding:1px 7px;margin-left:.3rem">Free forever</span></div>
+        <div class="po-sub">Personal projects · up to 3 workspaces</div>
+      </div>
+      <div class="radio sel"><div class="radio-dot"></div></div>
+    </div>
+
+    <div class="plan-opt">
+      <div>
+        <div class="po-name">Growth <span style="background:var(--rs);color:var(--red);border:1px solid var(--rg);border-radius:3px;font-size:.6rem;font-weight:600;padding:1px 7px;margin-left:.3rem">₹499/mo</span></div>
+        <div class="po-sub">Unlimited projects · version history · priority support</div>
+      </div>
+      <div class="radio"><div class="radio-dot" style="opacity:0"></div></div>
+    </div>
+
+    <div style="font-size:.73rem;color:var(--m1);margin:.85rem 0 .5rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em">I am a</div>
+    <div class="role-grid">
+      <div class="role-btn on">Client</div>
+      <div class="role-btn">Freelancer</div>
+    </div>
+
+    <button class="btn btn-p btn-lg" style="width:100%">Continue →</button>
+    <div class="auth-foot" style="margin-top:.75rem">Already have an account? <a href="#auth-login">Sign in</a></div>
+  </div>
+</div>
+
+<div style="height:3rem"></div>
+
+</body>
+</html>

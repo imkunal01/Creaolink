@@ -13,40 +13,67 @@ interface ProjectCardProps {
   onClick?: () => void;
 }
 
-const statusColors: Record<Project["status"], string> = {
-  active: "bg-emerald-400/15 text-emerald-300",
-  completed: "bg-slate-400/15 text-slate-300",
-  pending: "bg-amber-400/15 text-amber-300",
+function statusTag(status: Project["status"]) {
+  if (status === "active") return <span className="tag tag-a">● Active</span>;
+  if (status === "pending") return <span className="tag tag-r">⏳ Review</span>;
+  return <span className="tag tag-d">✓ Done</span>;
+}
+
+const progressMap: Record<Project["status"], number> = {
+  active: 40,
+  pending: 65,
+  completed: 100,
 };
 
 export default function ProjectCard({ project, onClick }: ProjectCardProps) {
+  const progress = progressMap[project.status];
+
   return (
     <button
       onClick={onClick}
-      className="group w-full rounded-md border border-[#30363d] bg-[#161b22] p-4 text-left transition-all duration-200 hover:border-[#58a6ff]/50 hover:bg-[#1b2230] cursor-pointer"
+      className="proj-card"
+      style={{ width: "100%", textAlign: "left", fontFamily: "var(--fb)" }}
     >
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <h3 className="text-sm font-semibold text-[#58a6ff] transition-colors group-hover:text-[#79c0ff] sm:text-base">
-          {project.name}
-        </h3>
-        <span
-          className={`whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${
-            statusColors[project.status]
-          }`}
-        >
-          {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
-        </span>
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "flex-start",
+        justifyContent: "space-between", gap: "0.5rem", marginBottom: "0.5rem",
+      }}>
+        <div className="proj-card-title">{project.name}</div>
+        {statusTag(project.status)}
       </div>
 
       {project.description && (
-        <p className="mb-3 line-clamp-2 text-sm text-[#8b949e]">
-          {project.description}
-        </p>
+        <div className="proj-card-desc">{project.description}</div>
       )}
 
-      <p className="text-xs text-[#8b949e]">
-        Updated {project.updatedAt}
-      </p>
+      {/* Progress */}
+      <div className="proj-card-prog-lbl">
+        <span>Progress</span>
+        <span>{progress}%</span>
+      </div>
+      <div className="proj-card-prog-bar">
+        <div className="proj-card-prog-fill" style={{ width: `${progress}%` }} />
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between", marginTop: "0.25rem",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+          <div style={{
+            width: 20, height: 20, borderRadius: "50%",
+            background: "var(--red)", display: "flex", alignItems: "center",
+            justifyContent: "center", fontSize: "0.5rem", fontWeight: 700, color: "#fff",
+          }}>
+            {project.name.slice(0, 2).toUpperCase()}
+          </div>
+        </div>
+        <span style={{ fontSize: "0.68rem", color: "var(--m1)" }}>
+          {project.updatedAt}
+        </span>
+      </div>
     </button>
   );
 }

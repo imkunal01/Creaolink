@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const navLinkClass = (active: boolean) =>
   `rounded-md px-3 py-2 text-sm transition-colors ${
     active
-      ? "bg-bg-tertiary text-text-primary"
+      ? "bg-bg-tertiary text-text-primary border border-border"
       : "text-text-secondary hover:text-text-primary"
   }`;
 
@@ -17,10 +17,10 @@ export default function AuthNavbar() {
   const onSignup = pathname === "/auth/signup";
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border/60 bg-bg/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-border/60 bg-bg/80 backdrop-blur-xl">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="text-base font-semibold tracking-tight text-text-primary">
-          CreaoLink
+        <Link href="/" className="font-display text-xl tracking-normal text-text-primary">
+          Creao<span className="text-accent">Link</span>
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2" aria-label="Auth navigation">

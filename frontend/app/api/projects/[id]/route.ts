@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool, getAuthUser } from "@/lib/db";
 import { readThroughCache, buildCacheKey } from "@/lib/cache";
-import { invalidateProject } from "@/lib/invalidation";
+import { invalidateProject, invalidateProjectAll } from "@/lib/invalidation";
 import { flags } from "@/lib/feature-flags";
 
 function createSyncCode() {
@@ -304,8 +304,8 @@ export async function DELETE(
 
       await client.query("COMMIT");
 
-      // Phase 4: invalidate project detail and owner's project list.
-      await invalidateProject(id, projRows[0].created_by);
+      // Invalidate ALL caches for this project (detail, lists, chat, feedback, team, presence)
+      await invalidateProjectAll(id, projRows[0].created_by);
 
       return NextResponse.json({ success: true });
     } catch (txErr) {

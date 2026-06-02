@@ -15,11 +15,11 @@ type FilterValue = "all" | "active" | "draft" | "archived";
 type SortValue = "recent" | "alphabetical" | "status";
 type SectionKey = "pinned" | "active" | "draft" | "archived";
 
-const statusAccent: Record<ProjectStatus, string> = {
-  active: "bg-emerald-400",
-  pending: "bg-amber-400",
-  completed: "bg-slate-400",
-  approved: "bg-sky-400",
+const statusDot: Record<ProjectStatus, string> = {
+  active: "#4ade80",
+  pending: "#fbbf24",
+  completed: "var(--m1)",
+  approved: "#7dd3fc",
 };
 
 function getProjectGroup(status: ProjectStatus): Exclude<FilterValue, "all"> {
@@ -47,10 +47,7 @@ export default function ProjectExplorer({
   const [sortBy, setSortBy] = useState<SortValue>("recent");
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   const [collapsed, setCollapsed] = useState<Record<SectionKey, boolean>>({
-    pinned: false,
-    active: false,
-    draft: false,
-    archived: false,
+    pinned: false, active: false, draft: false, archived: false,
   });
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -75,7 +72,6 @@ export default function ProjectExplorer({
 
   const filteredProjects = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-
     const nextProjects = projects.filter((project) => {
       const group = getProjectGroup(project.status);
       const matchesFilter = filter === "all" || filter === group;
@@ -85,28 +81,22 @@ export default function ProjectExplorer({
     });
 
     nextProjects.sort((left, right) => {
-      if (sortBy === "alphabetical") {
-        return left.title.localeCompare(right.title);
-      }
-
+      if (sortBy === "alphabetical") return left.title.localeCompare(right.title);
       if (sortBy === "status") {
-        return getProjectGroup(left.status).localeCompare(getProjectGroup(right.status)) ||
-          left.title.localeCompare(right.title);
+        return getProjectGroup(left.status).localeCompare(getProjectGroup(right.status)) || left.title.localeCompare(right.title);
       }
-
       return new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime();
     });
-
     return nextProjects;
   }, [filter, projects, search, sortBy]);
 
   const pinnedSet = useMemo(() => new Set(pinnedIds), [pinnedIds]);
-  const pinnedProjects = filteredProjects.filter((project) => pinnedSet.has(project.id));
-  const regularProjects = filteredProjects.filter((project) => !pinnedSet.has(project.id));
+  const pinnedProjects = filteredProjects.filter((p) => pinnedSet.has(p.id));
+  const regularProjects = filteredProjects.filter((p) => !pinnedSet.has(p.id));
   const groupedProjects: Record<Exclude<FilterValue, "all">, ListedProject[]> = {
-    active: regularProjects.filter((project) => getProjectGroup(project.status) === "active"),
-    draft: regularProjects.filter((project) => getProjectGroup(project.status) === "draft"),
-    archived: regularProjects.filter((project) => getProjectGroup(project.status) === "archived"),
+    active: regularProjects.filter((p) => getProjectGroup(p.status) === "active"),
+    draft: regularProjects.filter((p) => getProjectGroup(p.status) === "draft"),
+    archived: regularProjects.filter((p) => getProjectGroup(p.status) === "archived"),
   };
 
   const togglePin = (projectId: string) => {
@@ -116,62 +106,63 @@ export default function ProjectExplorer({
     setOpenMenuId(null);
   };
 
-  const sectionClassName = "rounded-2xl border border-[#30363d] bg-[#0d1117]/80 backdrop-blur-sm";
+  const inputStyle = {
+    width: "100%", height: 36, padding: "0 10px",
+    background: "var(--s3)", border: "1px solid var(--b2)",
+    borderRadius: "var(--r)", fontSize: "0.78rem",
+    color: "var(--white)", outline: "none", fontFamily: "var(--fb)",
+  } as React.CSSProperties;
 
   return (
-    <aside className={`${sectionClassName} overflow-hidden`}>
-      <div className="border-b border-[#30363d] px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-[#8b949e]">Project Explorer</p>
-            <h2 className="mt-1 text-lg font-semibold text-[#f0f6fc]">Workspace tree</h2>
-          </div>
-          <span className="rounded-full border border-[#30363d] px-2.5 py-1 text-xs text-[#8b949e]">
-            {projects.length} total
-          </span>
+    <aside className="cl-card" style={{ overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ padding: "0.9rem 1.1rem", borderBottom: "1px solid var(--b2)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.7rem" }}>
+          <span style={{ fontSize: "0.82rem", fontWeight: 500, color: "var(--white)" }}>Project Explorer</span>
+          <span className="tag tag-n" style={{ fontSize: "0.65rem" }}>{projects.length} total</span>
         </div>
 
-        <div className="mt-4 space-y-3">
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search projects, owners, notes"
-            className="w-full rounded-xl border border-[#30363d] bg-[#010409] px-3 py-2.5 text-sm text-[#f0f6fc] placeholder:text-[#6e7681] focus:border-[#58a6ff] focus:outline-none"
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              value={sortBy}
-              onChange={(event) => setSortBy(event.target.value as SortValue)}
-              className="rounded-xl border border-[#30363d] bg-[#010409] px-3 py-2.5 text-sm text-[#c9d1d9] focus:border-[#58a6ff] focus:outline-none"
-            >
-              <option value="recent">Sort: Recent</option>
-              <option value="alphabetical">Sort: A-Z</option>
-              <option value="status">Sort: Status</option>
-            </select>
-            <select
-              value={filter}
-              onChange={(event) => setFilter(event.target.value as FilterValue)}
-              className="rounded-xl border border-[#30363d] bg-[#010409] px-3 py-2.5 text-sm text-[#c9d1d9] focus:border-[#58a6ff] focus:outline-none"
-            >
-              <option value="all">All states</option>
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search projects…"
+          style={inputStyle}
+        />
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: "0.5rem" }}>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortValue)}
+            style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" } as React.CSSProperties}
+          >
+            <option value="recent">Recent</option>
+            <option value="alphabetical">A → Z</option>
+            <option value="status">By status</option>
+          </select>
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as FilterValue)}
+            style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" } as React.CSSProperties}
+          >
+            <option value="all">All states</option>
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+            <option value="archived">Archived</option>
+          </select>
         </div>
       </div>
 
-      <div className="max-h-[60vh] space-y-4 overflow-y-auto px-3 py-4">
+      {/* Sections */}
+      <div style={{ maxHeight: "60vh", overflowY: "auto", padding: "0.75rem" }}>
         <ProjectSection
           title="Pinned"
-          description="Fast access to projects you revisit often."
+          description="Fast access to revisited projects"
           count={pinnedProjects.length}
           collapsed={collapsed.pinned}
-          onToggle={() => setCollapsed((current) => ({ ...current, pinned: !current.pinned }))}
+          onToggle={() => setCollapsed((c) => ({ ...c, pinned: !c.pinned }))}
         >
           {pinnedProjects.length === 0 ? (
-            <EmptyStateCopy text="Pin projects from the quick actions menu to keep them within reach." />
+            <ExplorerEmptyText text="Pin projects from the quick actions menu." />
           ) : (
             pinnedProjects.map((project) => (
               <ProjectRow
@@ -180,14 +171,11 @@ export default function ProjectExplorer({
                 isActive={project.id === currentProjectId}
                 isPinned
                 menuOpen={openMenuId === project.id}
-                onMenuToggle={() => setOpenMenuId((current) => (current === project.id ? null : project.id))}
+                onMenuToggle={() => setOpenMenuId((c) => (c === project.id ? null : project.id))}
                 onOpen={() => onProjectOpen(project.id)}
                 onPinToggle={() => togglePin(project.id)}
-                onArchive={
-                  onArchiveProject && getProjectGroup(project.status) !== "archived"
-                    ? () => onArchiveProject(project.id)
-                    : undefined
-                }
+                onArchive={onArchiveProject && getProjectGroup(project.status) !== "archived" ? () => onArchiveProject(project.id) : undefined}
+                statusColor={statusDot[project.status]}
               />
             ))
           )}
@@ -198,18 +186,16 @@ export default function ProjectExplorer({
             key={group}
             title={groupLabel(group)}
             description={
-              group === "active"
-                ? "Projects currently moving with collaborators."
-                : group === "draft"
-                ? "Early-stage workspaces waiting on review or kickoff."
-                : "Shipped, approved, or archived spaces."
+              group === "active" ? "Currently in progress with collaborators" :
+              group === "draft" ? "Waiting on review or kickoff" :
+              "Shipped, approved, or archived"
             }
             count={groupedProjects[group].length}
             collapsed={collapsed[group]}
-            onToggle={() => setCollapsed((current) => ({ ...current, [group]: !current[group] }))}
+            onToggle={() => setCollapsed((c) => ({ ...c, [group]: !c[group] }))}
           >
             {groupedProjects[group].length === 0 ? (
-              <EmptyStateCopy text={`No ${groupLabel(group).toLowerCase()} projects match this filter.`} />
+              <ExplorerEmptyText text={`No ${groupLabel(group).toLowerCase()} projects match this filter.`} />
             ) : (
               groupedProjects[group].map((project) => (
                 <ProjectRow
@@ -218,14 +204,11 @@ export default function ProjectExplorer({
                   isActive={project.id === currentProjectId}
                   isPinned={pinnedSet.has(project.id)}
                   menuOpen={openMenuId === project.id}
-                  onMenuToggle={() => setOpenMenuId((current) => (current === project.id ? null : project.id))}
+                  onMenuToggle={() => setOpenMenuId((c) => (c === project.id ? null : project.id))}
                   onOpen={() => onProjectOpen(project.id)}
                   onPinToggle={() => togglePin(project.id)}
-                  onArchive={
-                    onArchiveProject && group !== "archived"
-                      ? () => onArchiveProject(project.id)
-                      : undefined
-                  }
+                  onArchive={onArchiveProject && group !== "archived" ? () => onArchiveProject(project.id) : undefined}
+                  statusColor={statusDot[project.status]}
                 />
               ))
             )}
@@ -237,117 +220,126 @@ export default function ProjectExplorer({
 }
 
 function ProjectSection({
-  title,
-  description,
-  count,
-  collapsed,
-  onToggle,
-  children,
+  title, description, count, collapsed, onToggle, children,
 }: {
-  title: string;
-  description: string;
-  count: number;
-  collapsed: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
+  title: string; description: string; count: number;
+  collapsed: boolean; onToggle: () => void; children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-[#21262d] bg-[#010409]/70 p-3">
+    <div style={{ marginBottom: "0.6rem" }}>
       <button
         onClick={onToggle}
-        className="flex w-full items-start justify-between gap-3 text-left"
+        style={{
+          display: "flex", width: "100%", alignItems: "center",
+          justifyContent: "space-between", padding: "0.45rem 0.6rem",
+          background: "none", border: "none", cursor: "pointer", textAlign: "left",
+        }}
       >
         <div>
-          <p className="text-sm font-semibold text-[#f0f6fc]">{title}</p>
-          <p className="mt-1 text-xs leading-relaxed text-[#8b949e]">{description}</p>
+          <div style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--m2)", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+            {title}
+          </div>
+          <div style={{ fontSize: "0.67rem", color: "var(--m1)", marginTop: "0.1rem" }}>{description}</div>
         </div>
-        <div className="flex items-center gap-2 text-[#8b949e]">
-          <span className="rounded-full border border-[#30363d] px-2 py-0.5 text-[11px]">{count}</span>
-          <span className={`transition-transform ${collapsed ? "rotate-180" : ""}`}>^</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--m1)", fontSize: "0.68rem" }}>
+          <span style={{
+            padding: "1px 7px", borderRadius: 99,
+            background: "var(--s3)", border: "1px solid var(--b2)",
+          }}>{count}</span>
+          <span style={{ transform: collapsed ? "rotate(180deg)" : "none", transition: "transform 0.2s", fontSize: 10 }}>▴</span>
         </div>
       </button>
 
-      {!collapsed && <div className="mt-3 space-y-2">{children}</div>}
-    </section>
+      {!collapsed && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "0.2rem 0 0.5rem 0.2rem" }}>
+          {children}
+        </div>
+      )}
+    </div>
   );
 }
 
 function ProjectRow({
-  project,
-  isActive,
-  isPinned,
-  menuOpen,
-  onMenuToggle,
-  onOpen,
-  onPinToggle,
-  onArchive,
+  project, isActive, isPinned, menuOpen,
+  onMenuToggle, onOpen, onPinToggle, onArchive, statusColor,
 }: {
-  project: ListedProject;
-  isActive: boolean;
-  isPinned: boolean;
-  menuOpen: boolean;
-  onMenuToggle: () => void;
-  onOpen: () => void;
-  onPinToggle: () => void;
-  onArchive?: () => void;
+  project: ListedProject; isActive: boolean; isPinned: boolean; menuOpen: boolean;
+  onMenuToggle: () => void; onOpen: () => void; onPinToggle: () => void;
+  onArchive?: () => void; statusColor: string;
 }) {
   return (
-    <div
-      className={`rounded-xl border p-3 transition-colors ${
-        isActive
-          ? "border-[#58a6ff] bg-[#0f1f35]"
-          : "border-[#30363d] bg-[#0d1117] hover:border-[#58a6ff]/40 hover:bg-[#111827]"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <button onClick={onOpen} className="flex min-w-0 flex-1 items-start gap-3 text-left">
-          <span className={`mt-1 h-2.5 w-2.5 rounded-full ${statusAccent[project.status]}`} />
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="truncate text-sm font-medium text-[#f0f6fc]">{project.title}</p>
-              {isPinned && <span className="text-xs text-[#79c0ff]">Pinned</span>}
+    <div style={{
+      borderRadius: "var(--r)",
+      background: isActive ? "var(--rs)" : "var(--s3)",
+      border: `1px solid ${isActive ? "var(--rg)" : "var(--b1)"}`,
+      padding: "0.55rem 0.75rem",
+      transition: "all 0.12s",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+        <button onClick={onOpen} style={{ display: "flex", minWidth: 0, flex: 1, gap: 8, textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <span style={{
+            marginTop: 5, width: 7, height: 7, borderRadius: "50%",
+            background: statusColor, flexShrink: 0,
+          }} />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+              <span style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {project.title}
+              </span>
+              {isPinned && <span style={{ fontSize: "0.6rem", color: "var(--red)" }}>📌</span>}
             </div>
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#8b949e]">
+            <div style={{ fontSize: "0.67rem", color: "var(--m1)", marginTop: "0.1rem", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
               {project.description || "No description yet."}
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-[#8b949e]">
+            </div>
+            <div style={{ display: "flex", gap: 10, marginTop: "0.35rem", fontSize: "0.63rem", color: "var(--m1)", flexWrap: "wrap" }}>
               <span>{project.owner_name}</span>
-              <span>{project.member_count} collaborators</span>
-              <span>{project.open_feedback} open feedback</span>
+              <span>· {project.member_count} people</span>
+              {project.open_feedback > 0 && <span style={{ color: "var(--red)" }}>· {project.open_feedback} feedback</span>}
             </div>
           </div>
         </button>
 
-        <div className="relative">
+        {/* Context menu */}
+        <div style={{ position: "relative", flexShrink: 0 }}>
           <button
             onClick={onMenuToggle}
-            className="rounded-lg border border-[#30363d] px-2 py-1 text-xs text-[#8b949e] hover:border-[#58a6ff]/40 hover:text-[#f0f6fc]"
+            style={{
+              width: 24, height: 24, borderRadius: 4,
+              background: "var(--s4)", border: "1px solid var(--b2)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", color: "var(--m1)", fontSize: 13,
+            }}
           >
-            ...
+            ⋯
           </button>
-
           {menuOpen && (
-            <div className="absolute right-0 top-full z-20 mt-2 w-36 rounded-xl border border-[#30363d] bg-[#0d1117] p-1 shadow-2xl shadow-black/30">
-              <button
-                onClick={onPinToggle}
-                className="block w-full rounded-lg px-3 py-2 text-left text-xs text-[#c9d1d9] hover:bg-[#161b22]"
-              >
-                {isPinned ? "Unpin project" : "Pin project"}
-              </button>
-              {onArchive && (
+            <div style={{
+              position: "absolute", right: 0, top: "100%", zIndex: 30,
+              marginTop: 6, width: 150,
+              background: "var(--s1)", border: "1px solid var(--b2)",
+              borderRadius: "var(--rl)", padding: "0.3rem",
+              boxShadow: "0 12px 30px rgba(0,0,0,0.4)",
+            }}>
+              {[
+                { label: isPinned ? "Unpin" : "Pin project", action: onPinToggle },
+                onArchive ? { label: "Archive", action: onArchive } : null,
+                { label: "Open settings", action: onOpen },
+              ].filter(Boolean).map((item) => (
                 <button
-                  onClick={onArchive}
-                  className="block w-full rounded-lg px-3 py-2 text-left text-xs text-[#c9d1d9] hover:bg-[#161b22]"
+                  key={item!.label}
+                  onClick={item!.action}
+                  style={{
+                    display: "block", width: "100%", padding: "0.4rem 0.65rem",
+                    textAlign: "left", fontSize: "0.76rem", color: "var(--m2)",
+                    background: "none", border: "none", cursor: "pointer",
+                    borderRadius: 5, transition: "background 0.1s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--s3)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
                 >
-                  Archive project
+                  {item!.label}
                 </button>
-              )}
-              <button
-                onClick={onOpen}
-                className="block w-full rounded-lg px-3 py-2 text-left text-xs text-[#c9d1d9] hover:bg-[#161b22]"
-              >
-                Open settings
-              </button>
+              ))}
             </div>
           )}
         </div>
@@ -356,6 +348,14 @@ function ProjectRow({
   );
 }
 
-function EmptyStateCopy({ text }: { text: string }) {
-  return <p className="rounded-xl border border-dashed border-[#30363d] px-3 py-4 text-xs leading-relaxed text-[#6e7681]">{text}</p>;
+function ExplorerEmptyText({ text }: { text: string }) {
+  return (
+    <div style={{
+      padding: "0.75rem 0.85rem",
+      border: "1px dashed var(--b2)", borderRadius: "var(--r)",
+      fontSize: "0.73rem", color: "var(--m1)", lineHeight: 1.55,
+    }}>
+      {text}
+    </div>
+  );
 }

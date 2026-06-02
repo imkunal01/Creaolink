@@ -25,16 +25,53 @@ interface ProjectSettingsPanelProps {
   onProjectUpdated: () => Promise<void>;
 }
 
-const STATUS_DOT: Record<string, string> = {
-  online: "bg-emerald-400",
-  away: "bg-amber-400",
-  offline: "bg-slate-500",
+const STATUS_COLORS: Record<string, string> = {
+  online: "#4ade80",
+  away: "#fbbf24",
+  offline: "var(--m1)",
 };
 
 function formatDate(value?: string) {
-  if (!value) return "-";
-  return new Date(value).toLocaleString();
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" });
 }
+
+const sectionStyle = {
+  background: "var(--s2)",
+  border: "1px solid var(--b2)",
+  borderRadius: "var(--rl)",
+  padding: "1rem 1.1rem",
+  marginBottom: "0.85rem",
+} as React.CSSProperties;
+
+const labelStyle = {
+  display: "block",
+  fontSize: "0.7rem",
+  fontWeight: 600,
+  color: "var(--m1)",
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.07em",
+  marginBottom: "0.4rem",
+};
+
+const inputStyle = {
+  width: "100%",
+  height: 36,
+  padding: "0 10px",
+  background: "var(--s3)",
+  border: "1px solid var(--b2)",
+  borderRadius: "var(--r)",
+  fontSize: "0.79rem",
+  color: "var(--white)",
+  outline: "none",
+  fontFamily: "var(--fb)",
+} as React.CSSProperties;
+
+const selectStyle = {
+  ...inputStyle,
+  cursor: "pointer",
+  colorScheme: "dark",
+} as React.CSSProperties;
 
 export default function ProjectSettingsPanel({
   projectId,
@@ -47,6 +84,7 @@ export default function ProjectSettingsPanel({
   const [visibility, setVisibility] = useState<ProjectVisibility>(project.visibility);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState<"ok" | "err">("ok");
 
   const [team, setTeam] = useState(project.members || []);
   const [presence, setPresence] = useState<ActiveFreelancer[]>([]);
@@ -82,8 +120,8 @@ export default function ProjectSettingsPanel({
   const nameError = useMemo(() => {
     const trimmed = nameInput.trim();
     if (!trimmed) return "Project name is required";
-    if (trimmed.length < 3) return "Project name must be at least 3 characters";
-    if (trimmed.length > 80) return "Project name must be 80 characters or fewer";
+    if (trimmed.length < 3) return "Must be at least 3 characters";
+    if (trimmed.length > 80) return "Maximum 80 characters";
     return "";
   }, [nameInput]);
 
@@ -92,9 +130,7 @@ export default function ProjectSettingsPanel({
       setLoadingTeam(true);
       const data = await apiGetTeamMembers(projectId);
       setTeam(data.members);
-    } catch {
-      // ignore for now
-    } finally {
+    } catch { /* ignore */ } finally {
       setLoadingTeam(false);
     }
   };
@@ -104,9 +140,7 @@ export default function ProjectSettingsPanel({
       setLoadingPresence(true);
       const data = await apiGetFreelancerPresence(projectId);
       setPresence(data.activeFreelancers);
-    } catch {
-      // ignore for now
-    } finally {
+    } catch { /* ignore */ } finally {
       setLoadingPresence(false);
     }
   };
@@ -118,19 +152,21 @@ export default function ProjectSettingsPanel({
     return () => clearInterval(timer);
   }, [projectId]);
 
+  const showMsg = (text: string, type: "ok" | "err" = "ok") => {
+    setMessage(text);
+    setMessageType(type);
+    setTimeout(() => setMessage(""), 4000);
+  };
+
   const handleRename = async () => {
     if (nameError || !canManage) return;
     try {
       setSaving(true);
-      setMessage("");
-      await apiUpdateProjectSettings(projectId, {
-        title: nameInput.trim(),
-        visibility,
-      });
-      setMessage("Project settings updated.");
+      await apiUpdateProjectSettings(projectId, { title: nameInput.trim(), visibility });
+      showMsg("Settings saved.");
       await onProjectUpdated();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Failed to update settings");
+      showMsg(err instanceof Error ? err.message : "Failed to update settings", "err");
     } finally {
       setSaving(false);
     }
@@ -140,16 +176,13 @@ export default function ProjectSettingsPanel({
     if (!identifier.trim() || !canManage) return;
     try {
       setAddingMember(true);
-      setMessage("");
-      await apiAddFreelancer(projectId, {
-        identifier: identifier.trim(),
-        permission,
-      });
+      await apiAddFreelancer(projectId, { identifier: identifier.trim(), permission });
       setIdentifier("");
       await fetchTeam();
       await onProjectUpdated();
+      showMsg("Freelancer added.");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Failed to add freelancer");
+      showMsg(err instanceof Error ? err.message : "Failed to add freelancer", "err");
     } finally {
       setAddingMember(false);
     }
@@ -158,58 +191,49 @@ export default function ProjectSettingsPanel({
   const handlePermissionChange = async (targetUserId: string, next: ProjectPermission) => {
     if (!canManage) return;
     try {
-      await apiUpdateFreelancerPermission(projectId, {
-        userId: targetUserId,
-        permission: next,
-      });
+      await apiUpdateFreelancerPermission(projectId, { userId: targetUserId, permission: next });
       await fetchTeam();
       await onProjectUpdated();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Failed to update permission");
+      showMsg(err instanceof Error ? err.message : "Failed to update permission", "err");
     }
   };
 
   const handleRemoveFreelancer = async (targetUserId: string) => {
     if (!canManage) return;
-    const confirmed = window.confirm("Remove this freelancer from the project?");
-    if (!confirmed) return;
-
+    if (!window.confirm("Remove this freelancer from the project?")) return;
     try {
       await apiRemoveFreelancer(projectId, { userId: targetUserId });
       await fetchTeam();
       await onProjectUpdated();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Failed to remove freelancer");
+      showMsg(err instanceof Error ? err.message : "Failed to remove freelancer", "err");
     }
   };
 
   const handleUpdatePresence = async () => {
     if (!user) return;
     try {
-      await apiUpdateFreelancerPresence(projectId, {
-        status: myStatus,
-        currentTask: myTask,
-        hoursLogged: myHours,
-      });
+      await apiUpdateFreelancerPresence(projectId, { status: myStatus, currentTask: myTask, hoursLogged: myHours });
       await fetchPresence();
+      showMsg("Live status updated.");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Failed to update live status");
+      showMsg(err instanceof Error ? err.message : "Failed to update live status", "err");
     }
   };
 
   const handleDeleteProject = async () => {
     if (!canManage) return;
     if (deletePhrase.trim().toLowerCase() !== project.title.trim().toLowerCase()) {
-      setMessage("Type the exact project name before deleting.");
+      showMsg("Type the exact project name before deleting.", "err");
       return;
     }
-
     try {
       setDeleting(true);
       await apiDeleteProject(projectId);
       router.push("/dashboard/projects");
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Failed to delete project");
+      showMsg(err instanceof Error ? err.message : "Failed to delete project", "err");
     } finally {
       setDeleting(false);
       setShowDeleteModal(false);
@@ -218,75 +242,105 @@ export default function ProjectSettingsPanel({
   };
 
   return (
-    <aside className="space-y-5">
-      <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-[#c9d1d9]">Project Settings</h2>
-        <p className="mt-2 text-xs text-[#8b949e]">Manage name, visibility, and team access in one place.</p>
+    <aside>
+      {/* Feedback toast */}
+      {message && (
+        <div style={{
+          marginBottom: "0.85rem",
+          padding: "0.6rem 0.9rem",
+          background: messageType === "err" ? "var(--rs)" : "rgba(74,222,128,0.08)",
+          border: `1px solid ${messageType === "err" ? "var(--rg)" : "rgba(74,222,128,0.22)"}`,
+          borderRadius: "var(--r)",
+          fontSize: "0.77rem",
+          color: messageType === "err" ? "var(--red)" : "#4ade80",
+        }}>
+          {message}
+        </div>
+      )}
 
-        <div className="mt-4 space-y-3">
-          <div>
-            <label className="block text-xs text-[#8b949e]">Rename Project</label>
-            <input
-              value={nameInput}
-              onChange={(event) => setNameInput(event.target.value)}
-              className={`mt-1 w-full rounded-md border bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc] outline-none ${
-                nameError ? "border-red-500/60" : "border-[#30363d]"
-              }`}
-              disabled={!canManage}
-            />
-            <div className="mt-1 flex items-center justify-between text-[11px] text-[#6e7681]">
-              <span>{nameError || "Looks good"}</span>
-              <span>{nameInput.trim().length}/80</span>
-            </div>
+      {/* ── Project Settings ── */}
+      <div style={sectionStyle}>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.6rem" }}>
+          Project Settings
+        </div>
+
+        <div style={{ marginBottom: "0.65rem" }}>
+          <label style={labelStyle}>Rename</label>
+          <input
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            style={{ ...inputStyle, borderColor: nameError ? "var(--red)" : "var(--b2)" }}
+            disabled={!canManage}
+          />
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.64rem", color: nameError ? "var(--red)" : "var(--m1)", marginTop: "0.2rem" }}>
+            <span>{nameError || "Looks good"}</span>
+            <span>{nameInput.trim().length}/80</span>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-xs text-[#8b949e]">Visibility</label>
-            <select
-              value={visibility}
-              onChange={(event) => setVisibility(event.target.value as ProjectVisibility)}
-              className="mt-1 w-full rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc]"
-              disabled={!canManage}
-            >
-              <option value="private">Private</option>
-              <option value="followers-only">Followers Only</option>
-              <option value="public">Public</option>
-            </select>
-          </div>
-
-          <button
-            onClick={handleRename}
-            disabled={saving || !!nameError || !canManage}
-            className="w-full rounded-md border border-[#1f6feb] bg-[#1f6feb] px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+        <div style={{ marginBottom: "0.75rem" }}>
+          <label style={labelStyle}>Visibility</label>
+          <select
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as ProjectVisibility)}
+            style={selectStyle}
+            disabled={!canManage}
           >
-            {saving ? "Saving..." : "Save Project Settings"}
-          </button>
+            <option value="private">🔒 Private</option>
+            <option value="followers-only">👥 Followers Only</option>
+            <option value="public">🌐 Public</option>
+          </select>
         </div>
+
+        <button
+          onClick={handleRename}
+          disabled={saving || !!nameError || !canManage}
+          className="btn btn-p btn-full"
+          style={{ fontSize: "0.79rem" }}
+        >
+          {saving ? "Saving…" : "Save Settings"}
+        </button>
       </div>
 
-      <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9d1d9]">Project Metadata</h3>
-        <div className="mt-3 space-y-2 text-sm text-[#c9d1d9]">
-          <p className="flex items-center justify-between"><span className="text-[#8b949e]">Created</span><span>{formatDate(project.created_at)}</span></p>
-          <p className="flex items-center justify-between"><span className="text-[#8b949e]">Last modified</span><span>{formatDate(project.updated_at)}</span></p>
-          <p className="flex items-center justify-between"><span className="text-[#8b949e]">Owner</span><span>{project.owner?.name || "Unknown"}</span></p>
+      {/* ── Metadata ── */}
+      <div style={sectionStyle}>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.6rem" }}>
+          Metadata
         </div>
+        {[
+          { label: "Created", value: formatDate(project.created_at) },
+          { label: "Updated", value: formatDate(project.updated_at) },
+          { label: "Owner", value: project.owner?.name || "Unknown" },
+        ].map(({ label, value }) => (
+          <div key={label} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            fontSize: "0.77rem", marginBottom: "0.4rem",
+          }}>
+            <span style={{ color: "var(--m1)" }}>{label}</span>
+            <span style={{ color: "var(--m2)", fontWeight: 500 }}>{value}</span>
+          </div>
+        ))}
       </div>
 
-      <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9d1d9]">Manage Freelancers</h3>
-        <div className="mt-3 flex gap-2">
+      {/* ── Manage Freelancers ── */}
+      <div style={sectionStyle}>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.65rem" }}>
+          Manage Freelancers
+        </div>
+
+        <div style={{ display: "flex", gap: 6, marginBottom: "0.5rem" }}>
           <input
             value={identifier}
-            onChange={(event) => setIdentifier(event.target.value)}
+            onChange={(e) => setIdentifier(e.target.value)}
             placeholder="username or email"
-            className="flex-1 rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc]"
+            style={{ ...inputStyle, flex: 1 }}
             disabled={!canManage}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAddFreelancer(); }}
           />
           <select
             value={permission}
-            onChange={(event) => setPermission(event.target.value as ProjectPermission)}
-            className="rounded-md border border-[#30363d] bg-[#0d1117] px-2 py-2 text-sm text-[#f0f6fc]"
+            onChange={(e) => setPermission(e.target.value as ProjectPermission)}
+            style={{ ...selectStyle, width: 86 }}
             disabled={!canManage}
           >
             <option value="admin">Admin</option>
@@ -294,33 +348,38 @@ export default function ProjectSettingsPanel({
             <option value="viewer">Viewer</option>
           </select>
         </div>
+
         <button
           onClick={handleAddFreelancer}
           disabled={!canManage || addingMember || !identifier.trim()}
-          className="mt-2 w-full rounded-md border border-[#238636] bg-[#238636] px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="btn btn-s btn-full"
+          style={{ fontSize: "0.77rem", marginBottom: "0.75rem" }}
         >
-          {addingMember ? "Adding..." : "Add Freelancer"}
+          {addingMember ? "Adding…" : "+ Add Freelancer"}
         </button>
 
-        <div className="mt-3 space-y-2">
-          {loadingTeam ? (
-            <p className="text-xs text-[#8b949e]">Loading team...</p>
-          ) : (
-            team.map((member) => (
-              <div key={member.id} className="rounded-md border border-[#30363d] bg-[#0d1117] p-2">
-                <div className="flex items-center justify-between gap-2">
+        {/* Team list */}
+        {loadingTeam ? (
+          <div style={{ fontSize: "0.75rem", color: "var(--m1)" }}>Loading team…</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {team.map((member) => (
+              <div key={member.id} style={{
+                background: "var(--s3)", border: "1px solid var(--b1)",
+                borderRadius: "var(--r)", padding: "0.55rem 0.75rem",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <div>
-                    <p className="text-sm text-[#f0f6fc]">{member.name}</p>
-                    <p className="text-xs text-[#8b949e]">{member.email}</p>
+                    <div style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)" }}>{member.name}</div>
+                    <div style={{ fontSize: "0.67rem", color: "var(--m1)" }}>{member.email}</div>
                   </div>
-                  <span className="rounded-full bg-slate-700/50 px-2 py-1 text-[11px] uppercase text-[#c9d1d9]">{member.role}</span>
+                  <span className="tag tag-n" style={{ fontSize: "0.62rem", textTransform: "capitalize" }}>{member.role}</span>
                 </div>
-
-                <div className="mt-2 flex gap-2">
+                <div style={{ display: "flex", gap: 6, marginTop: "0.4rem" }}>
                   <select
                     value={member.permission || "editor"}
-                    onChange={(event) => handlePermissionChange(member.id, event.target.value as ProjectPermission)}
-                    className="flex-1 rounded-md border border-[#30363d] bg-[#161b22] px-2 py-1.5 text-xs text-[#f0f6fc]"
+                    onChange={(e) => handlePermissionChange(member.id, e.target.value as ProjectPermission)}
+                    style={{ ...selectStyle, flex: 1, height: 30, fontSize: "0.72rem", padding: "0 8px" }}
                     disabled={!canManage}
                   >
                     <option value="admin">Admin</option>
@@ -330,126 +389,187 @@ export default function ProjectSettingsPanel({
                   {member.id !== project.created_by && (
                     <button
                       onClick={() => handleRemoveFreelancer(member.id)}
-                      className="rounded-md border border-red-600/70 px-2 py-1.5 text-xs text-red-300"
                       disabled={!canManage}
+                      style={{
+                        height: 30, padding: "0 10px",
+                        background: "var(--rs)", border: "1px solid var(--rg)",
+                        borderRadius: "var(--r)", fontSize: "0.72rem", color: "var(--red)",
+                        cursor: "pointer",
+                      }}
                     >
                       Remove
                     </button>
                   )}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="rounded-xl border border-[#30363d] bg-[#111827] p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c9d1d9]">Active Freelancers</h3>
-
-        <div className="mt-3 space-y-2">
-          {loadingPresence ? (
-            <p className="text-xs text-[#8b949e]">Syncing live status...</p>
-          ) : presence.length === 0 ? (
-            <p className="text-xs text-[#8b949e]">No active statuses yet.</p>
-          ) : (
-            presence.map((item) => (
-              <div key={item.user_id} className="rounded-md border border-[#30363d] bg-[#0d1117] p-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-[#f0f6fc]">{item.name}</p>
-                  <span className="flex items-center gap-1 text-xs text-[#8b949e]">
-                    <span className={`inline-block h-2 w-2 rounded-full ${STATUS_DOT[item.status] || STATUS_DOT.offline}`} />
-                    {item.status}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs text-[#8b949e]">Task: {item.current_task || "No task set"}</p>
-                <p className="text-xs text-[#8b949e]">Hours logged: {Number(item.hours_logged || 0).toFixed(1)}</p>
-              </div>
-            ))
+      {/* ── Active Freelancers ── */}
+      <div style={sectionStyle}>
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          fontSize: "0.82rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.65rem",
+        }}>
+          <span>Active Freelancers</span>
+          {loadingPresence && (
+            <div style={{
+              width: 12, height: 12, borderRadius: "50%",
+              border: "1.5px solid var(--b2)", borderTopColor: "var(--red)",
+              animation: "spin 0.8s linear infinite",
+            }} />
           )}
         </div>
 
-        <div className="mt-3 rounded-md border border-[#30363d] bg-[#0d1117] p-3">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-[#8b949e]">Update My Status</p>
-          <div className="mt-2 space-y-2">
+        {presence.length === 0 ? (
+          <div style={{ fontSize: "0.77rem", color: "var(--m1)" }}>No active statuses yet.</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: "0.75rem" }}>
+            {presence.map((item) => (
+              <div key={item.user_id} style={{
+                background: "var(--s3)", border: "1px solid var(--b1)",
+                borderRadius: "var(--r)", padding: "0.55rem 0.75rem",
+              }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)" }}>{item.name}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.72rem", color: "var(--m2)" }}>
+                    <span style={{
+                      width: 7, height: 7, borderRadius: "50%",
+                      background: STATUS_COLORS[item.status] || STATUS_COLORS.offline,
+                    }} />
+                    {item.status}
+                  </div>
+                </div>
+                <div style={{ fontSize: "0.68rem", color: "var(--m1)", marginTop: "0.2rem" }}>
+                  {item.current_task ? `Working on: ${item.current_task}` : "No task set"} · {Number(item.hours_logged || 0).toFixed(1)}h logged
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Update my status */}
+        <div style={{
+          background: "var(--s3)", border: "1px solid var(--b1)",
+          borderRadius: "var(--r)", padding: "0.65rem 0.75rem",
+        }}>
+          <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--m1)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>
+            Update My Status
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <select
               value={myStatus}
-              onChange={(event) => setMyStatus(event.target.value as "online" | "away" | "offline")}
-              className="w-full rounded-md border border-[#30363d] bg-[#161b22] px-2 py-1.5 text-xs text-[#f0f6fc]"
+              onChange={(e) => setMyStatus(e.target.value as "online" | "away" | "offline")}
+              style={{ ...selectStyle, height: 32, fontSize: "0.75rem", padding: "0 8px" }}
             >
-              <option value="online">Online</option>
-              <option value="away">Away</option>
-              <option value="offline">Offline</option>
+              <option value="online">🟢 Online</option>
+              <option value="away">🟡 Away</option>
+              <option value="offline">⚫ Offline</option>
             </select>
             <input
               value={myTask}
-              onChange={(event) => setMyTask(event.target.value)}
-              className="w-full rounded-md border border-[#30363d] bg-[#161b22] px-2 py-1.5 text-xs text-[#f0f6fc]"
+              onChange={(e) => setMyTask(e.target.value)}
+              style={{ ...inputStyle, height: 32, fontSize: "0.75rem", padding: "0 8px" }}
               placeholder="Current task"
             />
-            <input
-              type="number"
-              min={0}
-              step={0.1}
-              value={myHours}
-              onChange={(event) => setMyHours(Number(event.target.value || 0))}
-              className="w-full rounded-md border border-[#30363d] bg-[#161b22] px-2 py-1.5 text-xs text-[#f0f6fc]"
-              placeholder="Hours logged"
-            />
-            <button
-              onClick={handleUpdatePresence}
-              className="w-full rounded-md border border-[#1f6feb] bg-[#1f6feb] px-2 py-1.5 text-xs text-white"
-            >
-              Sync Live Status
-            </button>
+            <div style={{ display: "flex", gap: 6 }}>
+              <input
+                type="number"
+                min={0}
+                step={0.1}
+                value={myHours}
+                onChange={(e) => setMyHours(Number(e.target.value || 0))}
+                style={{ ...inputStyle, height: 32, fontSize: "0.75rem", padding: "0 8px", flex: 1 }}
+                placeholder="Hours logged"
+              />
+              <button
+                onClick={handleUpdatePresence}
+                className="btn btn-p"
+                style={{ height: 32, fontSize: "0.73rem", padding: "0 12px", flexShrink: 0 }}
+              >
+                Sync
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-red-800/50 bg-red-500/10 p-4">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-red-200">Delete Project</h3>
-        <p className="mt-2 text-xs text-red-100/90">
-          Permanently delete this project, including versions, feedback, team members, and linked plugin data.
-        </p>
+      {/* ── Danger Zone ── */}
+      <div style={{
+        ...sectionStyle,
+        background: "rgba(232,57,46,0.06)",
+        border: "1px solid rgba(232,57,46,0.25)",
+      }}>
+        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--red)", marginBottom: "0.45rem" }}>
+          Danger Zone
+        </div>
+        <div style={{ fontSize: "0.76rem", color: "var(--m1)", lineHeight: 1.55, marginBottom: "0.65rem" }}>
+          Permanently delete this project, including all versions, feedback, team members, and plugin data.
+        </div>
         <button
           onClick={() => setShowDeleteModal(true)}
           disabled={!canManage}
-          className="mt-3 w-full rounded-md border border-red-500/70 px-3 py-2 text-sm text-red-200 disabled:opacity-60"
+          style={{
+            width: "100%", padding: "0.55rem 1rem",
+            background: "transparent", border: "1px solid rgba(232,57,46,0.45)",
+            borderRadius: "var(--r)", fontSize: "0.79rem", color: "var(--red)",
+            cursor: canManage ? "pointer" : "not-allowed", opacity: canManage ? 1 : 0.5,
+            fontFamily: "var(--fb)",
+          }}
         >
-          Delete Project
+          Delete Project…
         </button>
       </div>
 
-      {message && (
-        <div className="rounded-md border border-[#30363d] bg-[#111827] px-3 py-2 text-xs text-[#9fb3c8]">
-          {message}
-        </div>
-      )}
-
+      {/* ── Delete Confirmation Modal ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-xl border border-[#30363d] bg-[#111827] p-5">
-            <h4 className="text-base font-semibold text-[#f0f6fc]">Confirm permanent deletion</h4>
-            <p className="mt-2 text-sm text-[#c9d1d9]">
-              This action cannot be undone. Type <span className="font-semibold">{project.title}</span> to confirm.
-            </p>
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 50,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.7)",
+        }}>
+          <div style={{
+            width: "100%", maxWidth: 420, margin: "0 1rem",
+            background: "var(--s1)", border: "1px solid var(--b2)",
+            borderRadius: "var(--rxl)", padding: "1.5rem",
+            boxShadow: "0 30px 60px rgba(0,0,0,0.5)",
+          }}>
+            <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.5rem" }}>
+              Confirm permanent deletion
+            </div>
+            <div style={{ fontSize: "0.81rem", color: "var(--m2)", lineHeight: 1.6, marginBottom: "0.85rem" }}>
+              This action cannot be undone. Type{" "}
+              <span style={{ color: "var(--white)", fontWeight: 600 }}>{project.title}</span>{" "}
+              to confirm.
+            </div>
             <input
               value={deletePhrase}
-              onChange={(event) => setDeletePhrase(event.target.value)}
-              className="mt-3 w-full rounded-md border border-[#30363d] bg-[#0d1117] px-3 py-2 text-sm text-[#f0f6fc]"
+              onChange={(e) => setDeletePhrase(e.target.value)}
+              style={{ ...inputStyle, marginBottom: "0.85rem" }}
+              placeholder={project.title}
             />
-            <div className="mt-4 flex gap-2">
+            <div style={{ display: "flex", gap: "0.5rem" }}>
               <button
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 rounded-md border border-[#30363d] px-3 py-2 text-sm text-[#c9d1d9]"
+                onClick={() => { setShowDeleteModal(false); setDeletePhrase(""); }}
+                className="btn btn-g"
+                style={{ flex: 1, fontSize: "0.79rem" }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteProject}
                 disabled={deleting || deletePhrase.trim().toLowerCase() !== project.title.trim().toLowerCase()}
-                className="flex-1 rounded-md border border-red-500/70 bg-red-500/20 px-3 py-2 text-sm text-red-200 disabled:opacity-60"
+                style={{
+                  flex: 1, padding: "0.5rem 1rem",
+                  background: "rgba(232,57,46,0.15)", border: "1px solid rgba(232,57,46,0.4)",
+                  borderRadius: "var(--r)", fontSize: "0.79rem", color: "var(--red)",
+                  cursor: "pointer", fontFamily: "var(--fb)",
+                  opacity: (deleting || deletePhrase.trim().toLowerCase() !== project.title.trim().toLowerCase()) ? 0.45 : 1,
+                }}
               >
-                {deleting ? "Deleting..." : "Delete Forever"}
+                {deleting ? "Deleting…" : "Delete Forever"}
               </button>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
+import { invalidateProject } from "@/lib/invalidation";
 
 // ── POST /api/plugin/sync — Save Timeline JSON payload from UXP Plugin ──
 // Body expects: { projectId: "...", versionId: "...", timelineData: { ... } }
@@ -40,11 +41,17 @@ export async function POST(request: NextRequest) {
       [JSON.stringify(timelineData), versionId]
     );
 
-    // Provide back the timeline metrics
-    return NextResponse.json({ 
+    // Invalidate project detail cache (timeline_data is part of versions which are embedded)
+    const { rows: ownerRows } = await db.query(
+      "SELECT created_by FROM projects WHERE id = $1",
+      [projectId]
+    );
+    await invalidateProject(projectId, ownerRows[0]?.created_by).catch(() => {});
+
+    return NextResponse.json({
       success: true,
       message: "Timeline saved successfully!",
-      metadata: timelineData.metadata
+      metadata: timelineData.metadata,
     }, { status: 200 });
 
   } catch (err) {

@@ -12,20 +12,27 @@ interface EmptyStateProps {
 
 export default function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-6">
-      {/* Illustration container */}
-      <div className="w-20 h-20 rounded-2xl bg-bg-tertiary border border-border flex items-center justify-center mb-6">
+    <div style={{
+      display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", padding: "4rem 2rem", textAlign: "center",
+      gap: "0.85rem",
+    }}>
+      {/* Icon container */}
+      <div style={{
+        width: 56, height: 56, borderRadius: "var(--rl)",
+        background: "var(--s3)", border: "1px solid var(--b2)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "var(--m1)",
+      }}>
         {icon ?? (
           <svg
-            width="32"
-            height="32"
+            width="26" height="26"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-text-tertiary"
           >
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             <line x1="12" y1="11" x2="12" y2="17" />
@@ -34,17 +41,21 @@ export default function EmptyState({ icon, title, description, action }: EmptySt
         )}
       </div>
 
-      {/* Text */}
-      <h3 className="text-sm font-medium text-text-primary mb-1.5">{title}</h3>
-      <p className="text-sm text-text-tertiary text-center max-w-[280px] leading-relaxed">
+      <div style={{ fontSize: "0.95rem", fontWeight: 500, color: "var(--white)" }}>
+        {title}
+      </div>
+      <div style={{
+        fontSize: "0.82rem", color: "var(--m1)",
+        maxWidth: 280, lineHeight: 1.65, textAlign: "center",
+      }}>
         {description}
-      </p>
+      </div>
 
-      {/* CTA */}
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-6 px-5 py-2.5 bg-accent text-bg rounded-lg text-sm font-medium hover:bg-accent-hover transition-all duration-200 cursor-pointer"
+          className="btn btn-p"
+          style={{ marginTop: "0.35rem" }}
         >
           {action.label}
         </button>
