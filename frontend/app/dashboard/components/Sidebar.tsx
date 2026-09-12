@@ -48,16 +48,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const isProfile = pathname.startsWith("/dashboard/profile");
 
   const statusColor = (status: string) => {
-    if (status === "active") return "#00e5ff";
-    if (status === "pending") return "#f59e0b";
-    if (status === "approved" || status === "completed") return "#10b981";
+    if (status === "active") return "#38bdf8";
+    if (status === "pending") return "#fbbf24";
+    if (status === "approved" || status === "completed") return "#34d399";
     return "#71717a";
   };
 
   return (
-    <aside
-      className={`app-sidebar${open ? " open" : ""}`}
-    >
+    <aside className={`app-sidebar${open ? " open" : ""}`}>
       {/* WORKSPACE section */}
       <div className="sb-section-label">Workspace</div>
 
@@ -66,10 +64,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         className={`sb-item${isDash ? " active" : ""}`}
       >
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1" />
-          <rect x="14" y="3" width="7" height="7" rx="1" />
-          <rect x="3" y="14" width="7" height="7" rx="1" />
-          <rect x="14" y="14" width="7" height="7" rx="1" />
+          <rect x="3" y="3" width="7" height="7" rx="2" />
+          <rect x="14" y="3" width="7" height="7" rx="2" />
+          <rect x="3" y="14" width="7" height="7" rx="2" />
+          <rect x="14" y="14" width="7" height="7" rx="2" />
         </svg>
         Overview
       </Link>
@@ -133,7 +131,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           className="sb-user-card"
           style={{ width: "100%", cursor: "pointer" }}
         >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1c1e22] border border-white/[0.08] text-zinc-400 hover:text-white">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/5 border border-white/10 text-neutral-400 hover:text-white">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -144,7 +142,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             <div className="sb-user-name">Sign out</div>
             <div className="sb-user-role font-mono text-[10px]">End session</div>
           </div>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-600">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-500">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>

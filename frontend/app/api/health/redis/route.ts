@@ -14,7 +14,13 @@
  */
 
 import { NextResponse } from "next/server";
-import { isRedisHealthy, getRedisClient } from "@/lib/cache";
+import {
+  isRedisHealthy,
+  getRedisClient,
+  getRedisProvider,
+  getRedisHost,
+  getUpstashClient,
+} from "@/lib/cache";
 import { flags } from "@/lib/feature-flags";
 
 function redactUrl(url: string): string {
@@ -34,11 +40,8 @@ function parseInfoSection(info: string, key: string): string | null {
 
 export async function GET() {
   const startedAt = Date.now();
-  const redisUrl = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || "";
-  const redisHost = (() => {
-    try { return redisUrl ? new URL(redisUrl).host : "not-configured"; }
-    catch { return "invalid-url"; }
-  })();
+  const provider = getRedisProvider();
+  const redisHost = getRedisHost();
 
   // Basic connectivity ping
   const health = await isRedisHealthy();
@@ -46,8 +49,9 @@ export async function GET() {
   const base = {
     ok: health.ok,
     configured: health.configured,
+    provider,
     redisHost,
-    redisUrl: redisUrl ? redactUrl(redisUrl) : null,
+    redisUrl: provider === "upstash" ? process.env.UPSTASH_REDIS_REST_URL : (process.env.REDIS_URL ? redactUrl(process.env.REDIS_URL) : null),
     latencyMs: health.latencyMs,
     checkedAt: new Date().toISOString(),
     flags,
@@ -73,57 +77,82 @@ export async function GET() {
   }
 
   // Connection is good — gather richer stats
-  const redis = await getRedisClient();
   let server: Record<string, string | null> = {};
   let memory: Record<string, string | null> = {};
   let keyCount: number | null = null;
   let rateLimitKeyCount: number | null = null;
 
-  if (redis) {
+  if (provider === "upstash") {
     try {
-      // Redis INFO sections
-      const [serverInfo, memInfo, statsInfo] = await Promise.all([
-        redis.info("server"),
-        redis.info("memory"),
-        redis.info("stats"),
-      ]);
+      const upstash = getUpstashClient();
+      if (upstash) {
+        server = {
+          version: "Upstash Serverless",
+          mode: "REST (HTTP)",
+          provider: "Upstash Redis",
+          endpoint: process.env.UPSTASH_REDIS_REST_URL || null,
+        };
+        memory = {
+          status: "Managed by Upstash Serverless",
+        };
 
-      server = {
-        version:          parseInfoSection(serverInfo, "redis_version"),
-        mode:             parseInfoSection(serverInfo, "redis_mode"),
-        os:               parseInfoSection(serverInfo, "os"),
-        uptimeSeconds:    parseInfoSection(serverInfo, "uptime_in_seconds"),
-        connectedClients: parseInfoSection(serverInfo, "connected_clients"),
-        tcpPort:          parseInfoSection(serverInfo, "tcp_port"),
-      };
-
-      memory = {
-        usedHuman:        parseInfoSection(memInfo, "used_memory_human"),
-        usedPeakHuman:    parseInfoSection(memInfo, "used_memory_peak_human"),
-        maxMemoryHuman:   parseInfoSection(memInfo, "maxmemory_human"),
-        maxMemoryPolicy:  parseInfoSection(memInfo, "maxmemory_policy"),
-        memFragRatio:     parseInfoSection(memInfo, "mem_fragmentation_ratio"),
-        rssHuman:         parseInfoSection(memInfo, "used_memory_rss_human"),
-      };
-
-      // Count application cache keys and rate-limit keys using SCAN
-      let cacheKeys = 0;
-      let rlKeys = 0;
-
-      for await (const keys of redis.scanIterator({ MATCH: "cl:*", COUNT: 500 })) {
+        const keys = await upstash.keys("cl:*");
+        let cacheKeys = 0;
+        let rlKeys = 0;
         for (const k of keys) {
           if (k.startsWith("cl:rl:")) rlKeys++;
           else cacheKeys++;
         }
+        keyCount = cacheKeys;
+        rateLimitKeyCount = rlKeys;
       }
-
-      keyCount = cacheKeys;
-      rateLimitKeyCount = rlKeys;
-
-      // Suppress unused statsInfo variable lint warning
-      void statsInfo;
     } catch (err) {
-      console.warn("[Redis Health] Could not fetch INFO stats:", (err as Error).message);
+      console.warn("[Redis Health] Upstash stats error:", (err as Error).message);
+    }
+  } else {
+    const redis = await getRedisClient();
+    if (redis) {
+      try {
+        // Redis INFO sections
+        const [serverInfo, memInfo] = await Promise.all([
+          redis.info("server"),
+          redis.info("memory"),
+        ]);
+
+        server = {
+          version:          parseInfoSection(serverInfo, "redis_version"),
+          mode:             parseInfoSection(serverInfo, "redis_mode"),
+          os:               parseInfoSection(serverInfo, "os"),
+          uptimeSeconds:    parseInfoSection(serverInfo, "uptime_in_seconds"),
+          connectedClients: parseInfoSection(serverInfo, "connected_clients"),
+          tcpPort:          parseInfoSection(serverInfo, "tcp_port"),
+        };
+
+        memory = {
+          usedHuman:        parseInfoSection(memInfo, "used_memory_human"),
+          usedPeakHuman:    parseInfoSection(memInfo, "used_memory_peak_human"),
+          maxMemoryHuman:   parseInfoSection(memInfo, "maxmemory_human"),
+          maxMemoryPolicy:  parseInfoSection(memInfo, "maxmemory_policy"),
+          memFragRatio:     parseInfoSection(memInfo, "mem_fragmentation_ratio"),
+          rssHuman:         parseInfoSection(memInfo, "used_memory_rss_human"),
+        };
+
+        // Count application cache keys and rate-limit keys using SCAN
+        let cacheKeys = 0;
+        let rlKeys = 0;
+
+        for await (const keys of redis.scanIterator({ MATCH: "cl:*", COUNT: 500 })) {
+          for (const k of keys) {
+            if (k.startsWith("cl:rl:")) rlKeys++;
+            else cacheKeys++;
+          }
+        }
+
+        keyCount = cacheKeys;
+        rateLimitKeyCount = rlKeys;
+      } catch (err) {
+        console.warn("[Redis Health] Could not fetch INFO stats:", (err as Error).message);
+      }
     }
   }
 

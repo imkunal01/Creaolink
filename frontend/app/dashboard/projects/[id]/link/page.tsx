@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiGetProject } from "@/lib/api";
-
-type ProjectData = Awaited<ReturnType<typeof apiGetProject>>;
+import { useProject } from "@/lib/hooks/use-projects";
 
 const STEPS = [
   {
@@ -48,25 +46,11 @@ export default function LinkPremierePage() {
   const router = useRouter();
   const projectId = params.id as string;
 
-  const [project, setProject] = useState<ProjectData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { project, isLoading: loadingProject, error: projectError } = useProject(projectId);
   const [copied, setCopied] = useState(false);
 
-  const fetchProject = async () => {
-    try {
-      const data = await apiGetProject(projectId);
-      setProject(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load project");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProject();
-  }, [projectId]);
+  const loading = loadingProject && !project;
+  const error = projectError ? (projectError instanceof Error ? projectError.message : "Failed to load project") : "";
 
   const handleCopy = () => {
     if (!project?.sync_code) return;
@@ -77,8 +61,10 @@ export default function LinkPremierePage() {
 
   if (loading) {
     return (
-      <div className="mc flex items-center justify-center h-80">
-        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
+      <div className="mc max-w-3xl pb-16 space-y-6">
+        <div className="h-6 w-48 rounded bg-white/[0.05] animate-pulse" />
+        <div className="h-40 rounded-xl bg-white/[0.03] animate-pulse" />
+        <div className="h-32 rounded-xl bg-white/[0.03] animate-pulse" />
       </div>
     );
   }

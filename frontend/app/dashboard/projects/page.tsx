@@ -7,6 +7,8 @@ import { apiFetch } from "@/lib/api-client";
 import CreateProjectModal from "../components/CreateProjectModal";
 import EmptyState from "../components/EmptyState";
 
+import { useProjects } from "@/lib/hooks/use-projects";
+
 interface ApiProject {
   id: string;
   title: string;
@@ -37,30 +39,16 @@ function matchesFilter(project: ApiProject, filter: StatusFilter): boolean {
 export default function ProjectsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [projects, setProjects] = useState<ApiProject[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects: rawProjects, isLoading: loading, mutate } = useProjects();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("All");
   const [search, setSearch] = useState("");
 
-  const fetchProjects = useCallback(async () => {
-    try {
-      const res = await apiFetch("/api/projects");
-      if (res.ok) {
-        const data = await res.json();
-        setProjects(data.projects || []);
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const projects = rawProjects as unknown as ApiProject[];
 
   useEffect(() => {
     setUser(getUser());
-    fetchProjects();
-  }, [fetchProjects]);
+  }, []);
 
   if (!user) return null;
 
@@ -100,19 +88,19 @@ export default function ProjectsPage() {
 
       {/* Filter bar & Search */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#0d0e10] border border-white/[0.08]">
+        <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/[0.04] border border-white/[0.08]">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => setActiveFilter(f)}
-              className={`px-3 py-1.5 rounded-md text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeFilter === f
-                  ? "bg-[#1c1e22] text-white border border-white/10"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  ? "bg-white text-black font-semibold shadow-sm"
+                  : "text-neutral-400 hover:text-white"
               }`}
             >
               <span>{f}</span>
-              <span className="text-[10px] opacity-70">
+              <span className={`text-[10px] ${activeFilter === f ? "text-neutral-700 font-bold" : "opacity-70"}`}>
                 {countFor(f)}
               </span>
             </button>
@@ -120,8 +108,8 @@ export default function ProjectsPage() {
         </div>
 
         {/* Search */}
-        <div className="flex items-center gap-2 h-9 px-3 rounded-md bg-[#141618] border border-white/[0.08] text-xs text-white w-full sm:w-64">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-500 shrink-0">
+        <div className="flex items-center gap-2 h-9 px-3.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs text-white w-full sm:w-64 focus-within:border-white/30 transition-all">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-500 shrink-0">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -129,15 +117,28 @@ export default function ProjectsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search workspaces..."
-            className="w-full bg-transparent placeholder:text-zinc-600 outline-none text-xs"
+            className="w-full bg-transparent placeholder:text-neutral-600 outline-none text-xs text-white"
           />
         </div>
       </div>
 
       {/* Projects grid */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="cl-card p-4 space-y-4">
+              <div className="flex justify-between items-start">
+                <div className="h-5 w-3/4 rounded bg-white/[0.05] animate-pulse" />
+                <div className="h-5 w-14 rounded-full bg-white/[0.05] animate-pulse" />
+              </div>
+              <div className="h-3 w-full rounded bg-white/[0.03] animate-pulse" />
+              <div className="h-3 w-2/3 rounded bg-white/[0.03] animate-pulse" />
+              <div className="pt-3 border-t border-white/[0.06] flex justify-between items-center">
+                <div className="h-3 w-20 rounded bg-white/[0.04] animate-pulse" />
+                <div className="h-3 w-16 rounded bg-white/[0.04] animate-pulse" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : filtered.length === 0 ? (
         <div className="cl-card">
@@ -211,7 +212,7 @@ export default function ProjectsPage() {
           open={showCreateModal}
           onClose={() => {
             setShowCreateModal(false);
-            fetchProjects();
+            mutate();
           }}
         />
       )}

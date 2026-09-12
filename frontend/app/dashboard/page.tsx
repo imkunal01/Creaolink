@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getUser, type User } from "@/lib/auth";
-import { apiFetch } from "@/lib/api-client";
-import { apiGetFeed, type FeedActivityItem, type FeedNetworkItem } from "@/lib/api";
+import type { FeedActivityItem, FeedNetworkItem } from "@/lib/api";
+import { useProjects, useProjectFeed } from "@/lib/hooks/use-projects";
 
 interface ProjectRow {
   id: string;
@@ -64,31 +64,15 @@ function activityIcon(item: FeedActivityItem) {
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [projects, setProjects] = useState<ProjectRow[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
-  const [activity, setActivity] = useState<FeedActivityItem[]>([]);
-  const [network, setNetwork] = useState<FeedNetworkItem[]>([]);
+  const { projects, isLoading: loadingProjects } = useProjects();
+  const { activity, network, isLoading: loadingFeed } = useProjectFeed();
 
   useEffect(() => {
     const currentUser = getUser();
     setUser(currentUser);
     if (!currentUser) {
       router.replace("/auth/login");
-      return;
     }
-
-    apiFetch("/api/projects")
-      .then((r) => r.json())
-      .then((d) => setProjects(d.projects || []))
-      .catch(() => {})
-      .finally(() => setLoadingProjects(false));
-
-    apiGetFeed()
-      .then((d) => {
-        setActivity(d.activity || []);
-        setNetwork(d.network || []);
-      })
-      .catch(() => {});
   }, [router]);
 
   if (!user) return null;
@@ -175,7 +159,18 @@ export default function DashboardPage() {
             </div>
 
             {loadingProjects ? (
-              <div className="p-8 text-center text-xs font-mono text-zinc-500">Loading workspaces...</div>
+              <div className="p-4 space-y-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center justify-between gap-4 py-2 border-b border-white/[0.03] last:border-0">
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-4 w-44 rounded bg-white/[0.05] animate-pulse" />
+                      <div className="h-3 w-32 rounded bg-white/[0.03] animate-pulse" />
+                    </div>
+                    <div className="h-5 w-16 rounded-full bg-white/[0.05] animate-pulse" />
+                    <div className="h-3.5 w-16 rounded bg-white/[0.04] animate-pulse" />
+                  </div>
+                ))}
+              </div>
             ) : projects.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-xs text-zinc-400 mb-3">No active project rooms found.</p>
@@ -216,7 +211,19 @@ export default function DashboardPage() {
               <span className="cl-card-title">Live Activity Stream</span>
             </div>
             <div className="divide-y divide-white/[0.04]">
-              {activity.length === 0 ? (
+              {loadingFeed ? (
+                <div className="p-4 space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-3 py-1.5">
+                      <div className="h-7 w-7 rounded-md bg-white/[0.05] animate-pulse shrink-0" />
+                      <div className="space-y-1.5 flex-1">
+                        <div className="h-3.5 w-3/4 rounded bg-white/[0.04] animate-pulse" />
+                        <div className="h-2.5 w-20 rounded bg-white/[0.02] animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : activity.length === 0 ? (
                 <div className="p-6 text-center text-xs font-mono text-zinc-500">
                   No recent timeline events recorded.
                 </div>

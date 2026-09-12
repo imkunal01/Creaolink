@@ -53,14 +53,14 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/[0.04]">
+      <div className="flex items-center justify-between mt-3.5 pt-3 border-t border-white/[0.06]">
         <div className="flex items-center gap-1.5">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-[#00e5ff]/15 font-mono text-[9px] font-bold text-[#00e5ff]">
+          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 font-mono text-[9px] font-bold text-white">
             {project.name.slice(0, 2).toUpperCase()}
           </div>
-          <span className="text-[11px] font-mono text-zinc-500">Workspace</span>
+          <span className="text-[11px] font-mono text-neutral-400">Workspace</span>
         </div>
-        <span className="text-[11px] font-mono text-zinc-500">
+        <span className="text-[11px] font-mono text-neutral-500">
           {project.updatedAt}
         </span>
       </div>

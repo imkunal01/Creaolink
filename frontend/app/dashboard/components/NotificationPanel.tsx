@@ -130,14 +130,14 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
   return (
     <div
       ref={panelRef}
-      className="absolute top-[calc(100%+8px)] right-0 w-[min(380px,calc(100vw-24px))] max-h-[min(580px,calc(100dvh-80px))] flex flex-col bg-[#141618] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden"
+      className="absolute top-[calc(100%+8px)] right-0 w-[min(380px,calc(100vw-24px))] max-h-[min(580px,calc(100dvh-80px))] flex flex-col bg-[#0c0e14]/95 border border-white/[0.12] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl z-50 overflow-hidden text-white"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08] bg-[#0d0e10] shrink-0">
+      <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.08] bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-white">Notifications</span>
           {unreadCount > 0 && (
-            <span className="bg-[#00e5ff] text-[#08090a] text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full">
+            <span className="bg-white text-black text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full">
               {unreadCount}
             </span>
           )}
@@ -146,7 +146,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
           {unreadCount > 0 && (
             <button
               onClick={() => { markAllRead(); reload(); }}
-              className="text-[11px] font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
+              className="text-[11px] font-mono text-neutral-400 hover:text-white transition-colors cursor-pointer"
             >
               Mark read
             </button>
@@ -154,7 +154,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
           {notifs.length > 0 && (
             <button
               onClick={() => { clearAll(); reload(); }}
-              className="text-[11px] font-mono text-zinc-500 hover:text-red-400 transition-colors cursor-pointer ml-1"
+              className="text-[11px] font-mono text-neutral-500 hover:text-red-400 transition-colors cursor-pointer ml-1"
             >
               Clear
             </button>
@@ -163,15 +163,15 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1.5 px-3 py-2 overflow-x-auto shrink-0 border-b border-white/[0.04] bg-[#0d0e10]/60">
+      <div className="flex gap-1.5 px-3 py-2 overflow-x-auto shrink-0 border-b border-white/[0.06] bg-white/[0.01]">
         {(["all", "chat", "feedback", "status", "project", "version"] as const).map((k) => (
           <button
             key={k}
             onClick={() => setFilter(k)}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-mono capitalize whitespace-nowrap transition-colors cursor-pointer ${
+            className={`px-3 py-1 rounded-full text-[11px] font-mono capitalize whitespace-nowrap transition-all cursor-pointer ${
               filter === k
-                ? "bg-zinc-800 text-white border border-white/10"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "bg-white text-black font-semibold shadow-sm"
+                : "text-neutral-400 hover:text-white"
             }`}
           >
             {k}

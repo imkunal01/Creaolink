@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import AutoOpenAuthModal from "./components/AutoOpenAuthModal";
 
 export default function AuthPage() {
-  redirect("/auth/login");
+  return <AutoOpenAuthModal initialTab="login" />;
 }

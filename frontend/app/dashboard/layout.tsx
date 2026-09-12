@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { getUser, type User } from "@/lib/auth";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
+import { DashboardShellSkeleton } from "./components/DashboardSkeletons";
 
 export default function DashboardLayout({
   children,
@@ -42,11 +43,7 @@ export default function DashboardLayout({
   }, [sidebarOpen]);
 
   if (!ready || !user) {
-    return (
-      <div className="h-[100dvh] bg-[#08090a] flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
-      </div>
-    );
+    return <DashboardShellSkeleton />;
   }
 
   return (

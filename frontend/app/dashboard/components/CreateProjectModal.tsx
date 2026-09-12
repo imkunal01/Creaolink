@@ -63,39 +63,39 @@ export default function CreateProjectModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/80 backdrop-blur-2xl"
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg rounded-xl border border-white/[0.1] bg-[#141618] shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col z-10">
+      <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.12] bg-[#0c0e14]/95 shadow-[0_25px_70px_rgba(0,0,0,0.85)] backdrop-blur-2xl overflow-hidden max-h-[90dvh] flex flex-col z-10 text-white my-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0d0e10]">
+        <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-white/[0.08] bg-white/[0.02]">
           <div>
-            <h2 className="text-sm font-semibold text-white tracking-tight">
+            <h2 className="text-base font-bold text-white tracking-tight">
               Create New Project Room
             </h2>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
+            <p className="text-xs text-neutral-400 mt-0.5">
               Initialize a synced review workspace and timeline tracking.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-neutral-400 hover:text-white transition-colors cursor-pointer"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto">
+        <div className="p-6 sm:p-8 overflow-y-auto">
           {error && (
-            <div className="mb-4 px-3.5 py-2.5 rounded-md bg-red-500/10 border border-red-500/20 text-xs font-medium text-red-400">
+            <div className="mb-4 px-3.5 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs font-medium text-red-400">
               {error}
             </div>
           )}
@@ -103,59 +103,59 @@ export default function CreateProjectModal({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Title */}
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                Project Title <span className="text-[#00e5ff]">*</span>
+              <label className="block text-xs font-medium text-neutral-300 mb-1.5">
+                Project Title <span className="text-white">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Commercial Reel 2026 — v1 Cut"
-                className="w-full h-10 px-3 rounded-md bg-[#1c1e22] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 focus:ring-1 focus:ring-[#00e5ff]/20 transition-colors"
+                className="w-full h-11 px-3.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white placeholder:text-neutral-600 outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-colors"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                Description & Brief
+              <label className="block text-xs font-medium text-neutral-300 mb-1.5">
+                Description &amp; Brief
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Target delivery dates, color grading notes, export formats..."
                 rows={3}
-                className="w-full p-3 rounded-md bg-[#1c1e22] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 focus:ring-1 focus:ring-[#00e5ff]/20 transition-colors resize-none"
+                className="w-full p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white placeholder:text-neutral-600 outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-colors resize-none"
               />
             </div>
 
             {/* Deadline */}
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+              <label className="block text-xs font-medium text-neutral-300 mb-1.5">
                 Delivery Deadline
               </label>
               <input
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
-                className="w-full h-10 px-3 rounded-md bg-[#1c1e22] border border-white/[0.08] text-xs text-white outline-none focus:border-[#00e5ff]/60 focus:ring-1 focus:ring-[#00e5ff]/20 transition-colors [color-scheme:dark]"
+                className="w-full h-11 px-3.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-colors [color-scheme:dark]"
               />
             </div>
 
             {/* Freelancer Emails */}
             <div>
-              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                Collaborators & Freelancers{" "}
-                <span className="text-zinc-500 font-normal">(comma-separated emails)</span>
+              <label className="block text-xs font-medium text-neutral-300 mb-1.5">
+                Collaborators &amp; Freelancers{" "}
+                <span className="text-neutral-500 font-normal">(comma-separated emails)</span>
               </label>
               <input
                 type="text"
                 value={freelancerEmails}
                 onChange={(e) => setFreelancerEmails(e.target.value)}
                 placeholder="editor@studio.com, colorist@post.com"
-                className="w-full h-10 px-3 rounded-md bg-[#1c1e22] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 focus:ring-1 focus:ring-[#00e5ff]/20 transition-colors"
+                className="w-full h-11 px-3.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white placeholder:text-neutral-600 outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-colors"
               />
-              <p className="text-[11px] font-mono text-zinc-500 mt-1">
+              <p className="text-[11px] font-mono text-neutral-500 mt-1">
                 Collaborators will receive access to timeline review and comments.
               </p>
             </div>
@@ -165,14 +165,14 @@ export default function CreateProjectModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="btn btn-g btn-lg flex-1"
+                className="flex-1 h-11 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium text-xs transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-p btn-lg flex-1"
+                className="flex-1 h-11 rounded-full bg-white text-black font-semibold text-xs hover:bg-neutral-100 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_24px_rgba(255,255,255,0.18)] cursor-pointer flex items-center justify-center gap-2"
               >
                 {loading ? "Creating..." : "Create Project Room"}
               </button>

@@ -1,29 +1,25 @@
 /**
- * lib/cache.ts  —  Redis cache layer (production-grade with resilient DB fallback)
+ * lib/cache.ts  —  Redis cache layer (production-grade with Upstash REST & TCP Redis support)
  *
  * Strategy & Resilience:
- *  - Single persistent client with automatic reconnect & state management.
- *  - Graceful degradation / Circuit breaker:
+ *  - Primary: Upstash Redis (REST) via `@upstash/redis` when UPSTASH_REDIS_REST_URL & UPSTASH_REDIS_REST_TOKEN are set.
+ *             Serverless-native, HTTP-based, no socket leak, zero TCP connection limits.
+ *  - Secondary / Legacy: TCP Redis via `redis` client when REDIS_URL or UPSTASH_REDIS_URL is configured.
+ *  - Fallback / Circuit breaker:
  *      If Redis is not configured, unreachable, drops connection, or times out,
  *      all cache operations fail fast and transparently fall back to normal PostgreSQL database queries.
- *  - Cooldown circuit breaker:
- *      Prevents connection retries on every single request when Redis is offline,
- *      ensuring zero latency overhead on DB queries when running without Redis.
- *  - Read-through cache with distributed stampede protection (SETNX).
+ *  - Distributed stampede protection (SETNX).
  *  - Fail-open rate limiting and safe presence fallback.
- *
- * Environment variables:
- *   REDIS_URL         — standard redis:// or rediss:// URL (self-hosted / Railway / Render)
- *   UPSTASH_REDIS_URL — alternative for Upstash (same format)
  */
 
 import { createClient } from "redis";
+import { Redis as UpstashRedis } from "@upstash/redis";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type RedisClient = ReturnType<typeof createClient>;
+type NodeRedisClient = ReturnType<typeof createClient>;
 
-interface RateLimitResult {
+export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   resetInSeconds: number;
@@ -32,19 +28,61 @@ interface RateLimitResult {
 // ── Singleton & Circuit Breaker State ──────────────────────────────────────────
 
 const CIRCUIT_BREAKER_COOLDOWN_MS = 20_000; // 20s cooldown before retrying connection
-const COMMAND_TIMEOUT_MS = 1_500; // 1.5s max for any cache command
+const COMMAND_TIMEOUT_MS = 2_000; // 2.0s max for any cache command
 const CONNECT_TIMEOUT_MS = 2_500; // 2.5s max for initial connection
 
 const globalForRedis = globalThis as typeof globalThis & {
-  _redisClient?: RedisClient;
-  _redisClientPromise?: Promise<RedisClient | null>;
+  _upstashClient?: UpstashRedis | null;
+  _redisClient?: NodeRedisClient;
+  _redisClientPromise?: Promise<NodeRedisClient | null>;
   _redisLastFailureTime?: number;
   _redisHasLoggedWarning?: boolean;
 };
 
+export function getUpstashClient(): UpstashRedis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token && url.trim().length > 0 && token.trim().length > 0) {
+    if (!globalForRedis._upstashClient) {
+      globalForRedis._upstashClient = new UpstashRedis({
+        url: url.trim(),
+        token: token.trim(),
+      });
+    }
+    return globalForRedis._upstashClient;
+  }
+  return null;
+}
+
 function getRedisUrl(): string | null {
   const url = process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL;
   return url && url.trim().length > 0 ? url.trim() : null;
+}
+
+export function getRedisProvider(): "upstash" | "node-redis" | "none" {
+  if (getUpstashClient() !== null) return "upstash";
+  if (getRedisUrl() !== null) return "node-redis";
+  return "none";
+}
+
+export function getRedisHost(): string {
+  const upstash = getUpstashClient();
+  if (upstash) {
+    try {
+      return new URL(process.env.UPSTASH_REDIS_REST_URL!).host;
+    } catch {
+      return "upstash.io";
+    }
+  }
+  const redisUrl = getRedisUrl();
+  if (redisUrl) {
+    try {
+      return new URL(redisUrl).host;
+    } catch {
+      return "redis-tcp";
+    }
+  }
+  return "not-configured";
 }
 
 /** Utility to race any promise against a timeout */
@@ -83,22 +121,21 @@ function recordRedisFailure(err?: unknown) {
 }
 
 /**
- * Returns a connected and ready Redis client, or null if Redis is not configured,
- * offline, in cooldown, or unreachable.
- *
- * Safe to call on every request — connection is reused and circuit-broken.
+ * Returns a connected Node Redis client for TCP connections, or null.
  */
-export async function getRedisClient(): Promise<RedisClient | null> {
-  // If we have an active connected client, verify it's open
+export async function getRedisClient(): Promise<NodeRedisClient | null> {
+  // If Upstash is active, return null here as node-redis is bypassed
+  if (getUpstashClient()) {
+    return null;
+  }
+
   if (globalForRedis._redisClient) {
     if (globalForRedis._redisClient.isOpen) {
       return globalForRedis._redisClient;
     }
-    // Client was connected but is no longer open
     globalForRedis._redisClient = undefined;
   }
 
-  // Return in-flight connection promise if currently connecting
   if (globalForRedis._redisClientPromise) {
     return globalForRedis._redisClientPromise;
   }
@@ -108,17 +145,14 @@ export async function getRedisClient(): Promise<RedisClient | null> {
     if (!globalForRedis._redisHasLoggedWarning) {
       globalForRedis._redisHasLoggedWarning = true;
       console.info(
-        "[Redis] Not configured (REDIS_URL not set). App will serve all requests directly from PostgreSQL."
+        "[Redis] Not configured. App will serve all requests directly from PostgreSQL."
       );
     }
     return null;
   }
 
-  // Circuit breaker: check if we're in cooldown after a recent connection failure
   const lastFailure = globalForRedis._redisLastFailureTime || 0;
-  const timeSinceFailure = Date.now() - lastFailure;
-  if (timeSinceFailure < CIRCUIT_BREAKER_COOLDOWN_MS) {
-    // Fast path: bypass Redis immediately without blocking requests
+  if (Date.now() - lastFailure < CIRCUIT_BREAKER_COOLDOWN_MS) {
     return null;
   }
 
@@ -133,7 +167,7 @@ export async function getRedisClient(): Promise<RedisClient | null> {
     try {
       const nextClient = createClient({
         url: redisUrl,
-        disableOfflineQueue: true, // Fail fast if disconnected instead of queuing indefinitely
+        disableOfflineQueue: true,
         socket: {
           connectTimeout: CONNECT_TIMEOUT_MS,
           reconnectStrategy: (retries: number) => {
@@ -146,27 +180,14 @@ export async function getRedisClient(): Promise<RedisClient | null> {
       });
 
       nextClient.on("error", (err: any) => {
-        // Prevent uncaught error events from crashing the process
         console.warn("[Redis] Client socket error:", err?.message || err);
-      });
-
-      nextClient.on("reconnecting", () => {
-        console.info("[Redis] Reconnecting…", { host: redisHost });
-      });
-
-      nextClient.on("ready", () => {
-        console.info("[Redis] Connection ready", { host: redisHost });
-      });
-
-      nextClient.on("end", () => {
-        globalForRedis._redisClient = undefined;
       });
 
       const t = Date.now();
       await withTimeout(nextClient.connect(), CONNECT_TIMEOUT_MS + 500);
 
       globalForRedis._redisClient = nextClient;
-      globalForRedis._redisLastFailureTime = 0; // Clear failure time on success
+      globalForRedis._redisLastFailureTime = 0;
       console.info("[Redis] Connected successfully", {
         host: redisHost,
         latencyMs: Date.now() - t,
@@ -201,6 +222,20 @@ export function buildCacheKey(...parts: Primitive[]): string {
 
 export async function getCachedJson<T>(key: string): Promise<T | null> {
   try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      const data = await withTimeout(upstash.get<T>(key), COMMAND_TIMEOUT_MS, null);
+      if (data === null || data === undefined) return null;
+      if (typeof data === "string") {
+        try {
+          return JSON.parse(data) as T;
+        } catch {
+          return data as unknown as T;
+        }
+      }
+      return data as T;
+    }
+
     const redis = await getRedisClient();
     if (!redis || !redis.isOpen) return null;
 
@@ -222,6 +257,12 @@ export async function setCachedJson<T>(
   ttlSeconds: number
 ): Promise<boolean> {
   try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      await withTimeout(upstash.set(key, value, { ex: ttlSeconds }), COMMAND_TIMEOUT_MS);
+      return true;
+    }
+
     const redis = await getRedisClient();
     if (!redis || !redis.isOpen) return false;
 
@@ -240,6 +281,11 @@ export async function setCachedJson<T>(
 export async function deleteCachedKeys(keys: string[]): Promise<number> {
   if (keys.length === 0) return 0;
   try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      return await withTimeout(upstash.del(...keys), COMMAND_TIMEOUT_MS, 0);
+    }
+
     const redis = await getRedisClient();
     if (!redis || !redis.isOpen) return 0;
 
@@ -253,9 +299,17 @@ export async function deleteCachedKeys(keys: string[]): Promise<number> {
   }
 }
 
-/** Delete all keys matching a pattern — use sparingly, SCAN is O(N) */
 export async function deleteCachedPattern(pattern: string): Promise<number> {
   try {
+    const upstash = getUpstashClient();
+    if (upstash) {
+      const keys = await withTimeout(upstash.keys(pattern), COMMAND_TIMEOUT_MS, []);
+      if (keys && keys.length > 0) {
+        return await withTimeout(upstash.del(...keys), COMMAND_TIMEOUT_MS, 0);
+      }
+      return 0;
+    }
+
     const redis = await getRedisClient();
     if (!redis || !redis.isOpen) return 0;
 
@@ -277,15 +331,6 @@ export async function deleteCachedPattern(pattern: string): Promise<number> {
 
 // ── Read-through cache with Automatic Database Fallback ───────────────────────
 
-/**
- * Read-through cache with distributed stampede protection via Redis SETNX.
- *
- * Guarantees:
- *  - 100% resilient fallback: If Redis is unavailable, slow, or errors at any stage,
- *    `params.compute()` (the SQL/DB query) is immediately executed and returned.
- *  - The application will NEVER fail or return a 500 error due to Redis issues.
- *  - If DB query itself fails, that error will throw so caller handles database integrity.
- */
 export async function readThroughCache<T>(params: {
   key: string;
   ttlSeconds: number;
@@ -304,29 +349,42 @@ export async function readThroughCache<T>(params: {
     console.warn(`[Cache] GET failed for ${params.key}, falling back to DB:`, (err as Error).message);
   }
 
-  // 2. Distributed stampede protection via Redis lock (only if Redis is active)
+  // 2. Distributed stampede protection via Redis lock
   let lockAcquired = false;
   const lockKey = `${params.key}:lock`;
 
   try {
-    const redis = await getRedisClient();
-    if (redis && redis.isOpen) {
+    const upstash = getUpstashClient();
+    if (upstash) {
       const lockRes = await withTimeout(
-        redis.set(lockKey, "1", { NX: true, EX: 5 }),
+        upstash.set(lockKey, "1", { nx: true, ex: 5 }),
         500,
         null
       );
-      lockAcquired = Boolean(lockRes);
-
+      lockAcquired = lockRes === "OK" || Boolean(lockRes);
       if (!lockAcquired) {
-        // Another instance is computing — wait briefly and retry cache
-        await new Promise((r) => setTimeout(r, 200));
+        await new Promise((r) => setTimeout(r, 150));
         const retried = await getCachedJson<T>(params.key);
         if (retried !== null) return retried;
       }
+    } else {
+      const redis = await getRedisClient();
+      if (redis && redis.isOpen) {
+        const lockRes = await withTimeout(
+          redis.set(lockKey, "1", { NX: true, EX: 5 }),
+          500,
+          null
+        );
+        lockAcquired = Boolean(lockRes);
+
+        if (!lockAcquired) {
+          await new Promise((r) => setTimeout(r, 150));
+          const retried = await getCachedJson<T>(params.key);
+          if (retried !== null) return retried;
+        }
+      }
     }
   } catch {
-    // If lock attempt fails for any reason, proceed directly to DB compute
     lockAcquired = false;
   }
 
@@ -345,12 +403,16 @@ export async function readThroughCache<T>(params: {
   } catch {
     // Ignore cache set failures
   } finally {
-    // Always release lock safely if acquired
     if (lockAcquired) {
       try {
-        const redis = await getRedisClient();
-        if (redis && redis.isOpen) {
-          await withTimeout(redis.del(lockKey), 500, 0).catch(() => {});
+        const upstash = getUpstashClient();
+        if (upstash) {
+          await withTimeout(upstash.del(lockKey), 500, 0).catch(() => {});
+        } else {
+          const redis = await getRedisClient();
+          if (redis && redis.isOpen) {
+            await withTimeout(redis.del(lockKey), 500, 0).catch(() => {});
+          }
         }
       } catch {
         // Ignore lock release error
@@ -363,30 +425,38 @@ export async function readThroughCache<T>(params: {
 
 // ── Rate limiting (sliding window, fail-open) ──────────────────────────────────
 
-/**
- * Sliding window rate limiter using INCR + EXPIRE.
- * Fails open (allows request) if Redis is offline or errors.
- */
 export async function rateLimit(
   identifier: string,
   limit: number,
   windowSec: number
 ): Promise<RateLimitResult> {
   try {
-    const redis = await getRedisClient();
+    const key = `cl:rl:${identifier}`;
+    const upstash = getUpstashClient();
 
-    // No Redis or disconnected → allow everything (fail-open)
+    if (upstash) {
+      const count = await withTimeout(upstash.incr(key), COMMAND_TIMEOUT_MS, 1);
+      if (count === 1) {
+        await withTimeout(upstash.expire(key, windowSec), COMMAND_TIMEOUT_MS).catch(() => {});
+      }
+      const ttl = await withTimeout(upstash.ttl(key), COMMAND_TIMEOUT_MS, windowSec);
+      const remaining = Math.max(0, limit - count);
+      return {
+        allowed: count <= limit,
+        remaining,
+        resetInSeconds: ttl > 0 ? ttl : windowSec,
+      };
+    }
+
+    const redis = await getRedisClient();
     if (!redis || !redis.isOpen) {
       return { allowed: true, remaining: limit, resetInSeconds: windowSec };
     }
 
-    const key = `cl:rl:${identifier}`;
     const count = await withTimeout(redis.incr(key), COMMAND_TIMEOUT_MS);
-
     if (count === 1) {
       await withTimeout(redis.expire(key, windowSec), COMMAND_TIMEOUT_MS).catch(() => {});
     }
-
     const ttl = await withTimeout(redis.ttl(key), COMMAND_TIMEOUT_MS, windowSec);
     const remaining = Math.max(0, limit - count);
 
@@ -396,7 +466,6 @@ export async function rateLimit(
       resetInSeconds: ttl > 0 ? ttl : windowSec,
     };
   } catch {
-    // On Redis failure — fail open
     return { allowed: true, remaining: limit, resetInSeconds: windowSec };
   }
 }
@@ -404,7 +473,7 @@ export async function rateLimit(
 // ── Real-time presence (Redis live store with PostgreSQL fallback) ────────────
 
 const PRESENCE_PREFIX = "cl:presence";
-const PRESENCE_TTL = 70; // seconds — clients heartbeat every 60s
+const PRESENCE_TTL = 70; // seconds
 
 export interface PresenceEntry {
   userId: string;
@@ -415,16 +484,24 @@ export interface PresenceEntry {
   lastSeen: string; // ISO
 }
 
-/** Write a user's presence for a project into Redis */
 export async function setPresence(
   projectId: string,
   entry: PresenceEntry
 ): Promise<void> {
   try {
+    const key = `${PRESENCE_PREFIX}:${projectId}:${entry.userId}`;
+    const upstash = getUpstashClient();
+    if (upstash) {
+      await withTimeout(
+        upstash.set(key, entry, { ex: PRESENCE_TTL }),
+        COMMAND_TIMEOUT_MS
+      );
+      return;
+    }
+
     const redis = await getRedisClient();
     if (!redis || !redis.isOpen) return;
 
-    const key = `${PRESENCE_PREFIX}:${projectId}:${entry.userId}`;
     await withTimeout(
       redis.set(key, JSON.stringify(entry), { EX: PRESENCE_TTL }),
       COMMAND_TIMEOUT_MS
@@ -434,15 +511,34 @@ export async function setPresence(
   }
 }
 
-/** Read all active presence entries for a project */
 export async function getPresence(projectId: string): Promise<PresenceEntry[]> {
   try {
+    const pattern = `${PRESENCE_PREFIX}:${projectId}:*`;
+    const upstash = getUpstashClient();
+
+    if (upstash) {
+      const keys = await withTimeout(upstash.keys(pattern), COMMAND_TIMEOUT_MS, []);
+      if (!keys || keys.length === 0) return [];
+      const values = await withTimeout(upstash.mget<(PresenceEntry | string)[]>(...keys), COMMAND_TIMEOUT_MS, []);
+      const entries: PresenceEntry[] = [];
+      for (const v of values) {
+        if (v) {
+          if (typeof v === "string") {
+            try {
+              entries.push(JSON.parse(v) as PresenceEntry);
+            } catch {}
+          } else {
+            entries.push(v as PresenceEntry);
+          }
+        }
+      }
+      return entries;
+    }
+
     const redis = await getRedisClient();
     if (!redis || !redis.isOpen) return [];
 
-    const pattern = `${PRESENCE_PREFIX}:${projectId}:*`;
     const entries: PresenceEntry[] = [];
-
     for await (const keys of redis.scanIterator({ MATCH: pattern, COUNT: 50 })) {
       if (keys.length > 0) {
         const values = await withTimeout(redis.mGet(keys), COMMAND_TIMEOUT_MS, []);
@@ -450,14 +546,11 @@ export async function getPresence(projectId: string): Promise<PresenceEntry[]> {
           if (v) {
             try {
               entries.push(JSON.parse(v) as PresenceEntry);
-            } catch {
-              /* skip */
-            }
+            } catch {}
           }
         }
       }
     }
-
     return entries;
   } catch (err) {
     console.warn("[Redis] getPresence failed, falling back to PostgreSQL:", (err as Error).message);
@@ -467,7 +560,7 @@ export async function getPresence(projectId: string): Promise<PresenceEntry[]> {
 
 // ── Cache keys & TTL constants ────────────────────────────────────────────────
 
-export const CHAT_CACHE_TTL = 20; // seconds
+export const CHAT_CACHE_TTL = 20;
 export function chatKey(projectId: string): string {
   return buildCacheKey("chat", projectId);
 }
@@ -476,7 +569,7 @@ export async function invalidateChatCache(projectId: string): Promise<void> {
   await deleteCachedKeys([chatKey(projectId)]);
 }
 
-export const FEEDBACK_CACHE_TTL = 30; // seconds
+export const FEEDBACK_CACHE_TTL = 30;
 export function feedbackKey(projectId: string): string {
   return buildCacheKey("feedback", projectId);
 }
@@ -485,7 +578,7 @@ export async function invalidateFeedbackCache(projectId: string): Promise<void> 
   await deleteCachedKeys([feedbackKey(projectId)]);
 }
 
-export const TEAM_CACHE_TTL = 120; // 2 minutes
+export const TEAM_CACHE_TTL = 120;
 export function teamKey(projectId: string): string {
   return buildCacheKey("team", projectId);
 }
@@ -499,27 +592,59 @@ export async function invalidateTeamCache(projectId: string): Promise<void> {
 export async function isRedisHealthy(): Promise<{
   ok: boolean;
   configured: boolean;
+  provider: "upstash" | "node-redis" | "none";
   latencyMs: number;
   error?: string;
 }> {
   const startedAt = Date.now();
-  const redisUrl = getRedisUrl();
+  const upstash = getUpstashClient();
 
+  if (upstash) {
+    try {
+      const res = await withTimeout(upstash.ping(), 2500);
+      if (res === "PONG") {
+        return {
+          ok: true,
+          configured: true,
+          provider: "upstash",
+          latencyMs: Date.now() - startedAt,
+        };
+      }
+      return {
+        ok: false,
+        configured: true,
+        provider: "upstash",
+        latencyMs: Date.now() - startedAt,
+        error: `Unexpected ping response: ${res}`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        configured: true,
+        provider: "upstash",
+        latencyMs: Date.now() - startedAt,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  const redisUrl = getRedisUrl();
   if (!redisUrl) {
     return {
       ok: false,
       configured: false,
+      provider: "none",
       latencyMs: 0,
-      error: "Redis not configured (REDIS_URL not set)",
+      error: "Redis not configured (UPSTASH_REDIS_REST_URL or REDIS_URL not set)",
     };
   }
 
-  // Check if currently in cooldown
   const lastFailure = globalForRedis._redisLastFailureTime || 0;
   if (Date.now() - lastFailure < CIRCUIT_BREAKER_COOLDOWN_MS) {
     return {
       ok: false,
       configured: true,
+      provider: "node-redis",
       latencyMs: Date.now() - startedAt,
       error: "Redis connection in cooldown following a previous failure",
     };
@@ -531,22 +656,23 @@ export async function isRedisHealthy(): Promise<{
       return {
         ok: false,
         configured: true,
+        provider: "node-redis",
         latencyMs: Date.now() - startedAt,
         error: "Redis unavailable or failed to connect",
       };
     }
 
     await withTimeout(redis.ping(), 2000);
-    return { ok: true, configured: true, latencyMs: Date.now() - startedAt };
+    return { ok: true, configured: true, provider: "node-redis", latencyMs: Date.now() - startedAt };
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     recordRedisFailure(err);
     return {
       ok: false,
       configured: true,
+      provider: "node-redis",
       latencyMs: Date.now() - startedAt,
       error: errorMsg,
     };
   }
 }
-

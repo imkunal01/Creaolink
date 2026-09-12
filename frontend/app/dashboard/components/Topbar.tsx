@@ -11,6 +11,8 @@ import {
 } from "@/lib/notifications";
 import NotificationPanel from "./NotificationPanel";
 
+import Image from "next/image";
+
 interface TopbarProps {
   user: User | null;
   onMenuToggle: () => void;
@@ -74,12 +76,12 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
     : "?";
 
   return (
-    <header className="app-topbar">
+    <header className="app-topbar px-4 sm:px-8">
       {/* Left: Mobile hamburger + Logo */}
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuToggle}
-          className="lg:hidden flex h-8 w-8 items-center justify-center rounded-md bg-[#141618] border border-white/[0.08] text-zinc-400 hover:text-white transition-colors cursor-pointer"
+          className="lg:hidden flex h-8 w-8 items-center justify-center rounded-full bg-white/5 border border-white/10 text-neutral-400 hover:text-white transition-colors cursor-pointer"
           aria-label="Toggle menu"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -89,15 +91,27 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
           </svg>
         </button>
 
-        <Link href="/" className="tb-logo">
-          <b>Creao</b><span>Link</span>
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="relative w-7 h-7 flex items-center justify-center rounded-lg overflow-hidden bg-white/5 border border-white/10 group-hover:border-white/25 transition-colors">
+            <Image
+              src="/favicon.ico"
+              alt="Creaolink Logo"
+              width={20}
+              height={20}
+              className="object-contain"
+              priority
+            />
+          </div>
+          <span className="font-bold text-sm tracking-tight text-white/95 group-hover:text-white transition-colors">
+            Creaolink
+          </span>
         </Link>
       </div>
 
       {/* Center: Search */}
       <div className="relative flex-1 max-w-sm hidden sm:block">
         <div className="tb-search">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-500 shrink-0">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-500 shrink-0">
             <circle cx="11" cy="11" r="8" />
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
@@ -109,21 +123,21 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
         </div>
 
         {(loading || results.length > 0) && (
-          <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-md border border-white/[0.08] bg-[#141618] shadow-2xl">
+          <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0c0e14]/95 backdrop-blur-2xl shadow-2xl">
             {loading ? (
-              <div className="px-3 py-2 text-xs font-mono text-zinc-500">Searching workspace...</div>
+              <div className="px-3 py-2 text-xs font-mono text-neutral-400">Searching workspace...</div>
             ) : (
               results.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => { setQuery(""); setResults([]); router.push(`/dashboard/profile/${item.id}`); }}
-                  className="w-full px-3 py-2 text-left hover:bg-[#1c1e22] transition-colors flex items-center justify-between cursor-pointer border-b border-white/[0.04] last:border-b-0"
+                  className="w-full px-3.5 py-2.5 text-left hover:bg-white/5 transition-colors flex items-center justify-between cursor-pointer border-b border-white/[0.04] last:border-b-0"
                 >
                   <div>
                     <div className="text-xs font-medium text-white">{item.name}</div>
-                    <div className="text-[10px] font-mono text-zinc-500">@{item.username}</div>
+                    <div className="text-[10px] font-mono text-neutral-500">@{item.username}</div>
                   </div>
-                  <span className="text-[10px] font-mono uppercase text-zinc-500 bg-[#0d0e10] px-1.5 py-0.5 rounded border border-white/[0.06]">
+                  <span className="text-[10px] font-mono uppercase text-neutral-400 bg-white/5 px-2 py-0.5 rounded-full border border-white/[0.08]">
                     Profile
                   </span>
                 </button>
@@ -134,12 +148,12 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
       </div>
 
       {/* Right: Notifications + User profile */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         {/* Notification Bell */}
         <div ref={bellRef} className="relative">
           <button
             onClick={() => setPanelOpen((v) => !v)}
-            className="relative flex h-8 w-8 items-center justify-center rounded-md bg-[#141618] border border-white/[0.08] text-zinc-400 hover:text-white hover:border-white/20 transition-colors cursor-pointer"
+            className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/5 border border-white/10 text-neutral-400 hover:text-white hover:border-white/20 transition-colors cursor-pointer"
             title="Notifications"
             aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ""}`}
           >
@@ -148,7 +162,7 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
             {unread > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00e5ff] px-1 font-mono text-[9px] font-bold text-[#08090a] shadow-sm">
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 font-mono text-[9px] font-bold text-black shadow-sm">
                 {unread <= 9 ? unread : "9+"}
               </span>
             )}
@@ -163,16 +177,16 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
         {/* User Chip */}
         <Link
           href="/dashboard/profile"
-          className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-md bg-[#141618] border border-white/[0.08] hover:border-white/20 transition-colors"
+          className="flex items-center gap-2.5 p-1 pl-1.5 pr-3 rounded-full bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all"
         >
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[#00e5ff]/15 font-mono text-[10px] font-bold text-[#00e5ff]">
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15 font-mono text-[10px] font-bold text-white">
             {initials}
           </div>
           <div className="hidden sm:block text-left">
             <div className="text-xs font-medium text-white leading-tight">
               {user?.name ?? "User"}
             </div>
-            <div className="text-[10px] font-mono text-zinc-500 capitalize leading-tight">
+            <div className="text-[10px] font-mono text-neutral-400 capitalize leading-tight">
               {user?.role ?? "member"}
             </div>
           </div>

@@ -1,24 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getUser, type User } from "@/lib/auth";
 import {
-  apiGetProject,
-  apiUpdateStatus,
   apiCreateVersion,
-  apiAddFeedback,
-  apiGetFeedback,
-  apiResolveFeedback,
   type ProjectStatus,
 } from "@/lib/api";
+import { useProject } from "@/lib/hooks/use-projects";
+import { useProjectFeedback } from "@/lib/hooks/use-feedback";
+import { ProjectDetailSkeleton } from "../../components/DashboardSkeletons";
 import TimelineViewer from "../../components/TimelineViewer";
 import ProjectSettingsPanel from "./components/ProjectSettingsPanel";
 import ProjectChatRoom from "./components/ProjectChatRoom";
-
-type ProjectData = Awaited<ReturnType<typeof apiGetProject>>;
-type FeedbackItem = Awaited<ReturnType<typeof apiGetFeedback>>["feedback"][number];
 
 type Tab = "overview" | "chat" | "feedback";
 
@@ -41,10 +36,20 @@ export default function ProjectDetailPage() {
   const projectId = params.id as string;
 
   const [user, setUser] = useState<User | null>(null);
-  const [project, setProject] = useState<ProjectData | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const {
+    project,
+    isLoading: loadingProject,
+    error: projectError,
+    mutate: mutateProject,
+    updateStatus,
+  } = useProject(projectId);
+
+  const {
+    feedback,
+    isLoading: loadingFeedback,
+    addFeedback,
+    resolveFeedback,
+  } = useProjectFeedback(projectId);
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [showStatusMenu, setShowStatusMenu] = useState(false);
@@ -60,37 +65,14 @@ export default function ProjectDetailPage() {
 
   const isClient = user?.role === "client" || user?.role === "admin";
 
-  const fetchProject = useCallback(async () => {
-    try {
-      const data = await apiGetProject(projectId);
-      setProject(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load project");
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
-
-  const fetchFeedback = useCallback(async () => {
-    try {
-      const { feedback: list } = await apiGetFeedback(projectId);
-      setFeedback(list);
-    } catch {
-      // ignore
-    }
-  }, [projectId]);
-
   useEffect(() => {
     setUser(getUser());
-    fetchProject();
-    fetchFeedback();
-  }, [fetchProject, fetchFeedback]);
+  }, []);
 
   const handleStatusChange = async (status: string) => {
     setShowStatusMenu(false);
     try {
-      await apiUpdateStatus(projectId, status as ProjectStatus);
-      fetchProject();
+      await updateStatus(status as ProjectStatus);
     } catch { /* ignore */ }
   };
 
@@ -100,7 +82,7 @@ export default function ProjectDetailPage() {
       await apiCreateVersion(projectId, versionNotes);
       setVersionNotes("");
       setShowVersionForm(false);
-      fetchProject();
+      mutateProject();
     } catch { /* ignore */ }
     finally { setCreatingVersion(false); }
   };
@@ -110,29 +92,33 @@ export default function ProjectDetailPage() {
     if (!fbDescription.trim()) return;
     setAddingFeedback(true);
     try {
-      await apiAddFeedback(projectId, {
-        type: fbType, priority: fbPriority,
-        timestamp: fbTimestamp, description: fbDescription.trim(),
-      });
-      setFbDescription(""); setFbTimestamp(""); setShowFeedbackForm(false);
-      fetchFeedback();
+      await addFeedback(
+        {
+          type: fbType,
+          priority: fbPriority,
+          timestamp: fbTimestamp,
+          description: fbDescription.trim(),
+        },
+        user?.name || "You"
+      );
+      setFbDescription("");
+      setFbTimestamp("");
+      setShowFeedbackForm(false);
     } catch { /* ignore */ }
     finally { setAddingFeedback(false); }
   };
 
   const handleResolve = async (feedbackId: string) => {
     try {
-      await apiResolveFeedback(feedbackId);
-      fetchFeedback();
+      await resolveFeedback(feedbackId);
     } catch { /* ignore */ }
   };
 
+  const loading = loadingProject && !project;
+  const error = projectError ? (projectError instanceof Error ? projectError.message : "Failed to load project") : "";
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[50vh]">
-        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
-      </div>
-    );
+    return <ProjectDetailSkeleton />;
   }
 
   if (error || !project) {
@@ -600,7 +586,9 @@ export default function ProjectDetailPage() {
               projectId={projectId}
               project={project}
               user={user}
-              onProjectUpdated={fetchProject}
+              onProjectUpdated={async () => {
+                await mutateProject();
+              }}
             />
           </div>
         </div>

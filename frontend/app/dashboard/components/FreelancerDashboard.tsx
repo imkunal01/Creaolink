@@ -8,6 +8,8 @@ import StatsCards from "./StatsCards";
 import EmptyState from "./EmptyState";
 import ProjectCard from "./ProjectCard";
 
+import { useProjects } from "@/lib/hooks/use-projects";
+
 interface ApiProject {
   id: string;
   title: string;
@@ -24,26 +26,8 @@ interface FreelancerDashboardProps {
 
 export default function FreelancerDashboard({ user }: FreelancerDashboardProps) {
   const router = useRouter();
-  const [projects, setProjects] = useState<ApiProject[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchProjects = useCallback(async () => {
-    try {
-      const res = await apiFetch("/api/projects");
-      if (res.ok) {
-        const data = await res.json();
-        setProjects(data.projects);
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+  const { projects: rawProjects, isLoading: loading } = useProjects();
+  const projects = rawProjects as unknown as ApiProject[];
 
   const assignedCount = projects.filter((p) => p.status === "active").length;
   const openFeedback = projects.reduce((sum, p) => sum + (p.openFeedback || 0), 0);

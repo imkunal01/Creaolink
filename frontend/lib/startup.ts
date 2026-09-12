@@ -6,7 +6,13 @@
  * it shows up in your Railway / Render / Vercel logs on every deploy.
  */
 
-import { getRedisClient, isRedisHealthy } from "./cache";
+import {
+  getRedisClient,
+  isRedisHealthy,
+  getRedisProvider,
+  getRedisHost,
+  getUpstashClient,
+} from "./cache";
 
 const SEPARATOR = "─".repeat(56);
 
@@ -41,57 +47,69 @@ export async function runStartupHealthCheck(): Promise<void> {
   logLine("Environment", process.env.NODE_ENV ?? "development");
 
   // ── Redis ──────────────────────────────────────────────────────────────────
-  const redisUrl =
-    process.env.REDIS_URL || process.env.UPSTASH_REDIS_URL || "";
+  const provider = getRedisProvider();
+  const redisHost = getRedisHost();
 
-  if (!redisUrl) {
+  if (provider === "none") {
     console.log("");
     console.log(
-      "  ⚠  REDIS_URL is not set — caching, rate limiting, and presence"
+      "  ⚠  Neither UPSTASH_REDIS_REST_URL nor REDIS_URL is set — caching, rate limiting, and presence"
     );
     console.log(
-      "     will fall back to PostgreSQL. Set REDIS_URL in .env to enable Redis."
+      "     will fall back to PostgreSQL. Set UPSTASH_REDIS_REST_URL in .env to enable Redis."
     );
     console.log("");
   } else {
     // Attempt connection and time it
     const health = await isRedisHealthy();
-    const redactedUrl = redactUrl(redisUrl);
 
     console.log("");
-    logLine("Redis URL", redactedUrl);
+    logLine("Redis provider", provider === "upstash" ? "Upstash (REST / Serverless)" : "Node Redis (TCP)");
+    logLine("Redis host", redisHost);
 
     if (health.ok) {
       logLine("Redis status", `connected (${health.latencyMs}ms)`, true);
 
-      // Pull extra info from Redis INFO command
-      try {
-        const redis = await getRedisClient();
-        if (redis) {
-          const info = await redis.info("server");
-          const versionMatch = info.match(/redis_version:(\S+)/);
-          const modeMatch    = info.match(/redis_mode:(\S+)/);
-          const uptimeMatch  = info.match(/uptime_in_seconds:(\d+)/);
-
-          if (versionMatch) logLine("Redis version", versionMatch[1]);
-          if (modeMatch)    logLine("Redis mode", modeMatch[1]);
-          if (uptimeMatch) {
-            const uptimeSec = parseInt(uptimeMatch[1], 10);
-            const uptimeStr =
-              uptimeSec < 60
-                ? `${uptimeSec}s`
-                : uptimeSec < 3600
-                ? `${Math.floor(uptimeSec / 60)}m ${uptimeSec % 60}s`
-                : `${Math.floor(uptimeSec / 3600)}h ${Math.floor((uptimeSec % 3600) / 60)}m`;
-            logLine("Redis uptime", uptimeStr);
+      if (provider === "upstash") {
+        try {
+          const upstash = getUpstashClient();
+          if (upstash) {
+            const dbsize = await upstash.dbsize();
+            logLine("Redis key count", String(dbsize));
           }
-
-          const memInfo = await redis.info("memory");
-          const usedMemMatch = memInfo.match(/used_memory_human:(\S+)/);
-          if (usedMemMatch) logLine("Redis memory used", usedMemMatch[1]);
+        } catch {
+          // Optional
         }
-      } catch {
-        // INFO is optional — don't crash startup if it fails
+      } else {
+        // Pull extra info from Redis INFO command
+        try {
+          const redis = await getRedisClient();
+          if (redis) {
+            const info = await redis.info("server");
+            const versionMatch = info.match(/redis_version:(\S+)/);
+            const modeMatch    = info.match(/redis_mode:(\S+)/);
+            const uptimeMatch  = info.match(/uptime_in_seconds:(\d+)/);
+
+            if (versionMatch) logLine("Redis version", versionMatch[1]);
+            if (modeMatch)    logLine("Redis mode", modeMatch[1]);
+            if (uptimeMatch) {
+              const uptimeSec = parseInt(uptimeMatch[1], 10);
+              const uptimeStr =
+                uptimeSec < 60
+                  ? `${uptimeSec}s`
+                  : uptimeSec < 3600
+                  ? `${Math.floor(uptimeSec / 60)}m ${uptimeSec % 60}s`
+                  : `${Math.floor(uptimeSec / 3600)}h ${Math.floor((uptimeSec % 3600) / 60)}m`;
+              logLine("Redis uptime", uptimeStr);
+            }
+
+            const memInfo = await redis.info("memory");
+            const usedMemMatch = memInfo.match(/used_memory_human:(\S+)/);
+            if (usedMemMatch) logLine("Redis memory used", usedMemMatch[1]);
+          }
+        } catch {
+          // INFO is optional — don't crash startup if it fails
+        }
       }
     } else {
       logLine("Redis status", `FAILED — ${health.error ?? "unknown error"}`, false);
@@ -100,7 +118,7 @@ export async function runStartupHealthCheck(): Promise<void> {
         "  ⚠  Redis connection failed. The app will serve requests from PostgreSQL."
       );
       console.log(
-        "     Verify REDIS_URL is reachable and the server is running."
+        "     Verify your Redis credentials are correct and reachable."
       );
     }
 

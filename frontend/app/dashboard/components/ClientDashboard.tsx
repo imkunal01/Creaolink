@@ -9,6 +9,8 @@ import EmptyState from "./EmptyState";
 import ProjectCard from "./ProjectCard";
 import CreateProjectModal from "./CreateProjectModal";
 
+import { useProjects } from "@/lib/hooks/use-projects";
+
 interface ApiProject {
   id: string;
   title: string;
@@ -37,27 +39,10 @@ function Spinner() {
 
 export default function ClientDashboard({ user }: ClientDashboardProps) {
   const router = useRouter();
-  const [projects, setProjects] = useState<ApiProject[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { projects: rawProjects, isLoading: loading, mutate } = useProjects();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const fetchProjects = useCallback(async () => {
-    try {
-      const res = await apiFetch("/api/projects");
-      if (res.ok) {
-        const data = await res.json();
-        setProjects(data.projects);
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+  const projects = rawProjects as unknown as ApiProject[];
 
   const activeCount = projects.filter((p) => p.status === "active").length;
   const completedCount = projects.filter((p) => p.status === "completed" || p.status === "approved").length;
@@ -151,7 +136,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
 
       <CreateProjectModal
         open={showCreateModal}
-        onClose={() => { setShowCreateModal(false); fetchProjects(); }}
+        onClose={() => { setShowCreateModal(false); mutate(); }}
       />
     </div>
   );
