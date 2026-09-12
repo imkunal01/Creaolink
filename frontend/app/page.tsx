@@ -6,6 +6,7 @@ import FloatingHeroWidgets from "./components/FloatingHeroWidgets";
 import MinimalSaaSGrid from "./components/MinimalSaaSGrid";
 import MinimalMetrics from "./components/MinimalMetrics";
 import MinimalFooter from "./components/MinimalFooter";
+import ScenoxisSection from "./components/ScenoxisSection";
 
 export default function LandingPage() {
   return (
@@ -33,8 +34,40 @@ export default function LandingPage() {
           ───────────────────────────────────────────────────────────── */}
       <section className="relative w-full h-[100dvh] min-h-[600px] flex flex-col justify-between pt-24 sm:pt-32 pb-0 overflow-hidden">
         {/* Hero Copy (Minimal, Impactful, Centered) */}
-        <div className="relative z-20 max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-4 sm:space-y-5">
-          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[76px] font-extrabold tracking-[-0.04em] text-white leading-[1.08] text-balance">
+        <div className="relative z-20 max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 text-center space-y-4 sm:space-y-5">
+
+          {/* Scenoxis Powered-by Badge */}
+          <div className="flex justify-center">
+            <a
+              href="https://scenoxis.in/"
+              target="_blank"
+              rel="noreferrer"
+              className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/[0.10] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.20] backdrop-blur-md transition-all duration-200 cursor-pointer"
+            >
+              <span className="text-[11px] font-mono tracking-widest text-neutral-400 uppercase">
+                Powered by
+              </span>
+              <span
+                className="text-[11px] font-bold tracking-wide"
+                style={{
+                  background: "linear-gradient(90deg, #fb923c, #ec4899, #a855f7)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                Scenoxis
+              </span>
+              {/* Arrow */}
+              <svg
+                className="w-3 h-3 text-neutral-400 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-200"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] xl:text-[64px] font-extrabold tracking-[-0.035em] text-white leading-[1.12]">
             Elevate Your Creative Workflow
           </h1>
 
@@ -73,6 +106,11 @@ export default function LandingPage() {
           Minimalist SaaS Value Architecture & Pipeline Console
           ───────────────────────────────────────────────────────────── */}
       <MinimalSaaSGrid />
+
+      {/* ─────────────────────────────────────────────────────────────
+          Powered by Scenoxis
+          ───────────────────────────────────────────────────────────── */}
+      <ScenoxisSection />
 
       {/* ─────────────────────────────────────────────────────────────
           Ultra-Clean Minimalist Footer
