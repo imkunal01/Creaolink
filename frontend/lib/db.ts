@@ -45,8 +45,20 @@ async function initTables() {
         username TEXT UNIQUE,
         password TEXT NOT NULL DEFAULT '',
         role TEXT NOT NULL CHECK(role IN ('client', 'freelancer', 'admin')),
+        avatar_url TEXT,
+        bio TEXT,
+        headline TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS headline TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS company TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS location TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS website TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS status_text TEXT;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS status_emoji TEXT;
 
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,

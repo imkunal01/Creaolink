@@ -81,7 +81,7 @@ export default function FloatingNavbar() {
               </Link>
               <Link
                 href="/auth/signup"
-                className="text-[13px] font-medium px-4 py-1.5 rounded-full bg-[#121418] hover:bg-[#1a1d24] border border-white/20 text-white transition-all shadow-[0_2px_10px_rgba(0,0,0,0.5)]"
+                className="text-[13px] font-semibold px-4 py-1.5 rounded-full bg-white text-black hover:bg-neutral-200 transition-all shadow-sm"
               >
                 Sign Up
               </Link>

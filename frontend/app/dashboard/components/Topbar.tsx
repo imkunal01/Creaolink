@@ -179,9 +179,18 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
           href="/dashboard/profile"
           className="flex items-center gap-2.5 p-1 pl-1.5 pr-3 rounded-full bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all"
         >
-          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15 font-mono text-[10px] font-bold text-white">
-            {initials}
-          </div>
+          {user?.avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.avatar_url}
+              alt={user.name}
+              className="h-6 w-6 shrink-0 rounded-full object-cover border border-white/20"
+            />
+          ) : (
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/15 font-mono text-[10px] font-bold text-white">
+              {initials}
+            </div>
+          )}
           <div className="hidden sm:block text-left">
             <div className="text-xs font-medium text-white leading-tight">
               {user?.name ?? "User"}

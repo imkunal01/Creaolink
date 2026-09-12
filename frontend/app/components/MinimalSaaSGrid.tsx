@@ -156,12 +156,25 @@ export default function MinimalSaaSGrid() {
               {activeTab === 2 &&
                 "Distributed edge workers generate high-fidelity HLS streams on the fly, saving hours of manual rendering and upload bandwidth."}
             </p>
-            <div className="pt-2">
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center gap-2 text-xs font-semibold text-white hover:text-neutral-200 group"
+            <div className="pt-3 flex flex-wrap items-center gap-3">
+              <a
+                href="/api/plugin/download?format=ccx"
+                download="creaolink-premiere-v1.0.0.ccx"
+                className="px-4 py-2 rounded-xl bg-white text-black font-semibold text-xs hover:bg-neutral-100 transition-all flex items-center gap-2 cursor-pointer shadow-sm"
               >
-                <span>Explore the documentation</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>Download Plugin (.ccx)</span>
+              </a>
+
+              <Link
+                href="/premiere-setup"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-300 hover:text-white px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+              >
+                <span>Setup Guide &amp; Docs</span>
                 <svg
                   width="12"
                   height="12"

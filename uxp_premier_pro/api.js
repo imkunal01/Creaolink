@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:3000";  // swap for your real URL
+const API_BASE_URL = typeof window !== "undefined" && window.CREAOLINK_API_URL ? window.CREAOLINK_API_URL : "http://localhost:3001";
 const SYNC_ENDPOINT = `${API_BASE_URL}/api/plugin/sync`;
 const LINK_ENDPOINT = `${API_BASE_URL}/api/plugin/link`;
 const TIMEOUT_MS = 15000;  // 15 seconds — generous for large timelines

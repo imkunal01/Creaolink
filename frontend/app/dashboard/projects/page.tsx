@@ -189,12 +189,12 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.04] text-[11px] font-mono text-zinc-500">
+                <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.06] text-[11px] font-mono text-neutral-500">
                   <div className="flex items-center gap-1.5">
-                    <div className="flex h-5 w-5 items-center justify-center rounded bg-[#00e5ff]/15 text-[#00e5ff] font-bold text-[9px]">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-white font-bold text-[9px] border border-white/10">
                       {project.title.slice(0, 2).toUpperCase()}
                     </div>
-                    <span>Workspace</span>
+                    <span className="text-neutral-400">Workspace</span>
                   </div>
                   <span>
                     {new Date(project.created_at).toLocaleDateString()}

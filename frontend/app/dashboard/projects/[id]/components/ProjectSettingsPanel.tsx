@@ -210,7 +210,7 @@ export default function ProjectSettingsPanel({
       {/* Feedback Toast */}
       {message && (
         <div
-          className={`p-2.5 rounded-md text-xs font-mono border ${
+          className={`p-3 rounded-xl text-xs font-mono border ${
             messageType === "err"
               ? "bg-red-500/10 border-red-500/20 text-red-400"
               : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
@@ -221,28 +221,28 @@ export default function ProjectSettingsPanel({
       )}
 
       {/* Settings Card */}
-      <div className="p-3.5 rounded-lg border border-white/[0.08] bg-[#141618] space-y-3">
-        <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+      <div className="p-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md space-y-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
           Room Settings
         </div>
 
         <div>
-          <label className="block text-[10px] font-mono uppercase text-zinc-500 mb-1">Rename Workspace</label>
+          <label className="block text-[10px] font-mono uppercase text-neutral-500 mb-1">Rename Workspace</label>
           <input
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
-            className="w-full h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white outline-none focus:border-[#00e5ff]/60"
+            className="w-full h-8 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white outline-none focus:border-white/40"
             disabled={!canManage}
           />
           {nameError && <span className="text-[10px] text-red-400 font-mono mt-1 block">{nameError}</span>}
         </div>
 
         <div>
-          <label className="block text-[10px] font-mono uppercase text-zinc-500 mb-1">Visibility Scope</label>
+          <label className="block text-[10px] font-mono uppercase text-neutral-500 mb-1">Visibility Scope</label>
           <select
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as ProjectVisibility)}
-            className="w-full h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-zinc-300 outline-none [color-scheme:dark]"
+            className="w-full h-8 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-neutral-300 outline-none [color-scheme:dark]"
             disabled={!canManage}
           >
             <option value="private">Private Workspace</option>
@@ -261,8 +261,8 @@ export default function ProjectSettingsPanel({
       </div>
 
       {/* Manage Collaborators */}
-      <div className="p-3.5 rounded-lg border border-white/[0.08] bg-[#141618] space-y-3">
-        <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+      <div className="p-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md space-y-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
           Manage Team
         </div>
 
@@ -271,14 +271,14 @@ export default function ProjectSettingsPanel({
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder="Username or email"
-            className="flex-1 h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60"
+            className="flex-1 h-8 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white placeholder:text-neutral-600 outline-none focus:border-white/40"
             disabled={!canManage}
             onKeyDown={(e) => { if (e.key === "Enter") handleAddFreelancer(); }}
           />
           <select
             value={permission}
             onChange={(e) => setPermission(e.target.value as ProjectPermission)}
-            className="w-20 h-8 px-1 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-zinc-300 outline-none [color-scheme:dark]"
+            className="w-20 h-8 px-1.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-neutral-300 outline-none [color-scheme:dark]"
             disabled={!canManage}
           >
             <option value="admin">Admin</option>
@@ -297,20 +297,20 @@ export default function ProjectSettingsPanel({
 
         {/* Team list */}
         {loadingTeam ? (
-          <div className="text-[11px] font-mono text-zinc-500">Loading team members...</div>
+          <div className="text-[11px] font-mono text-neutral-500">Loading team members...</div>
         ) : (
           <div className="space-y-1.5 pt-1">
             {team.map((member) => (
-              <div key={member.id} className="p-2 rounded bg-[#0d0e10] border border-white/[0.04] space-y-1.5">
+              <div key={member.id} className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-white truncate">{member.name}</span>
-                  <span className="text-[10px] font-mono uppercase text-zinc-500">{member.role}</span>
+                  <span className="text-[10px] font-mono uppercase text-neutral-500">{member.role}</span>
                 </div>
                 <div className="flex gap-1.5">
                   <select
                     value={member.permission || "editor"}
                     onChange={(e) => handlePermissionChange(member.id, e.target.value as ProjectPermission)}
-                    className="flex-1 h-6 px-1 rounded bg-[#141618] border border-white/[0.08] text-[10px] text-zinc-300 outline-none [color-scheme:dark]"
+                    className="flex-1 h-6 px-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-[10px] text-neutral-300 outline-none [color-scheme:dark]"
                     disabled={!canManage}
                   >
                     <option value="admin">Admin</option>
@@ -321,7 +321,7 @@ export default function ProjectSettingsPanel({
                     <button
                       onClick={() => handleRemoveFreelancer(member.id)}
                       disabled={!canManage}
-                      className="px-2 h-6 rounded bg-red-500/10 border border-red-500/20 text-[10px] text-red-400 hover:bg-red-500/20 cursor-pointer"
+                      className="px-2 h-6 rounded-lg bg-red-500/10 border border-red-500/20 text-[10px] text-red-400 hover:bg-red-500/20 cursor-pointer"
                     >
                       Remove
                     </button>
@@ -334,19 +334,19 @@ export default function ProjectSettingsPanel({
       </div>
 
       {/* Live Presence */}
-      <div className="p-3.5 rounded-lg border border-white/[0.08] bg-[#141618] space-y-3">
+      <div className="p-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Live Presence</span>
-          {loadingPresence && <div className="w-3 h-3 rounded-full border border-white/20 border-t-[#00e5ff] animate-spin" />}
+          <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Live Presence</span>
+          {loadingPresence && <div className="w-3 h-3 rounded-full border border-white/20 border-t-white animate-spin" />}
         </div>
 
         {presence.length > 0 ? (
           <div className="space-y-1.5">
             {presence.map((item) => (
-              <div key={item.user_id} className="p-2 rounded bg-[#0d0e10] border border-white/[0.04]">
+              <div key={item.user_id} className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-white">{item.name}</span>
-                  <span className="flex items-center gap-1 text-[10px] font-mono text-zinc-400 capitalize">
+                  <span className="flex items-center gap-1.5 text-[10px] font-mono text-neutral-400 capitalize">
                     <span
                       className="w-1.5 h-1.5 rounded-full"
                       style={{ backgroundColor: STATUS_COLORS[item.status] || STATUS_COLORS.offline }}
@@ -355,7 +355,7 @@ export default function ProjectSettingsPanel({
                   </span>
                 </div>
                 {item.current_task && (
-                  <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
+                  <p className="text-[10px] text-neutral-500 mt-0.5 truncate">
                     Task: {item.current_task}
                   </p>
                 )}
@@ -363,16 +363,16 @@ export default function ProjectSettingsPanel({
             ))}
           </div>
         ) : (
-          <p className="text-[11px] font-mono text-zinc-500">No active telemetry logged.</p>
+          <p className="text-[11px] font-mono text-neutral-500">No active telemetry logged.</p>
         )}
 
         {/* Update My Status */}
         <div className="pt-2 border-t border-white/[0.04] space-y-2">
-          <div className="text-[10px] font-mono uppercase text-zinc-500">Update My Status</div>
+          <div className="text-[10px] font-mono uppercase text-neutral-500">Update My Status</div>
           <select
             value={myStatus}
             onChange={(e) => setMyStatus(e.target.value as "online" | "away" | "offline")}
-            className="w-full h-7 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-[11px] text-zinc-300 outline-none [color-scheme:dark]"
+            className="w-full h-8 px-2 rounded-xl bg-white/[0.03] border border-white/[0.1] text-[11px] text-neutral-300 outline-none [color-scheme:dark]"
           >
             <option value="online">Online / Editing</option>
             <option value="away">Away / In Render</option>
@@ -381,7 +381,7 @@ export default function ProjectSettingsPanel({
           <input
             value={myTask}
             onChange={(e) => setMyTask(e.target.value)}
-            className="w-full h-7 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-[11px] text-white placeholder:text-zinc-600 outline-none"
+            className="w-full h-8 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-[11px] text-white placeholder:text-neutral-600 outline-none"
             placeholder="Current task focus"
           />
           <div className="flex gap-1.5">
@@ -391,7 +391,7 @@ export default function ProjectSettingsPanel({
               step={0.1}
               value={myHours}
               onChange={(e) => setMyHours(Number(e.target.value || 0))}
-              className="flex-1 h-7 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-[11px] text-white placeholder:text-zinc-600 outline-none"
+              className="flex-1 h-8 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-[11px] text-white placeholder:text-neutral-600 outline-none"
               placeholder="Hours logged"
             />
             <button
@@ -406,14 +406,14 @@ export default function ProjectSettingsPanel({
 
       {/* Danger Zone */}
       {canManage && (
-        <div className="p-3.5 rounded-lg border border-red-500/20 bg-red-500/5 space-y-2">
+        <div className="p-4 rounded-2xl border border-red-500/20 bg-red-500/[0.03] space-y-2">
           <div className="text-xs font-semibold text-red-400">Danger Zone</div>
-          <p className="text-[11px] text-zinc-500 leading-snug">
+          <p className="text-[11px] text-neutral-500 leading-snug">
             Permanently delete this project workspace and all timeline sync data.
           </p>
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="w-full py-1.5 rounded bg-red-500/10 border border-red-500/30 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
+            className="w-full py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
           >
             Delete Workspace...
           </button>
@@ -422,10 +422,10 @@ export default function ProjectSettingsPanel({
 
       {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-white/[0.1] bg-[#141618] p-5 shadow-2xl space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/45 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl border border-white/[0.14] bg-[#0c0e14]/65 backdrop-blur-md p-6 shadow-2xl space-y-3.5 text-white">
             <h4 className="text-sm font-semibold text-white">Permanent Deletion</h4>
-            <p className="text-xs text-zinc-400 leading-relaxed">
+            <p className="text-xs text-neutral-400 leading-relaxed">
               This action cannot be undone. Type{" "}
               <strong className="text-white font-mono">{project.title}</strong> to confirm.
             </p>
@@ -433,7 +433,7 @@ export default function ProjectSettingsPanel({
               value={deletePhrase}
               onChange={(e) => setDeletePhrase(e.target.value)}
               placeholder={project.title}
-              className="w-full h-8 px-2.5 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white outline-none focus:border-red-500/60"
+              className="w-full h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.1] text-xs text-white outline-none focus:border-red-500/60"
             />
             <div className="flex gap-2 pt-2">
               <button

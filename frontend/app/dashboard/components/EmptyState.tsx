@@ -14,7 +14,7 @@ export default function EmptyState({ icon, title, description, action }: EmptySt
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
       {/* Icon container */}
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#141618] border border-white/[0.08] text-zinc-500 mb-4 shadow-sm">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.04] border border-white/[0.08] text-neutral-400 mb-4 shadow-sm">
         {icon ?? (
           <svg
             width="22"
@@ -36,7 +36,7 @@ export default function EmptyState({ icon, title, description, action }: EmptySt
       <h3 className="text-sm font-semibold text-white mb-1">
         {title}
       </h3>
-      <p className="text-xs text-zinc-400 max-w-xs leading-relaxed mb-5">
+      <p className="text-xs text-neutral-400 max-w-xs leading-relaxed mb-5">
         {description}
       </p>
 

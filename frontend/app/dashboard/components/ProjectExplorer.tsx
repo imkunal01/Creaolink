@@ -109,7 +109,7 @@ export default function ProjectExplorer({
   return (
     <aside className="cl-card overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-white/[0.08] bg-[#0d0e10]">
+      <div className="p-4 border-b border-white/[0.08] bg-white/[0.02]">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-semibold uppercase tracking-wider text-white">Project Explorer</span>
           <span className="tag tag-n text-[10px] font-mono">{projects.length} Total</span>
@@ -119,14 +119,14 @@ export default function ProjectExplorer({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Filter workspaces..."
-          className="w-full h-8 px-2.5 rounded-md bg-[#141618] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 transition-colors"
+          className="w-full h-8 px-2.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-xs text-white placeholder:text-neutral-500 outline-none focus:border-white/30 transition-colors"
         />
 
         <div className="grid grid-cols-2 gap-2 mt-2">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortValue)}
-            className="w-full h-8 px-2 rounded-md bg-[#141618] border border-white/[0.08] text-[11px] text-zinc-300 outline-none cursor-pointer [color-scheme:dark]"
+            className="w-full h-8 px-2 rounded-lg bg-[#0c0e14] border border-white/[0.08] text-[11px] text-neutral-300 outline-none cursor-pointer [color-scheme:dark]"
           >
             <option value="recent">Recent</option>
             <option value="alphabetical">A to Z</option>
@@ -135,7 +135,7 @@ export default function ProjectExplorer({
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterValue)}
-            className="w-full h-8 px-2 rounded-md bg-[#141618] border border-white/[0.08] text-[11px] text-zinc-300 outline-none cursor-pointer [color-scheme:dark]"
+            className="w-full h-8 px-2 rounded-lg bg-[#0c0e14] border border-white/[0.08] text-[11px] text-neutral-300 outline-none cursor-pointer [color-scheme:dark]"
           >
             <option value="all">All States</option>
             <option value="active">Active</option>
@@ -222,16 +222,16 @@ function ProjectSection({
     <div>
       <button
         onClick={onToggle}
-        className="flex w-full items-center justify-between p-1.5 text-left cursor-pointer rounded hover:bg-white/[0.04] transition-colors"
+        className="flex w-full items-center justify-between p-1.5 text-left cursor-pointer rounded-lg hover:bg-white/[0.04] transition-colors"
       >
         <div>
-          <div className="text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-400">
+          <div className="text-[11px] font-mono font-semibold uppercase tracking-wider text-neutral-400">
             {title}
           </div>
-          <div className="text-[10px] text-zinc-500">{description}</div>
+          <div className="text-[10px] text-neutral-500">{description}</div>
         </div>
-        <div className="flex items-center gap-1.5 text-zinc-500 font-mono text-[10px]">
-          <span className="px-1.5 py-0.2 rounded bg-[#1c1e22] border border-white/[0.06]">{count}</span>
+        <div className="flex items-center gap-1.5 text-neutral-400 font-mono text-[10px]">
+          <span className="px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08]">{count}</span>
           <svg
             width="12"
             height="12"
@@ -264,15 +264,15 @@ function ProjectRow({
   onArchive?: () => void; statusColor: string;
 }) {
   return (
-    <div className={`group rounded-md border p-2.5 transition-all ${
+    <div className={`group rounded-xl border p-2.5 transition-all ${
       isActive
-        ? "bg-[#00e5ff]/10 border-[#00e5ff]/30"
-        : "bg-[#141618] border-white/[0.06] hover:border-white/[0.14]"
+        ? "bg-white/[0.08] border-white/25 shadow-sm"
+        : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.14]"
     }`}>
       <div className="flex items-start gap-2.5">
         <button onClick={onOpen} className="flex min-w-0 flex-1 gap-2 text-left cursor-pointer">
           <span
-            className="mt-1 h-2 w-2 rounded-full shrink-0"
+            className="mt-1.5 h-2 w-2 rounded-full shrink-0 shadow-sm"
             style={{ backgroundColor: statusColor }}
           />
           <div className="min-w-0 flex-1">
@@ -281,19 +281,19 @@ function ProjectRow({
                 {project.title}
               </span>
               {isPinned && (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="text-[#00e5ff] shrink-0">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="text-white shrink-0">
                   <path d="M16 3H8l2 6-4 4v2h7v6l1 1 1-1v-6h7v-2l-4-4 2-6z" />
                 </svg>
               )}
             </div>
-            <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5">
+            <p className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
               {project.description || "No description provided."}
             </p>
-            <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-zinc-500">
+            <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-neutral-400">
               <span className="truncate max-w-[90px]">{project.owner_name}</span>
               <span>&middot; {project.member_count} members</span>
               {project.open_feedback > 0 && (
-                <span className="text-[#00e5ff] font-medium">&middot; {project.open_feedback} open</span>
+                <span className="text-white font-medium">&middot; {project.open_feedback} open</span>
               )}
             </div>
           </div>
@@ -303,7 +303,7 @@ function ProjectRow({
         <div className="relative shrink-0">
           <button
             onClick={onMenuToggle}
-            className="flex h-6 w-6 items-center justify-center rounded bg-[#1c1e22] border border-white/[0.06] text-zinc-400 hover:text-white cursor-pointer"
+            className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/[0.04] border border-white/[0.08] text-neutral-400 hover:text-white hover:bg-white/10 cursor-pointer transition-colors"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="1" />
@@ -312,7 +312,7 @@ function ProjectRow({
             </svg>
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1.5 z-40 w-36 rounded-md border border-white/[0.1] bg-[#141618] p-1 shadow-2xl">
+            <div className="absolute right-0 top-full mt-1.5 z-40 w-36 rounded-2xl border border-white/[0.12] bg-[#0c0e14]/95 backdrop-blur-md p-1 shadow-2xl">
               {[
                 { label: isPinned ? "Unpin Room" : "Pin Room", action: onPinToggle },
                 onArchive ? { label: "Archive Room", action: onArchive } : null,
@@ -321,7 +321,7 @@ function ProjectRow({
                 <button
                   key={item!.label}
                   onClick={item!.action}
-                  className="block w-full px-2.5 py-1.5 text-left text-xs text-zinc-300 hover:bg-[#1c1e22] hover:text-white rounded transition-colors cursor-pointer"
+                  className="block w-full px-2.5 py-1.5 text-left text-xs text-neutral-300 hover:bg-white/10 hover:text-white rounded-xl transition-colors cursor-pointer"
                 >
                   {item!.label}
                 </button>
@@ -336,7 +336,7 @@ function ProjectRow({
 
 function ExplorerEmptyText({ text }: { text: string }) {
   return (
-    <div className="p-3 border border-dashed border-white/[0.08] rounded-md text-[11px] font-mono text-zinc-500 leading-relaxed text-center">
+    <div className="p-3 border border-dashed border-white/[0.08] rounded-xl text-[11px] font-mono text-neutral-500 leading-relaxed text-center">
       {text}
     </div>
   );

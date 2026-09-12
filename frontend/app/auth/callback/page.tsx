@@ -80,19 +80,19 @@ function CallbackContent() {
 
   return (
     <div className="min-h-[50vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-xl border border-white/[0.08] bg-[#141618] p-8 text-center shadow-2xl">
+      <div className="w-full max-w-md rounded-3xl border border-white/[0.12] bg-[#0c0e14]/65 backdrop-blur-md p-8 text-center shadow-2xl">
         {status === "loading" ? (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
-            <p className="text-xs text-zinc-400 font-mono">Finalizing Google authentication...</p>
+            <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-white animate-spin" />
+            <p className="text-xs text-neutral-400 font-mono">Finalizing Google authentication...</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-xs text-red-400 font-medium">{error || "Google login failed"}</p>
+            <p className="text-xs text-rose-400 font-medium">{error || "Google login failed"}</p>
             <button
               type="button"
               onClick={() => router.replace("/auth/login")}
-              className="mt-2 rounded-md border border-white/[0.08] px-4 py-2 text-xs text-zinc-300 transition-colors hover:border-white/20 hover:text-white"
+              className="mt-2 rounded-full border border-white/20 bg-white/5 px-5 py-2 text-xs text-white transition-all hover:bg-white/10"
             >
               Return to login
             </button>
@@ -106,9 +106,9 @@ function CallbackContent() {
 function CallbackFallback() {
   return (
     <div className="min-h-[50vh] flex items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-xl border border-white/[0.08] bg-[#141618] p-8 text-center">
-        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin mx-auto mb-3" />
-        <p className="text-xs text-zinc-400 font-mono">Finalizing Google authentication...</p>
+      <div className="w-full max-w-md rounded-3xl border border-white/[0.12] bg-[#0c0e14]/65 backdrop-blur-md p-8 text-center shadow-2xl">
+        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-white animate-spin mx-auto mb-3" />
+        <p className="text-xs text-neutral-400 font-mono">Finalizing Google authentication...</p>
       </div>
     </div>
   );

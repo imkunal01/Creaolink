@@ -72,8 +72,8 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
 
   if (!data || !data.sequence) {
     return (
-      <div className="w-full h-56 rounded-xl border border-white/[0.08] bg-[#0d0e10] flex flex-col items-center justify-center gap-3 text-zinc-500 shadow-inner">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#141618] border border-white/[0.06] text-zinc-600">
+      <div className="w-full h-56 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-md flex flex-col items-center justify-center gap-3 text-neutral-500 shadow-inner">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04] border border-white/[0.06] text-neutral-500">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <rect x="2" y="3" width="20" height="14" rx="2" />
             <path d="M8 21h8M12 17v4" />
@@ -119,11 +119,11 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
   };
 
   return (
-    <div className="w-full rounded-xl border border-white/[0.1] bg-[#0d0e10] flex flex-col font-sans overflow-hidden shadow-2xl">
+    <div className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-md flex flex-col font-sans overflow-hidden shadow-2xl">
       {/* Top Header & Telemetry Bar */}
-      <div className="bg-[#141618] px-4 py-3 border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white/[0.03] px-5 py-3.5 border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-[#00e5ff]/15 border border-[#00e5ff]/30 text-[#00e5ff]">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10 border border-white/20 text-white">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
@@ -131,12 +131,12 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
           <div>
             <div className="text-xs font-semibold text-white tracking-tight flex items-center gap-2">
               {data.sequence.name}
-              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Synced
               </span>
             </div>
-            <div className="text-[10px] font-mono text-zinc-500 mt-0.5">
+            <div className="text-[10px] font-mono text-neutral-500 mt-0.5">
               Sequence Frame Rate: 24.00 fps &middot; Premiere Pro 2026 Engine
             </div>
           </div>
@@ -144,15 +144,15 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
 
         {/* Telemetry Metrics */}
         <div className="flex items-center gap-4 text-[11px] font-mono">
-          <div className="px-2.5 py-1 rounded bg-[#08090a] border border-white/[0.06] text-zinc-300">
-            <span className="text-zinc-500 mr-1.5">POS</span>
-            <span className="text-[#00e5ff] font-semibold">{formatTimecode(playheadTime)}</span>
+          <div className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-neutral-300">
+            <span className="text-neutral-500 mr-1.5">POS</span>
+            <span className="text-white font-semibold">{formatTimecode(playheadTime)}</span>
           </div>
-          <div className="px-2.5 py-1 rounded bg-[#08090a] border border-white/[0.06] text-zinc-300">
-            <span className="text-zinc-500 mr-1.5">DUR</span>
+          <div className="px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-neutral-300">
+            <span className="text-neutral-500 mr-1.5">DUR</span>
             <span>{formatTimecode(sequenceDuration)}</span>
           </div>
-          <div className="hidden sm:flex items-center gap-3 text-zinc-400 text-[10px]">
+          <div className="hidden sm:flex items-center gap-3 text-neutral-400 text-[10px]">
             <span>{data.metadata.totalClips} clips</span>
             <span>&middot;</span>
             <span>{data.metadata.totalMarkers} markers</span>
@@ -161,11 +161,11 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
       </div>
 
       {/* Timeline Scroll Container */}
-      <div className="overflow-x-auto overflow-y-auto relative flex max-h-[480px] min-h-[260px] bg-[#08090a]">
+      <div className="overflow-x-auto overflow-y-auto relative flex max-h-[480px] min-h-[260px] bg-black/40">
         {/* Track Headers (Left Sidebar - Sticky) */}
-        <div className="w-28 flex-shrink-0 bg-[#0d0e10] border-r border-white/[0.08] sticky left-0 z-30 flex flex-col shadow-lg select-none">
+        <div className="w-28 flex-shrink-0 bg-[#07080a]/90 backdrop-blur-md border-r border-white/[0.08] sticky left-0 z-30 flex flex-col shadow-lg select-none">
           {/* Ruler spacer */}
-          <div style={{ height: RULER_HEIGHT }} className="border-b border-white/[0.08] bg-[#141618] px-2.5 flex items-center text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+          <div style={{ height: RULER_HEIGHT }} className="border-b border-white/[0.08] bg-white/[0.02] px-2.5 flex items-center text-[10px] font-mono text-neutral-500 uppercase tracking-wider">
             Tracks
           </div>
 
@@ -174,10 +174,10 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
             <div
               key={`vh-${track.trackIndex}`}
               style={{ height: TRACK_HEIGHT }}
-              className="border-b border-white/[0.04] px-2.5 flex items-center justify-between bg-[#101214] text-zinc-400 text-[11px] font-mono"
+              className="border-b border-white/[0.04] px-2.5 flex items-center justify-between bg-white/[0.01] text-neutral-400 text-[11px] font-mono"
             >
-              <span className="font-semibold text-[#38bdf8]">{track.name}</span>
-              <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-[#38bdf8]/10 text-[#38bdf8] border border-[#38bdf8]/20">
+              <span className="font-semibold text-sky-400">{track.name}</span>
+              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
                 VID
               </span>
             </div>
@@ -188,10 +188,10 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
             <div
               key={`ah-${track.trackIndex}`}
               style={{ height: TRACK_HEIGHT }}
-              className="border-b border-white/[0.04] px-2.5 flex items-center justify-between bg-[#0e1110] text-zinc-400 text-[11px] font-mono"
+              className="border-b border-white/[0.04] px-2.5 flex items-center justify-between bg-white/[0.01] text-neutral-400 text-[11px] font-mono"
             >
               <span className="font-semibold text-emerald-400">{track.name}</span>
-              <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="text-[9px] uppercase px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 AUD
               </span>
             </div>
@@ -200,19 +200,19 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
 
         {/* Tracks Content Area */}
         <div
-          className="relative bg-[#08090a] cursor-crosshair select-none"
+          className="relative bg-transparent cursor-crosshair select-none"
           style={{ width: Math.max(containerWidth, 800) + 120 }}
           onClick={handleTimelineClick}
         >
           {/* Ruler (Sticky Top) */}
           <div
             style={{ height: RULER_HEIGHT }}
-            className="bg-[#141618] border-b border-white/[0.08] sticky top-0 z-20 w-full overflow-hidden"
+            className="bg-white/[0.03] backdrop-blur-md border-b border-white/[0.08] sticky top-0 z-20 w-full overflow-hidden"
           >
             {rulerTicks.map((tick) => (
               <div
                 key={`tick-${tick}`}
-                className="absolute top-0 bottom-0 border-l border-white/10 pl-1.5 pt-1 text-[9px] font-mono text-zinc-500"
+                className="absolute top-0 bottom-0 border-l border-white/10 pl-1.5 pt-1 text-[9px] font-mono text-neutral-500"
                 style={{ left: tick * pixelsPerSecond }}
               >
                 {/* Minor subdivision ticks */}
@@ -256,13 +256,13 @@ export default function TimelineViewer({ data, pixelsPerSecond = 24 }: TimelineV
                 />
 
                 {/* Marker Tooltip */}
-                <div className="absolute left-[-60px] top-[26px] w-max max-w-[220px] bg-[#141618] px-3 py-2 rounded-md border border-white/[0.12] shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                <div className="absolute left-[-60px] top-[26px] w-max max-w-[220px] bg-[#0c0e14]/90 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-white/[0.14] shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                   <div className="font-mono text-xs font-bold flex items-center justify-between gap-2" style={{ color }}>
                     <span>{marker.name || 'Sequence Marker'}</span>
-                    <span className="text-[10px] text-zinc-500">{marker.time.toFixed(2)}s</span>
+                    <span className="text-[10px] text-neutral-500">{marker.time.toFixed(2)}s</span>
                   </div>
                   {marker.comment && (
-                    <p className="text-zinc-300 text-[11px] mt-1 leading-snug break-words">
+                    <p className="text-neutral-300 text-[11px] mt-1 leading-snug break-words">
                       {marker.comment}
                     </p>
                   )}

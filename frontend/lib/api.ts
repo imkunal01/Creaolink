@@ -30,6 +30,7 @@ export interface ProjectOwner {
   email: string;
   username?: string;
   role: string;
+  avatar_url?: string | null;
 }
 
 export interface ProjectMember {
@@ -38,6 +39,7 @@ export interface ProjectMember {
   email: string;
   username?: string;
   role: string;
+  avatar_url?: string | null;
   permission?: ProjectPermission;
 }
 
@@ -129,6 +131,7 @@ export interface UserListItem {
   name: string;
   username: string;
   role: string;
+  avatar_url?: string | null;
 }
 
 export interface SearchUserItem {
@@ -136,6 +139,7 @@ export interface SearchUserItem {
   name: string;
   username: string;
   role: string;
+  avatar_url?: string | null;
 }
 
 export interface UserProfile {
@@ -147,6 +151,12 @@ export interface UserProfile {
   created_at: string;
   bio: string;
   headline: string;
+  avatar_url?: string | null;
+  company?: string | null;
+  location?: string | null;
+  website?: string | null;
+  status_text?: string | null;
+  status_emoji?: string | null;
   profile_visibility: "public" | "private";
 }
 
@@ -371,7 +381,7 @@ export function apiGetUserProfile(userId: string) {
     followersList: UserListItem[];
     followingList: UserListItem[];
     reputation: number;
-    activityGraph: Array<{ week: number; contributions: number }>;
+    activityGraph: Record<string, number>;
     skills: string[];
     isFollowing: boolean;
     isMutual: boolean;
@@ -385,6 +395,26 @@ export function apiSearchUsers(query: string) {
 export function apiCreatePost(data: { title: string; content: string; tags: string[]; projectId?: string }) {
   return request<{ success: boolean }>("/api/posts", {
     method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function apiUpdateUserProfile(
+  userId: string,
+  data: {
+    avatar_url?: string | null;
+    name?: string;
+    headline?: string;
+    bio?: string;
+    company?: string | null;
+    location?: string | null;
+    website?: string | null;
+    status_text?: string | null;
+    status_emoji?: string | null;
+  }
+) {
+  return request<{ profile: UserProfile; success: boolean }>(`/api/users/${userId}/profile`, {
+    method: "PATCH",
     body: JSON.stringify(data),
   });
 }

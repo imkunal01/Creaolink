@@ -130,14 +130,14 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
   return (
     <div
       ref={panelRef}
-      className="absolute top-[calc(100%+8px)] right-0 w-[min(380px,calc(100vw-24px))] max-h-[min(580px,calc(100dvh-80px))] flex flex-col bg-[#0c0e14]/95 border border-white/[0.12] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-2xl z-50 overflow-hidden text-white"
+      className="absolute top-[calc(100%+8px)] right-0 w-[min(380px,calc(100vw-24px))] max-h-[min(580px,calc(100dvh-80px))] flex flex-col bg-[#0c0e14]/65 border border-white/[0.12] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] backdrop-blur-md z-50 overflow-hidden text-white"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.08] bg-white/[0.02] shrink-0">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.08] bg-white/[0.02] shrink-0">
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-white">Notifications</span>
           {unreadCount > 0 && (
-            <span className="bg-white text-black text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full">
+            <span className="bg-white text-black text-[10px] font-mono font-bold px-2 py-0.5 rounded-full">
               {unreadCount}
             </span>
           )}
@@ -163,7 +163,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1.5 px-3 py-2 overflow-x-auto shrink-0 border-b border-white/[0.06] bg-white/[0.01]">
+      <div className="flex gap-1.5 px-3.5 py-2.5 overflow-x-auto shrink-0 border-b border-white/[0.06] bg-white/[0.01]">
         {(["all", "chat", "feedback", "status", "project", "version"] as const).map((k) => (
           <button
             key={k}
@@ -183,14 +183,14 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
       <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <div className="w-10 h-10 rounded-full bg-[#1c1e22] border border-white/[0.06] flex items-center justify-center text-zinc-500 mb-3">
+            <div className="w-10 h-10 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-neutral-500 mb-3">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
             </div>
-            <p className="text-xs font-semibold text-zinc-300">All caught up</p>
-            <p className="text-[11px] text-zinc-500 mt-1 max-w-[200px]">
+            <p className="text-xs font-semibold text-neutral-300">All caught up</p>
+            <p className="text-[11px] text-neutral-500 mt-1 max-w-[200px]">
               New timeline sync events and project feedback will appear here.
             </p>
           </div>
@@ -207,7 +207,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
       </div>
 
       {/* Footer */}
-      <div className="px-3 py-2 border-t border-white/[0.06] bg-[#0d0e10] text-[10px] font-mono text-zinc-600 text-center shrink-0">
+      <div className="px-4 py-2.5 border-t border-white/[0.06] bg-white/[0.015] text-[10px] font-mono text-neutral-500 text-center shrink-0">
         Real-time telemetry active
       </div>
     </div>
@@ -228,13 +228,13 @@ function NotifRow({
   return (
     <div
       onClick={onClick}
-      className={`group flex items-start gap-3 p-3 transition-colors cursor-pointer hover:bg-[#1c1e22] ${
+      className={`group flex items-start gap-3 p-3.5 transition-colors cursor-pointer hover:bg-white/[0.05] ${
         !notif.read ? "bg-white/[0.02]" : "bg-transparent"
       }`}
     >
       <div className="relative shrink-0 pt-0.5">
         <div
-          className="flex h-7 w-7 items-center justify-center rounded-md border"
+          className="flex h-7 w-7 items-center justify-center rounded-lg border"
           style={{
             backgroundColor: `${color}15`,
             borderColor: `${color}30`,
@@ -244,21 +244,21 @@ function NotifRow({
           {getKindIcon(notif.kind)}
         </div>
         {!notif.read && (
-          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#00e5ff] ring-2 ring-[#141618]" />
+          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-white ring-2 ring-[#0c0e14]" />
         )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <div className={`text-xs leading-tight truncate ${notif.read ? "text-zinc-300" : "text-white font-medium"}`}>
+        <div className={`text-xs leading-tight truncate ${notif.read ? "text-neutral-300" : "text-white font-medium"}`}>
           {notif.title}
         </div>
-        <p className="text-[11px] text-zinc-400 leading-snug line-clamp-2 mt-1">
+        <p className="text-[11px] text-neutral-400 leading-snug line-clamp-2 mt-1">
           {notif.body}
         </p>
-        <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-zinc-500">
+        <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-neutral-500">
           <span>{timeAgo(notif.createdAt)}</span>
           {notif.projectTitle && (
-            <span className="text-zinc-400 truncate max-w-[140px]">
+            <span className="text-neutral-400 truncate max-w-[140px]">
               &middot; {notif.projectTitle}
             </span>
           )}
@@ -272,7 +272,7 @@ function NotifRow({
           onDelete();
         }}
         title="Dismiss"
-        className="opacity-0 group-hover:opacity-100 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#1c1e22] border border-white/[0.08] text-zinc-500 hover:text-white transition-opacity"
+        className="opacity-0 group-hover:opacity-100 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/[0.08] border border-white/[0.1] text-neutral-400 hover:text-white transition-all cursor-pointer"
       >
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="18" y1="6" x2="6" y2="18" />

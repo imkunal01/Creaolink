@@ -8,36 +8,18 @@ import { useProject } from "@/lib/hooks/use-projects";
 const STEPS = [
   {
     num: 1,
-    title: "Open Premiere Pro",
-    desc: "Launch Adobe Premiere Pro and open the sequence timeline you want to sync.",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="2" y="3" width="20" height="14" rx="2" />
-        <path d="M8 21h8M12 17v4" />
-      </svg>
-    ),
+    title: "Install Plugin",
+    desc: "Download and double-click the .ccx plugin package to install in Adobe Creative Cloud.",
   },
   {
     num: 2,
-    title: "Launch UXP Extension",
-    desc: "Navigate to Window > Extensions > CreaoLink in the Premiere Pro menu bar.",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-      </svg>
-    ),
+    title: "Open in Premiere",
+    desc: "In Premiere Pro menu, navigate to Window > Extensions > CreaoLink.",
   },
   {
     num: 3,
-    title: "Authenticate Sync",
-    desc: "Paste the sync code below into the panel field and click Connect Timeline.",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="9" y="9" width="13" height="13" rx="2" />
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-      </svg>
-    ),
+    title: "Enter Sync Code",
+    desc: "Paste your sync code in the panel and click Connect Timeline.",
   },
 ];
 
@@ -61,21 +43,21 @@ export default function LinkPremierePage() {
 
   if (loading) {
     return (
-      <div className="mc max-w-3xl pb-16 space-y-6">
-        <div className="h-6 w-48 rounded bg-white/[0.05] animate-pulse" />
-        <div className="h-40 rounded-xl bg-white/[0.03] animate-pulse" />
+      <div className="max-w-2xl mx-auto py-12 px-6 space-y-6">
+        <div className="h-5 w-40 rounded bg-white/[0.05] animate-pulse" />
         <div className="h-32 rounded-xl bg-white/[0.03] animate-pulse" />
+        <div className="h-24 rounded-xl bg-white/[0.03] animate-pulse" />
       </div>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="mc flex flex-col items-center justify-center h-80 gap-3 text-center">
-        <div className="p-3 rounded-md bg-red-500/10 border border-red-500/20 text-xs font-mono text-red-400">
+      <div className="max-w-2xl mx-auto py-16 px-6 text-center space-y-3">
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs font-mono text-red-400">
           {error || "Project room not found"}
         </div>
-        <Link href={`/dashboard/projects/${projectId}`} className="text-xs text-zinc-400 hover:text-white">
+        <Link href={`/dashboard/projects/${projectId}`} className="text-xs text-neutral-400 hover:text-white">
           &larr; Return to Workspace
         </Link>
       </div>
@@ -83,124 +65,129 @@ export default function LinkPremierePage() {
   }
 
   return (
-    <div className="mc max-w-3xl pb-12">
+    <div className="max-w-2xl mx-auto py-10 px-6 space-y-8">
       {/* Back link */}
       <Link
         href={`/dashboard/projects/${projectId}`}
-        className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-white mb-6 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-mono text-neutral-400 hover:text-white transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-        Back to {project.title}
+        &larr; Back to {project.title}
       </Link>
 
-      {/* Hero section */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#00e5ff]/10 border border-[#00e5ff]/30 text-[#00e5ff] font-mono font-bold text-lg shrink-0">
-          Pr
-        </div>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-white tracking-tight">
-            Connect to Premiere Pro
+            Connect Premiere Pro
           </h1>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Sync sequence timelines from Adobe Premiere Pro directly into <span className="text-white font-medium">{project.title}</span>.
+          <p className="text-xs text-neutral-400 mt-1">
+            Link sequence timelines from Adobe Premiere Pro directly into <span className="text-white font-medium">{project.title}</span>.
           </p>
+        </div>
+
+        <Link
+          href="/premiere-setup"
+          target="_blank"
+          className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-neutral-300 hover:text-white transition-colors shrink-0"
+        >
+          <span>Full Setup Guide</span>
+          <span>&rarr;</span>
+        </Link>
+      </div>
+
+      {/* Download Plugin Bar */}
+      <div className="p-4 rounded-xl bg-white/[0.02] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold text-white">
+            CreaoLink Premiere Plugin (UXP)
+          </div>
+          <div className="text-[11px] text-neutral-400 mt-0.5">
+            Install the plugin to enable live timeline sync.
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <a
+            href="/api/plugin/download?format=ccx"
+            download="creaolink-premiere-v1.0.0.ccx"
+            className="px-3.5 py-1.5 rounded-lg bg-white text-black font-semibold text-xs hover:bg-neutral-200 transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Download .CCX</span>
+          </a>
+
+          <a
+            href="/api/plugin/download?format=zip"
+            download="creaolink-premiere-v1.0.0.zip"
+            title="Download Source / Developer ZIP"
+            className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-neutral-300 hover:text-white transition-colors cursor-pointer"
+          >
+            .ZIP
+          </a>
         </div>
       </div>
 
       {/* Code card */}
       {project.sync_code ? (
-        <div className="rounded-xl border border-white/[0.1] bg-[#141618] overflow-hidden mb-8 shadow-2xl">
-          {/* Card Top bar */}
-          <div className="px-5 py-3 border-b border-white/[0.08] bg-[#0d0e10] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#00e5ff] animate-pulse" />
-              <span className="text-xs font-mono font-medium text-white">Plugin Connection Ready</span>
+        <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 space-y-4 text-center">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Workspace Sync Token
             </div>
-            <span className="text-[11px] font-mono text-zinc-500 truncate max-w-[200px]">
-              {project.title}
-            </span>
+            <p className="text-xs text-neutral-400">
+              Enter this code in your CreaoLink panel inside Premiere Pro.
+            </p>
           </div>
 
-          <div className="p-8 flex flex-col items-center text-center space-y-4">
-            <div>
-              <h2 className="text-sm font-semibold text-white">
-                Workspace Sync Token
-              </h2>
-              <p className="text-xs text-zinc-400 max-w-sm mt-1">
-                Enter this code in your CreaoLink UXP panel to stream clips, tracks, and markers.
-              </p>
-            </div>
-
-            {/* Code Box */}
-            <div className="flex items-center justify-between gap-4 p-3.5 rounded-lg bg-[#0d0e10] border border-white/[0.1] w-full max-w-md">
-              <code className="flex-1 font-mono text-2xl font-bold tracking-[0.25em] text-white text-center select-all">
-                {project.sync_code}
-              </code>
-              <button
-                onClick={handleCopy}
-                title="Copy code"
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition-all cursor-pointer ${
-                  copied
-                    ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
-                    : "bg-[#1c1e22] border-white/[0.08] text-zinc-300 hover:text-white"
-                }`}
-              >
-                {copied ? (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                )}
-              </button>
-            </div>
-
-            {copied && (
-              <span className="text-xs font-mono text-emerald-400">
-                Copied to clipboard
-              </span>
-            )}
-
-            <p className="text-[11px] font-mono text-zinc-500 max-w-md">
-              Sync token gives direct sequence telemetry access to this workspace.
-            </p>
+          {/* Code Box */}
+          <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-white/[0.03] border border-white/10 max-w-sm mx-auto">
+            <code className="flex-1 font-mono text-xl font-bold tracking-[0.2em] text-white select-all">
+              {project.sync_code}
+            </code>
+            <button
+              onClick={handleCopy}
+              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                copied
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
+                  : "bg-white/10 border-white/10 text-white hover:bg-white/15"
+              }`}
+            >
+              {copied ? "Copied!" : "Copy"}
+            </button>
           </div>
         </div>
       ) : (
-        <div className="p-6 rounded-xl border border-red-500/20 bg-red-500/5 text-center text-xs font-mono text-red-400 mb-8">
+        <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-center text-xs font-mono text-red-400">
           No sync token available for this workspace.
         </div>
       )}
 
-      {/* How to connect */}
-      <div className="space-y-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-          Setup Instructions
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+      {/* Steps */}
+      <div className="space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-neutral-400 font-mono">
+          How to connect
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {STEPS.map((step) => (
             <div
               key={step.num}
-              className="p-4 rounded-xl border border-white/[0.08] bg-[#141618] space-y-2.5"
+              className="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-1.5"
             >
               <div className="flex items-center justify-between">
-                <div className="flex h-7 w-7 items-center justify-center rounded bg-[#00e5ff]/15 text-[#00e5ff]">
-                  {step.icon}
-                </div>
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0d0e10] border border-white/[0.08] font-mono text-[10px] text-zinc-400">
-                  {step.num}
+                <span className="text-xs font-bold text-white">
+                  {step.title}
+                </span>
+                <span className="text-[10px] font-mono text-neutral-500">
+                  0{step.num}
                 </span>
               </div>
-              <h4 className="text-xs font-semibold text-white">
-                {step.title}
-              </h4>
-              <p className="text-[11px] text-zinc-400 leading-relaxed">
+              <p className="text-xs text-neutral-400 leading-relaxed">
                 {step.desc}
               </p>
             </div>

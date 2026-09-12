@@ -35,6 +35,21 @@ export default function MinimalFooter() {
             <span className="text-neutral-300 font-mono">Systems Operational</span>
           </div>
           <Link
+            href="/premiere-setup"
+            className="hover:text-white transition-colors text-neutral-400 font-medium flex items-center gap-1"
+          >
+            <span>Premiere Plugin</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              v1.0
+            </span>
+          </Link>
+          <Link
+            href="/docs/premiere-pro"
+            className="hover:text-white transition-colors text-neutral-500"
+          >
+            Setup Guide
+          </Link>
+          <Link
             href="/privacy"
             className="hover:text-white transition-colors text-neutral-500"
           >

@@ -67,11 +67,11 @@ export default function CreateProjectModal({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/80 backdrop-blur-2xl"
+        className="fixed inset-0 bg-black/45 backdrop-blur-sm"
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.12] bg-[#0c0e14]/95 shadow-[0_25px_70px_rgba(0,0,0,0.85)] backdrop-blur-2xl overflow-hidden max-h-[90dvh] flex flex-col z-10 text-white my-auto">
+      <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.14] bg-[#0c0e14]/65 shadow-[0_25px_70px_rgba(0,0,0,0.85)] backdrop-blur-md overflow-hidden max-h-[90dvh] flex flex-col z-10 text-white my-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-white/[0.08] bg-white/[0.02]">
           <div>

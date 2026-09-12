@@ -8,6 +8,7 @@ export interface User {
   email: string;
   username: string;
   role: UserRole;
+  avatar_url?: string | null;
 }
 
 const STORAGE_KEY = "creolink_user";

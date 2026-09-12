@@ -1,13 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAuthModal } from "./AuthModalContext";
+import { getUser, type User } from "@/lib/auth";
+
+function initials(name: string) {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export default function MinimalNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { openAuthModal } = useAuthModal();
+  const [user, setUser] = useState<User | null>(null);
+
+  // Read auth state client-side (localStorage)
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-6 lg:px-12 py-5 transition-all duration-300">
@@ -66,6 +83,15 @@ export default function MinimalNavbar() {
             Pricing
           </Link>
           <Link
+            href="/premiere-setup"
+            className="hover:text-white transition-colors duration-200 flex items-center gap-1.5"
+          >
+            <span>Premiere Plugin</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+              UXP
+            </span>
+          </Link>
+          <Link
             href="/dashboard"
             className="hover:text-white transition-colors duration-200"
           >
@@ -73,22 +99,56 @@ export default function MinimalNavbar() {
           </Link>
         </nav>
 
-        {/* Right Actions: Login & High-Contrast Pill Button */}
-        <div className="hidden md:flex items-center gap-5">
-          <button
-            type="button"
-            onClick={() => openAuthModal("login")}
-            className="text-[13.5px] font-medium text-neutral-300 hover:text-white transition-colors px-3 py-1.5 cursor-pointer"
-          >
-            Login
-          </button>
-          <button
-            type="button"
-            onClick={() => openAuthModal("signup")}
-            className="px-5 py-2 rounded-full bg-white text-black font-semibold text-[13.5px] hover:bg-neutral-100 transition-all duration-200 hover:scale-[1.03] shadow-[0_0_24px_rgba(255,255,255,0.18)] flex items-center gap-1.5 cursor-pointer"
-          >
-            <span>Sign up</span>
-          </button>
+        {/* Right Actions: Logged-in user OR Login/Sign Up */}
+        <div className="hidden md:flex items-center gap-4">
+          {user ? (
+            // ── Authenticated State ──────────────────────────────
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-3 group cursor-pointer"
+            >
+              {/* Avatar */}
+              <div className="w-8 h-8 rounded-full border border-white/15 bg-white/[0.06] overflow-hidden flex items-center justify-center text-xs font-bold text-white/90 shrink-0 group-hover:border-white/40 transition-colors">
+                {user.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  initials(user.name)
+                )}
+              </div>
+              {/* Name + Go to Dashboard pill */}
+              <span className="text-[13.5px] font-medium text-neutral-300 group-hover:text-white transition-colors hidden lg:block">
+                {user.name.split(" ")[0]}
+              </span>
+              <span className="px-4 py-2 rounded-full bg-white text-black font-semibold text-[13.5px] hover:bg-neutral-100 transition-all duration-200 hover:scale-[1.03] shadow-[0_0_24px_rgba(255,255,255,0.18)] flex items-center gap-1.5">
+                <span>Dashboard</span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="7" y1="17" x2="17" y2="7" /><polyline points="7 7 17 7 17 17" />
+                </svg>
+              </span>
+            </Link>
+          ) : (
+            // ── Unauthenticated State ────────────────────────────
+            <>
+              <button
+                type="button"
+                onClick={() => openAuthModal("login")}
+                className="text-[13.5px] font-medium text-neutral-300 hover:text-white transition-colors px-3 py-1.5 cursor-pointer"
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={() => openAuthModal("signup")}
+                className="px-5 py-2 rounded-full bg-white text-black font-semibold text-[13.5px] hover:bg-neutral-100 transition-all duration-200 hover:scale-[1.03] shadow-[0_0_24px_rgba(255,255,255,0.18)] flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Sign up</span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Mobile Hamburger Toggle */}
@@ -140,32 +200,60 @@ export default function MinimalNavbar() {
           >
             Pricing
           </Link>
+          <Link
+            href="/premiere-setup"
+            onClick={() => setMobileMenuOpen(false)}
+            className="px-3 py-2 rounded-lg hover:bg-white/5 transition-colors flex items-center justify-between"
+          >
+            <span>Premiere Plugin (UXP)</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+              Download
+            </span>
+          </Link>
           <div className="h-px bg-white/10 my-1" />
-          <div className="flex items-center justify-between gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                openAuthModal("login");
-              }}
-              className="flex-1 text-center py-2.5 rounded-full border border-white/15 text-white font-medium hover:bg-white/5 transition-colors text-xs cursor-pointer"
+          {user ? (
+            // Mobile: logged-in state
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white text-black font-semibold text-sm hover:bg-neutral-100 transition-colors"
             >
-              Login
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileMenuOpen(false);
-                openAuthModal("signup");
-              }}
-              className="flex-1 text-center py-2.5 rounded-full bg-white text-black font-semibold hover:bg-neutral-100 transition-colors text-xs cursor-pointer"
-            >
-              Sign up
-            </button>
-          </div>
+              <div className="w-7 h-7 rounded-full border border-black/10 bg-black/5 overflow-hidden flex items-center justify-center text-xs font-bold text-black/80 shrink-0">
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  initials(user.name)
+                )}
+              </div>
+              <span>Go to Dashboard →</span>
+            </Link>
+          ) : (
+            // Mobile: logged-out state
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openAuthModal("login");
+                }}
+                className="flex-1 text-center py-2.5 rounded-full border border-white/15 text-white font-medium hover:bg-white/5 transition-colors text-xs cursor-pointer"
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openAuthModal("signup");
+                }}
+                className="flex-1 text-center py-2.5 rounded-full bg-white text-black font-semibold hover:bg-neutral-100 transition-colors text-xs cursor-pointer"
+              >
+                Sign up
+              </button>
+            </div>
+          )}
         </div>
       )}
     </header>
   );
 }
-

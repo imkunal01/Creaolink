@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import MinimalNavbar from "./components/MinimalNavbar";
 import HeroCTA from "./components/HeroCTA";
 import LiquidBubbleCanvas from "./components/LiquidBubbleCanvas";

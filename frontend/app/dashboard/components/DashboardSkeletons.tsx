@@ -40,7 +40,7 @@ export function DashboardHomeSkeleton() {
         <div className="lg:col-span-2 space-y-6">
           {/* Projects Table Skeleton */}
           <div className="cl-card overflow-hidden">
-            <div className="cl-card-head bg-[#0d0e10] flex justify-between items-center">
+            <div className="cl-card-head bg-white/[0.02] flex justify-between items-center">
               <SkeletonBox className="h-4 w-36" />
               <SkeletonBox className="h-3 w-16" />
             </div>
@@ -60,7 +60,7 @@ export function DashboardHomeSkeleton() {
 
           {/* Activity Stream Skeleton */}
           <div className="cl-card overflow-hidden">
-            <div className="cl-card-head bg-[#0d0e10]">
+            <div className="cl-card-head bg-white/[0.02]">
               <SkeletonBox className="h-4 w-32" />
             </div>
             <div className="p-4 space-y-4">

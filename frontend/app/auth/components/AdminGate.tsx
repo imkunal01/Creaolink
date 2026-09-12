@@ -64,10 +64,10 @@ export default function AdminGate({ onAdminUnlock }: AdminGateProps) {
 
       {/* Admin code input modal */}
       {showInput && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
-          <div className="bg-[#141618] border border-white/[0.1] rounded-xl p-6 w-full max-w-[340px] mx-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm">
+          <div className="bg-[#0c0e14]/75 border border-white/[0.14] rounded-3xl p-6 w-full max-w-[340px] mx-4 shadow-2xl backdrop-blur-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-300">
                 Administrator Access
               </h3>
               <button
@@ -76,7 +76,7 @@ export default function AdminGate({ onAdminUnlock }: AdminGateProps) {
                   setCode("");
                   setError("");
                 }}
-                className="text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
               >
                 <svg
                   width="14"
@@ -100,14 +100,14 @@ export default function AdminGate({ onAdminUnlock }: AdminGateProps) {
                   setError("");
                 }}
                 placeholder="Enter admin code"
-                className="w-full px-3 py-2 bg-[#1c1e22] border border-white/[0.08] rounded-md text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#00e5ff]/60 transition-colors"
+                className="w-full px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl text-xs text-white placeholder:text-neutral-500 focus:outline-none focus:border-white/30 transition-colors"
               />
               {error && (
-                <p className="text-red-400 text-[11px] mt-2 font-medium">{error}</p>
+                <p className="text-rose-400 text-[11px] mt-2 font-medium">{error}</p>
               )}
               <button
                 type="submit"
-                className="w-full mt-3 py-2 bg-[#00e5ff] text-[#08090a] rounded-md text-xs font-semibold hover:bg-[#38bdf8] transition-colors cursor-pointer"
+                className="w-full mt-3 py-2 bg-white text-black font-semibold rounded-full text-xs hover:bg-neutral-200 transition-colors cursor-pointer shadow-sm"
               >
                 Unlock
               </button>

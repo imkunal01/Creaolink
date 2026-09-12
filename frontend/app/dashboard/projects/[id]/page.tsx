@@ -137,18 +137,18 @@ export default function ProjectDetailPage() {
   const openFeedback = feedback.filter((f) => f.status === "open");
 
   return (
-    <div className="flex flex-col h-full bg-[#08090a]">
+    <div className="flex flex-col h-full bg-transparent">
       {/* Top Action Header Bar */}
-      <div className="px-6 py-3 border-b border-white/[0.08] bg-[#0d0e10] flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div className="px-6 py-3 border-b border-white/[0.08] bg-white/[0.02] backdrop-blur-md flex flex-wrap items-center justify-between gap-3 shrink-0">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs font-mono">
           <Link
             href="/dashboard/projects"
-            className="text-zinc-400 hover:text-white transition-colors"
+            className="text-neutral-400 hover:text-white transition-colors"
           >
             Projects
           </Link>
-          <span className="text-zinc-600">/</span>
+          <span className="text-neutral-600">/</span>
           <span className="text-white font-medium truncate max-w-[200px]">{project.title}</span>
         </div>
 
@@ -180,19 +180,19 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Project Title and Metadata Subheader */}
-      <div className="px-6 py-4 bg-[#0d0e10]/60 border-b border-white/[0.06]">
+      <div className="px-6 py-4 bg-white/[0.015] border-b border-white/[0.06]">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h1 className="text-lg font-bold text-white tracking-tight">
             {project.title}
           </h1>
-          <div className="flex items-center gap-3 text-xs font-mono text-zinc-500">
+          <div className="flex items-center gap-3 text-xs font-mono text-neutral-500">
             <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
             <span>&middot;</span>
             <span>{project.members?.length || 0} members</span>
             {project.currentVersion && (
               <>
                 <span>&middot;</span>
-                <span className="text-[#00e5ff] font-semibold">Active: {project.currentVersion.version_name}</span>
+                <span className="text-white font-semibold">Active: {project.currentVersion.version_name}</span>
               </>
             )}
           </div>
@@ -200,7 +200,7 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="proj-tab-bar bg-[#0d0e10]">
+      <div className="proj-tab-bar">
         {(["overview", "chat", "feedback"] as const).map((tab) => (
           <button
             key={tab}
@@ -225,11 +225,11 @@ export default function ProjectDetailPage() {
               {/* Premiere Pro Timeline */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
                     Premiere Pro Timeline Sequence
                   </h2>
                   {project.currentVersion && (
-                    <span className="text-[11px] font-mono text-zinc-500">
+                    <span className="text-[11px] font-mono text-neutral-500">
                       Tracking sequence: {project.currentVersion.version_name}
                     </span>
                   )}
@@ -237,8 +237,8 @@ export default function ProjectDetailPage() {
                 {project.currentVersion?.timeline_data ? (
                   <TimelineViewer data={project.currentVersion.timeline_data as Parameters<typeof TimelineViewer>[0]["data"]} />
                 ) : (
-                  <div className="rounded-xl border border-dashed border-white/[0.08] bg-[#0d0e10] p-8 text-center">
-                    <p className="text-xs font-mono text-zinc-400 mb-3">
+                  <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] backdrop-blur-md p-8 text-center">
+                    <p className="text-xs font-mono text-neutral-400 mb-3">
                       No sequence metadata synced from Adobe Premiere Pro yet.
                     </p>
                     <button
@@ -253,17 +253,17 @@ export default function ProjectDetailPage() {
 
               {/* Description + Deadline */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border border-white/[0.08] bg-[#141618]">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                <div className="p-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
                     Creative Brief & Requirements
                   </h3>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
+                  <p className="text-xs text-neutral-300 leading-relaxed">
                     {project.description || "No description provided."}
                   </p>
                 </div>
 
-                <div className="p-4 rounded-xl border border-white/[0.08] bg-[#141618]">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                <div className="p-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-2">
                     Delivery Schedule
                   </h3>
                   {project.deadline ? (
@@ -279,15 +279,15 @@ export default function ProjectDetailPage() {
                       )}
                     </div>
                   ) : (
-                    <span className="text-xs font-mono text-zinc-500">Flexible / No hard deadline set</span>
+                    <span className="text-xs font-mono text-neutral-500">Flexible / No hard deadline set</span>
                   )}
                 </div>
               </div>
 
               {/* Versions Stack */}
-              <div className="p-5 rounded-xl border border-white/[0.08] bg-[#141618]">
+              <div className="p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-md">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
                     Version History Stack
                   </h3>
                   <button className="btn btn-g btn-sm" onClick={() => setShowVersionForm((v) => !v)}>
@@ -296,13 +296,13 @@ export default function ProjectDetailPage() {
                 </div>
 
                 {showVersionForm && (
-                  <div className="mb-4 p-4 rounded-lg bg-[#0d0e10] border border-white/[0.08] space-y-3">
+                  <div className="mb-4 p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] space-y-3">
                     <textarea
                       value={versionNotes}
                       onChange={(e) => setVersionNotes(e.target.value)}
                       placeholder="Version changelog and render notes..."
                       rows={2}
-                      className="w-full p-2.5 rounded-md bg-[#141618] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 resize-none"
+                      className="w-full p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white placeholder:text-neutral-600 outline-none focus:border-white/40 resize-none"
                     />
                     <div className="flex gap-2">
                       <button className="btn btn-p btn-sm" onClick={handleCreateVersion} disabled={creatingVersion}>
@@ -318,15 +318,15 @@ export default function ProjectDetailPage() {
                     <div className="vt-item">
                       <div className="vt-line" />
                       <div className="vt-dot current">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#00e5ff]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-semibold text-white flex items-center gap-2">
                           <span>{project.currentVersion.version_name}</span>
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/20">
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-white/10 text-white border border-white/20">
                             Active Cut
                           </span>
-                          <span className="text-[10px] font-mono text-zinc-500 font-normal">
+                          <span className="text-[10px] font-mono text-neutral-500 font-normal">
                             &middot; {new Date(project.currentVersion.created_at).toLocaleDateString()}
                           </span>
                         </div>
@@ -343,9 +343,9 @@ export default function ProjectDetailPage() {
                       <div className="vt-item" key={v.id}>
                         <div className="vt-dot" />
                         <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium text-zinc-300">
+                          <div className="text-xs font-medium text-neutral-300">
                             {v.version_name}{" "}
-                            <span className="text-[10px] font-mono text-zinc-500 font-normal">
+                            <span className="text-[10px] font-mono text-neutral-500 font-normal">
                               &middot; {new Date(v.created_at).toLocaleDateString()}
                             </span>
                           </div>
@@ -354,7 +354,7 @@ export default function ProjectDetailPage() {
                       </div>
                     ))}
                   {project.versions.length === 0 && (
-                    <div className="text-xs font-mono text-zinc-500">No versions tracked yet.</div>
+                    <div className="text-xs font-mono text-neutral-500">No versions tracked yet.</div>
                   )}
                 </div>
               </div>
@@ -363,7 +363,7 @@ export default function ProjectDetailPage() {
 
           {/* ── CHAT TAB ── */}
           {activeTab === "chat" && (
-            <div className="h-[600px] rounded-xl border border-white/[0.08] overflow-hidden bg-[#0d0e10]">
+            <div className="h-[600px] rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.02] backdrop-blur-md">
               <ProjectChatRoom projectId={projectId} />
             </div>
           )}
@@ -385,14 +385,14 @@ export default function ProjectDetailPage() {
 
               {/* Feedback form */}
               {showFeedbackForm && (
-                <form onSubmit={handleAddFeedback} className="p-4 rounded-xl border border-white/[0.1] bg-[#141618] space-y-3 shadow-xl">
+                <form onSubmit={handleAddFeedback} className="p-5 rounded-2xl border border-white/[0.1] bg-white/[0.03] backdrop-blur-md space-y-3 shadow-xl">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Issue Type</label>
+                      <label className="block text-[11px] font-mono uppercase text-neutral-400 mb-1">Issue Type</label>
                       <select
                         value={fbType}
                         onChange={(e) => setFbType(e.target.value)}
-                        className="w-full h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white outline-none [color-scheme:dark]"
+                        className="w-full h-9 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white outline-none [color-scheme:dark]"
                       >
                         <option value="Revision">Revision</option>
                         <option value="Audio">Audio Mix</option>
@@ -401,11 +401,11 @@ export default function ProjectDetailPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Priority</label>
+                      <label className="block text-[11px] font-mono uppercase text-neutral-400 mb-1">Priority</label>
                       <select
                         value={fbPriority}
                         onChange={(e) => setFbPriority(e.target.value)}
-                        className="w-full h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white outline-none [color-scheme:dark]"
+                        className="w-full h-9 px-2.5 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white outline-none [color-scheme:dark]"
                       >
                         <option value="High">High Priority</option>
                         <option value="Medium">Medium Priority</option>
@@ -414,23 +414,23 @@ export default function ProjectDetailPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Sequence Timestamp (optional)</label>
+                    <label className="block text-[11px] font-mono uppercase text-neutral-400 mb-1">Sequence Timestamp (optional)</label>
                     <input
                       type="text"
                       value={fbTimestamp}
                       onChange={(e) => setFbTimestamp(e.target.value)}
                       placeholder="e.g. 01:24 or 00:01:24:12"
-                      className="w-full h-8 px-2.5 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white font-mono placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60"
+                      className="w-full h-9 px-3 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white font-mono placeholder:text-neutral-600 outline-none focus:border-white/40"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Feedback Description</label>
+                    <label className="block text-[11px] font-mono uppercase text-neutral-400 mb-1">Feedback Description</label>
                     <textarea
                       value={fbDescription}
                       onChange={(e) => setFbDescription(e.target.value)}
                       placeholder="Specific note or instruction for the editor..."
                       rows={3}
-                      className="w-full p-2.5 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 resize-none"
+                      className="w-full p-3 rounded-xl bg-white/[0.03] border border-white/[0.1] text-xs text-white placeholder:text-neutral-600 outline-none focus:border-white/40 resize-none"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -446,8 +446,8 @@ export default function ProjectDetailPage() {
 
               {/* Feedback List */}
               {feedback.length === 0 ? (
-                <div className="p-8 text-center rounded-xl border border-dashed border-white/[0.08] bg-[#0d0e10]">
-                  <p className="text-xs font-mono text-zinc-400">
+                <div className="p-8 text-center rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] backdrop-blur-md">
+                  <p className="text-xs font-mono text-neutral-400">
                     No feedback items logged. All reviews clear.
                   </p>
                 </div>
@@ -458,18 +458,18 @@ export default function ProjectDetailPage() {
                     return (
                       <div
                         key={item.id}
-                        className={`rounded-xl border bg-[#141618] p-4 transition-opacity ${
+                        className={`rounded-2xl border bg-white/[0.03] backdrop-blur-md p-4 transition-all hover:bg-white/[0.05] ${
                           item.status !== "open" ? "opacity-60 border-white/[0.04]" : "border-white/[0.08]"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-3 mb-2">
                           <div className="flex items-center gap-2">
-                            <div className="flex h-6 w-6 items-center justify-center rounded bg-[#00e5ff]/15 font-mono text-[9px] font-bold text-[#00e5ff]">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 font-mono text-[9px] font-bold text-white border border-white/10">
                               {item.creator_name?.slice(0, 2).toUpperCase() || "CR"}
                             </div>
                             <div>
                               <div className="text-xs font-semibold text-white">{item.creator_name}</div>
-                              <div className="text-[10px] font-mono text-zinc-500">
+                              <div className="text-[10px] font-mono text-neutral-500">
                                 {new Date(item.created_at).toLocaleDateString()}
                               </div>
                             </div>
@@ -485,12 +485,12 @@ export default function ProjectDetailPage() {
                           </div>
                         </div>
 
-                        <p className="text-xs text-zinc-300 leading-relaxed mb-3">
+                        <p className="text-xs text-neutral-300 leading-relaxed mb-3">
                           {item.description}
                         </p>
 
                         <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
-                          <span className={`text-[11px] font-mono ${item.status === "open" ? "text-[#00e5ff]" : "text-emerald-400"}`}>
+                          <span className={`text-[11px] font-mono ${item.status === "open" ? "text-white" : "text-emerald-400"}`}>
                             Status: {item.status === "open" ? "Open" : "Resolved"}
                           </span>
                           {item.status === "open" && (
@@ -512,24 +512,24 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Right Sidebar Metadata */}
-        <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-white/[0.08] bg-[#0d0e10] p-5 space-y-6 overflow-y-auto">
+        <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-white/[0.08] bg-white/[0.015] backdrop-blur-md p-5 space-y-6 overflow-y-auto">
           {/* Project Details */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">
               Room Specs
             </h3>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between py-1 border-b border-white/[0.04]">
-                <span className="text-zinc-500 font-mono">Status</span>
-                <span className="text-zinc-300 font-medium capitalize">{project.status}</span>
+                <span className="text-neutral-500 font-mono">Status</span>
+                <span className="text-neutral-300 font-medium capitalize">{project.status}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-white/[0.04]">
-                <span className="text-zinc-500 font-mono">Version</span>
-                <span className="text-[#00e5ff] font-mono">{project.currentVersion?.version_name || "v1"}</span>
+                <span className="text-neutral-500 font-mono">Version</span>
+                <span className="text-white font-mono">{project.currentVersion?.version_name || "v1"}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-white/[0.04]">
-                <span className="text-zinc-500 font-mono">Visibility</span>
-                <span className="text-zinc-300">Workspace</span>
+                <span className="text-neutral-500 font-mono">Visibility</span>
+                <span className="text-neutral-300">Workspace</span>
               </div>
             </div>
 
@@ -542,12 +542,12 @@ export default function ProjectDetailPage() {
                   Update Status
                 </button>
                 {showStatusMenu && (
-                  <div className="absolute left-0 right-0 top-full mt-1 bg-[#141618] border border-white/[0.1] rounded-md shadow-2xl z-30 overflow-hidden">
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-[#0c0e14]/90 border border-white/[0.12] rounded-2xl shadow-2xl backdrop-blur-md z-30 overflow-hidden p-1">
                     {["active", "pending", "completed", "approved"].map((s) => (
                       <button
                         key={s}
                         onClick={() => handleStatusChange(s)}
-                        className="block w-full px-3 py-2 text-left text-xs text-zinc-300 hover:bg-[#1c1e22] hover:text-white capitalize transition-colors"
+                        className="block w-full px-3 py-2 text-left text-xs text-neutral-300 hover:bg-white/[0.08] hover:text-white rounded-xl capitalize transition-colors"
                       >
                         {s}
                       </button>
@@ -560,19 +560,19 @@ export default function ProjectDetailPage() {
 
           {/* Team Collaborators */}
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400 mb-3">
               Collaborators ({project.members?.length || 0})
             </h3>
             <div className="space-y-2">
               {project.members?.map((m) => (
                 <div key={m.id} className="flex items-center justify-between gap-2 py-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="flex h-5 w-5 items-center justify-center rounded bg-[#1c1e22] border border-white/[0.08] font-mono text-[9px] text-zinc-300">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 border border-white/10 font-mono text-[9px] text-white">
                       {m.name.slice(0, 2).toUpperCase()}
                     </div>
-                    <div className="text-xs text-zinc-200 truncate">{m.name}</div>
+                    <div className="text-xs text-neutral-200 truncate">{m.name}</div>
                   </div>
-                  <span className="text-[10px] font-mono uppercase text-zinc-500">
+                  <span className="text-[10px] font-mono uppercase text-neutral-500">
                     {m.role}
                   </span>
                 </div>
