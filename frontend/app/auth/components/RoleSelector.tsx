@@ -9,28 +9,28 @@ interface RoleSelectorProps {
 
 export default function RoleSelector({ selected, onChange }: RoleSelectorProps) {
   return (
-    <div className="flex gap-2 mb-6">
+    <div className="grid grid-cols-2 gap-2 p-1 bg-[#141618] border border-white/[0.08] rounded-md mb-5">
       <button
         type="button"
         onClick={() => onChange("client")}
-        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer border ${
+        className={`py-2 px-3 rounded text-xs font-semibold transition-all duration-150 cursor-pointer ${
           selected === "client"
-            ? "bg-accent text-bg border-accent"
-            : "bg-transparent text-text-secondary border-border hover:border-border-hover hover:text-text-primary"
+            ? "bg-[#00e5ff] text-[#08090a] shadow-sm"
+            : "text-zinc-400 hover:text-white"
         }`}
       >
-        Client
+        Client / Agency
       </button>
       <button
         type="button"
         onClick={() => onChange("freelancer")}
-        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer border ${
+        className={`py-2 px-3 rounded text-xs font-semibold transition-all duration-150 cursor-pointer ${
           selected === "freelancer"
-            ? "bg-accent text-bg border-accent"
-            : "bg-transparent text-text-secondary border-border hover:border-border-hover hover:text-text-primary"
+            ? "bg-[#00e5ff] text-[#08090a] shadow-sm"
+            : "text-zinc-400 hover:text-white"
         }`}
       >
-        Freelancer
+        Freelancer / Editor
       </button>
     </div>
   );

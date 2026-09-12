@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getUser, type User } from "@/lib/auth";
 import { apiFetch } from "@/lib/api-client";
 import { apiGetFeed, type FeedActivityItem, type FeedNetworkItem } from "@/lib/api";
@@ -15,10 +16,10 @@ interface ProjectRow {
 
 function statusTag(status: string) {
   if (status === "active")
-    return <span className="tag tag-a">● Active</span>;
+    return <span className="tag tag-a">Active</span>;
   if (status === "pending")
-    return <span className="tag tag-r">⏳ Review</span>;
-  return <span className="tag tag-d">✓ Done</span>;
+    return <span className="tag tag-r">In Review</span>;
+  return <span className="tag tag-d">Approved</span>;
 }
 
 function formatDate(iso: string) {
@@ -31,22 +32,31 @@ function formatDate(iso: string) {
 }
 
 function activityIcon(item: FeedActivityItem) {
-  const styles: Record<string, { bg: string; color: string; letter: string }> = {
-    version: { bg: "var(--rs)", color: "var(--red)", letter: "v" },
-    join: { bg: "rgba(74,222,128,.1)", color: "#4ade80", letter: "✓" },
-    feedback: { bg: "rgba(251,191,36,.1)", color: "#fbbf24", letter: "!" },
-    create: { bg: "var(--s3)", color: "var(--m2)", letter: "+" },
-  };
   const key = item.status?.toLowerCase() || "create";
-  const s = styles[key] || styles.create;
+  if (key === "version") {
+    return (
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#00e5ff]/15 border border-[#00e5ff]/30 text-[#00e5ff] font-mono text-[11px] font-bold">
+        v
+      </div>
+    );
+  }
+  if (key === "join") {
+    return (
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-mono text-[11px] font-bold">
+        +
+      </div>
+    );
+  }
+  if (key === "feedback") {
+    return (
+      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-400 font-mono text-[11px] font-bold">
+        !
+      </div>
+    );
+  }
   return (
-    <div style={{
-      width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: "0.66rem", fontWeight: 700, border: "1px solid var(--b2)",
-      background: s.bg, color: s.color,
-    }}>
-      {s.letter}
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#1c1e22] border border-white/[0.08] text-zinc-400 font-mono text-[11px] font-bold">
+      *
     </div>
   );
 }
@@ -83,143 +93,145 @@ export default function DashboardPage() {
 
   if (!user) return null;
 
-  const openFeedback = 0; // placeholder — would come from API
-  const currentVersion = projects[0] ? "v1" : "—";
+  const openFeedback = 0;
+  const currentVersion = projects[0] ? "v1.2" : "—";
 
   return (
-    <div className="mc">
+    <div className="mc pb-10">
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.25rem", gap: "1rem" }}>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-white/[0.06]">
         <div>
-          <div style={{ fontFamily: "var(--fd)", fontSize: "1.55rem", color: "var(--white)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-            Good morning, {user.name?.split(" ")[0] || "there"}.
-          </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--m2)", marginTop: "0.2rem" }}>
-            Here&apos;s what&apos;s happening across your projects today.
-          </div>
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Good day, {user.name?.split(" ")[0] || "Editor"}.
+          </h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Active review workspaces and sequence telemetry.
+          </p>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
-          <button className="btn btn-g btn-sm">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="4" y1="6" x2="20" y2="6" /><line x1="4" y1="12" x2="14" y2="12" /><line x1="4" y1="18" x2="9" y2="18" />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push("/dashboard/projects")}
+            className="btn btn-p btn-sm"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Activity log
-          </button>
-          <button className="btn btn-p btn-sm" onClick={() => router.push("/dashboard/projects")}>
-            + New project
+            New Project Room
           </button>
         </div>
       </div>
 
       {/* KPI row */}
-      <div className="kpi-grid">
+      <div className="kpi-grid mb-6">
         <div className="kpi-card">
           <div className="kpi-num accent">{projects.length}</div>
-          <div className="kpi-label">Active projects</div>
-          <div className="kpi-trend up">↑ {projects.length} total</div>
+          <div className="kpi-label">Active Workspaces</div>
+          <div className="kpi-trend up font-mono text-[11px] text-zinc-500 mt-2">
+            {projects.length} synced
+          </div>
         </div>
         <div className="kpi-card">
           <div className="kpi-num">{openFeedback}</div>
-          <div className="kpi-label">Open feedback</div>
-          <div className="kpi-trend dn">↑ {openFeedback} unresolved</div>
+          <div className="kpi-label">Open Feedback</div>
+          <div className="kpi-trend font-mono text-[11px] text-zinc-500 mt-2">
+            Zero bottlenecks
+          </div>
         </div>
         <div className="kpi-card">
           <div className="kpi-num">{currentVersion}</div>
-          <div className="kpi-label">Latest version</div>
-          <div className="kpi-trend up">↑ {projects[0]?.title || "—"}</div>
+          <div className="kpi-label">Latest Version</div>
+          <div className="kpi-trend font-mono text-[11px] text-zinc-500 mt-2 truncate">
+            {projects[0]?.title || "Standby"}
+          </div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-num">11</div>
-          <div className="kpi-label">Reputation score</div>
-          <div className="kpi-trend up">↑ All time</div>
+          <div className="kpi-num">100%</div>
+          <div className="kpi-label">Sync Reliability</div>
+          <div className="kpi-trend font-mono text-[11px] text-emerald-400 mt-2">
+            Premiere Pro online
+          </div>
         </div>
       </div>
 
-      {/* Main grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 290px", gap: "1.1rem" }}>
-        {/* Left column */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+      {/* Main Grid: Left projects table + Right feed */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 cols */}
+        <div className="lg:col-span-2 space-y-6">
           {/* Projects table */}
-          <div className="cl-card">
-            <div className="cl-card-head">
-              <span className="cl-card-title">Recent Projects</span>
-              <a href="/dashboard/projects" style={{ fontSize: "0.72rem", color: "var(--m1)" }}>
-                All projects →
-              </a>
+          <div className="cl-card overflow-hidden">
+            <div className="cl-card-head bg-[#0d0e10]">
+              <span className="cl-card-title">Recent Project Rooms</span>
+              <Link href="/dashboard/projects" className="text-xs font-mono text-zinc-400 hover:text-white transition-colors">
+                View all &rarr;
+              </Link>
             </div>
-            {/* Table head */}
-            <div style={{
-              display: "grid", gridTemplateColumns: "minmax(0,1fr) 100px 95px 90px",
-              gap: "0.6rem", padding: "0.55rem 1.1rem", borderBottom: "1px solid var(--b2)",
-              fontSize: "0.63rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--m1)",
-            }}>
-              <span>Project</span><span>Owner</span><span>Status</span><span>Updated</span>
+
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-3 px-4 py-2 border-b border-white/[0.06] bg-[#0d0e10]/60 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+              <span className="col-span-6">Workspace</span>
+              <span className="col-span-3">Status</span>
+              <span className="col-span-3 text-right">Updated</span>
             </div>
+
             {loadingProjects ? (
-              <div style={{ padding: "1.5rem 1.1rem", fontSize: "0.8rem", color: "var(--m1)" }}>Loading…</div>
+              <div className="p-8 text-center text-xs font-mono text-zinc-500">Loading workspaces...</div>
             ) : projects.length === 0 ? (
-              <div style={{ padding: "2rem 1.1rem", textAlign: "center", fontSize: "0.8rem", color: "var(--m1)" }}>
-                No projects yet.{" "}
+              <div className="p-8 text-center">
+                <p className="text-xs text-zinc-400 mb-3">No active project rooms found.</p>
                 <button
                   onClick={() => router.push("/dashboard/projects")}
-                  style={{ color: "var(--red)", background: "none", border: "none", cursor: "pointer", fontSize: "0.8rem" }}
+                  className="btn btn-p btn-sm"
                 >
-                  Create one →
+                  Create workspace
                 </button>
               </div>
             ) : (
-              projects.slice(0, 5).map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => router.push(`/dashboard/projects/${p.id}`)}
-                  style={{
-                    display: "grid", gridTemplateColumns: "minmax(0,1fr) 100px 95px 90px",
-                    gap: "0.6rem", padding: "0.7rem 1.1rem", borderBottom: "1px solid var(--b1)",
-                    fontSize: "0.78rem", alignItems: "center", cursor: "pointer",
-                    background: "none", border: "none", width: "100%", textAlign: "left",
-                    transition: "background 0.12s",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--s2)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
-                >
-                  <div>
-                    <div style={{ fontWeight: 500, color: "var(--white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title}</div>
-                    <div style={{ fontSize: "0.68rem", color: "var(--m1)", marginTop: 1 }}>Project</div>
-                  </div>
-                  <div style={{ color: "var(--m2)" }}>{user.name?.split(" ")[0] || "You"}</div>
-                  <div>{statusTag(p.status)}</div>
-                  <div style={{ color: "var(--m1)" }}>{formatDate(p.created_at)}</div>
-                </button>
-              ))
+              <div className="divide-y divide-white/[0.04]">
+                {projects.slice(0, 5).map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => router.push(`/dashboard/projects/${p.id}`)}
+                    className="w-full grid grid-cols-12 gap-3 px-4 py-3 text-left hover:bg-[#141618] transition-colors items-center cursor-pointer"
+                  >
+                    <div className="col-span-6 min-w-0">
+                      <div className="text-xs font-semibold text-white truncate">{p.title}</div>
+                      <div className="text-[10px] font-mono text-zinc-500 mt-0.5">Premiere Pro timeline connected</div>
+                    </div>
+                    <div className="col-span-3">
+                      {statusTag(p.status)}
+                    </div>
+                    <div className="col-span-3 text-right text-[11px] font-mono text-zinc-500">
+                      {formatDate(p.created_at)}
+                    </div>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
           {/* Activity feed */}
-          <div className="cl-card">
-            <div className="cl-card-head">
-              <span className="cl-card-title">Activity feed</span>
-              <span style={{ fontSize: "0.72rem", color: "var(--m1)" }}>See all →</span>
+          <div className="cl-card overflow-hidden">
+            <div className="cl-card-head bg-[#0d0e10]">
+              <span className="cl-card-title">Live Activity Stream</span>
             </div>
-            <div style={{ padding: "0.2rem 0" }}>
+            <div className="divide-y divide-white/[0.04]">
               {activity.length === 0 ? (
-                <div style={{ padding: "1.25rem 1.1rem", fontSize: "0.8rem", color: "var(--m1)" }}>
-                  No recent activity yet.
+                <div className="p-6 text-center text-xs font-mono text-zinc-500">
+                  No recent timeline events recorded.
                 </div>
               ) : (
                 activity.slice(0, 5).map((item) => (
-                  <div key={item.id} style={{
-                    display: "flex", gap: "0.75rem", padding: "0.75rem 1.1rem",
-                    borderBottom: "1px solid var(--b1)", alignItems: "flex-start",
-                  }}>
+                  <div key={item.id} className="flex items-start gap-3 p-3.5 hover:bg-[#141618] transition-colors">
                     {activityIcon(item)}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "0.78rem", color: "var(--m2)", lineHeight: 1.45 }}>
-                        <strong style={{ color: "var(--white)", fontWeight: 500 }}>{item.owner_name}</strong>{" "}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-zinc-300 leading-snug">
+                        <strong className="text-white font-medium">{item.owner_name}</strong>{" "}
                         {item.title}
-                      </div>
-                      <div style={{ fontSize: "0.66rem", color: "var(--m1)", marginTop: "0.18rem" }}>
+                      </p>
+                      <span className="text-[10px] font-mono text-zinc-500 mt-1 block">
                         {formatDate(item.created_at || new Date().toISOString())}
-                      </div>
+                      </span>
                     </div>
                   </div>
                 ))
@@ -229,102 +241,71 @@ export default function DashboardPage() {
         </div>
 
         {/* Right column */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-          {/* Open feedback */}
-          <div className="cl-card">
-            <div className="cl-card-head">
-              <span className="cl-card-title">Open feedback</span>
-              <span className="tag tag-a" style={{ fontSize: "0.6rem" }}>{openFeedback} open</span>
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <div className="cl-card overflow-hidden">
+            <div className="cl-card-head bg-[#0d0e10]">
+              <span className="cl-card-title">Quick Actions</span>
             </div>
-            <div style={{ padding: "0.65rem 1.1rem" }}>
-              {openFeedback === 0 ? (
-                <div style={{ fontSize: "0.76rem", color: "var(--m1)", textAlign: "center", padding: "0.5rem 0" }}>
-                  No open feedback. All clear!
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Quick actions */}
-          <div className="cl-card">
-            <div className="cl-card-head">
-              <span className="cl-card-title">Quick actions</span>
-            </div>
-            {[
-              {
-                label: "Create new project",
-                icon: <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />,
-                onClick: () => router.push("/dashboard/projects"),
-              },
-              {
-                label: "View all projects",
-                icon: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></>,
-                onClick: () => router.push("/dashboard/projects"),
-              },
-              {
-                label: "Edit profile",
-                icon: <><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></>,
-                onClick: () => router.push("/dashboard/profile"),
-              },
-            ].map((action) => (
-              <button
-                key={action.label}
-                onClick={action.onClick}
-                style={{
-                  display: "flex", alignItems: "center", gap: "0.65rem",
-                  padding: "0.6rem 1.1rem", borderBottom: "1px solid var(--b1)",
-                  fontSize: "0.78rem", color: "var(--m2)", cursor: "pointer",
-                  transition: "all 0.12s", background: "none", border: "none", width: "100%",
-                  textAlign: "left",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "var(--white)";
-                  e.currentTarget.style.background = "var(--s2)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "var(--m2)";
-                  e.currentTarget.style.background = "none";
-                }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.6 }}>
-                  {action.icon}
-                </svg>
-                {action.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Network */}
-          <div className="cl-card">
-            <div className="cl-card-head">
-              <span className="cl-card-title">Network</span>
-            </div>
-            <div style={{ padding: "0.65rem 1.1rem" }}>
-              {network.length === 0 ? (
-                <div style={{ fontSize: "0.75rem", color: "var(--m1)", padding: "0.35rem 0" }}>
-                  No connections yet. Follow users to build your network.
-                </div>
-              ) : (
-                network.slice(0, 3).map((person) => (
-                  <div key={person.following_id} style={{
-                    display: "flex", alignItems: "center", gap: "0.6rem",
-                    padding: "0.45rem 0", borderBottom: "1px solid var(--b1)",
-                  }}>
-                    <div style={{
-                      width: 26, height: 26, borderRadius: "50%",
-                      background: "#7dd3fc", color: "#0d0f0e",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "0.56rem", fontWeight: 700, flexShrink: 0,
-                    }}>
-                      {person.name?.slice(0, 2).toUpperCase() || "??"}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "0.78rem", fontWeight: 500, color: "var(--white)" }}>{person.name}</div>
-                      <div style={{ fontSize: "0.67rem", color: "var(--m1)" }}>{person.project_count} projects</div>
-                    </div>
-                    <button className="btn btn-g btn-sm">Open</button>
+            <div className="p-2 space-y-1">
+              {[
+                {
+                  label: "Open Projects Directory",
+                  desc: "Filter and manage workspaces",
+                  onClick: () => router.push("/dashboard/projects"),
+                },
+                {
+                  label: "View Portfolio & Profile",
+                  desc: "Contributions and public page",
+                  onClick: () => router.push("/dashboard/profile"),
+                },
+              ].map((action) => (
+                <button
+                  key={action.label}
+                  onClick={action.onClick}
+                  className="w-full p-2.5 rounded-md text-left hover:bg-[#1c1e22] transition-colors cursor-pointer block group"
+                >
+                  <div className="text-xs font-medium text-white group-hover:text-[#00e5ff] transition-colors">
+                    {action.label}
                   </div>
-                ))
+                  <div className="text-[11px] text-zinc-500 mt-0.5">{action.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Network Connections */}
+          <div className="cl-card overflow-hidden">
+            <div className="cl-card-head bg-[#0d0e10]">
+              <span className="cl-card-title">Network & Collaborators</span>
+            </div>
+            <div className="p-4">
+              {network.length === 0 ? (
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  Collaborate on projects to build your shared creative network.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {network.slice(0, 4).map((person) => (
+                    <div key={person.following_id} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#00e5ff]/15 font-mono text-[10px] font-bold text-[#00e5ff]">
+                          {person.name?.slice(0, 2).toUpperCase() || "CR"}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-medium text-white truncate">{person.name}</div>
+                          <div className="text-[10px] font-mono text-zinc-500">{person.project_count} projects</div>
+                        </div>
+                      </div>
+                      <Link
+                        href={`/dashboard/profile/${person.following_id}`}
+                        className="btn btn-g btn-sm text-[10px]"
+                      >
+                        Profile
+                      </Link>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>

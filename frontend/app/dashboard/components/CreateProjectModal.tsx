@@ -62,175 +62,119 @@ export default function CreateProjectModal({
     }
   };
 
-  const inputStyle = {
-    width: "100%",
-    height: 40,
-    padding: "0 11px",
-    background: "var(--s3)",
-    border: "1px solid var(--b2)",
-    borderRadius: "var(--r)",
-    fontSize: "0.81rem",
-    color: "var(--white)",
-    outline: "none",
-    fontFamily: "var(--fb)",
-    transition: "border-color 0.15s",
-  } as React.CSSProperties;
-
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 50,
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: "absolute", inset: 0,
-          background: "rgba(0,0,0,0.65)",
-          backdropFilter: "blur(6px)",
-        }}
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
       />
 
-      {/* Modal */}
-      <div style={{
-        position: "relative",
-        width: "100%", maxWidth: 500,
-        margin: "0 1rem",
-        background: "var(--s1)",
-        border: "1px solid var(--b2)",
-        borderRadius: "var(--rxl)",
-        boxShadow: "0 40px 80px rgba(0,0,0,0.55)",
-        maxHeight: "90dvh",
-        overflowY: "auto",
-      }}>
+      {/* Modal Dialog */}
+      <div className="relative w-full max-w-lg rounded-xl border border-white/[0.1] bg-[#141618] shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col z-10">
         {/* Header */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "1.1rem 1.4rem",
-          borderBottom: "1px solid var(--b2)",
-        }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08] bg-[#0d0e10]">
           <div>
-            <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--white)" }}>
-              Create Project
-            </div>
-            <div style={{ fontSize: "0.75rem", color: "var(--m1)", marginTop: "0.1rem" }}>
-              Set up a new workspace and invite collaborators
-            </div>
+            <h2 className="text-sm font-semibold text-white tracking-tight">
+              Create New Project Room
+            </h2>
+            <p className="text-[11px] text-zinc-400 mt-0.5">
+              Initialize a synced review workspace and timeline tracking.
+            </p>
           </div>
           <button
             onClick={onClose}
-            style={{
-              width: 30, height: 30, borderRadius: "var(--r)",
-              background: "var(--s3)", border: "1px solid var(--b2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "var(--m2)", cursor: "pointer", flexShrink: 0,
-            }}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         </div>
 
-        <div style={{ padding: "1.25rem 1.4rem" }}>
+        <div className="p-6 overflow-y-auto">
           {error && (
-            <div style={{
-              marginBottom: "1rem", padding: "0.6rem 0.85rem",
-              background: "var(--rs)", border: "1px solid var(--rg)",
-              borderRadius: "var(--r)", fontSize: "0.79rem", color: "var(--red)",
-            }}>
+            <div className="mb-4 px-3.5 py-2.5 rounded-md bg-red-500/10 border border-red-500/20 text-xs font-medium text-red-400">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Title */}
             <div>
-              <label className="cl-label">Project Title <span style={{ color: "var(--red)" }}>*</span></label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                Project Title <span className="text-[#00e5ff]">*</span>
+              </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Brand Video Campaign"
-                style={inputStyle}
+                placeholder="e.g. Commercial Reel 2026 — v1 Cut"
+                className="w-full h-10 px-3 rounded-md bg-[#1c1e22] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 focus:ring-1 focus:ring-[#00e5ff]/20 transition-colors"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="cl-label">Description</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                Description & Brief
+              </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief project overview…"
+                placeholder="Target delivery dates, color grading notes, export formats..."
                 rows={3}
-                style={{
-                  ...inputStyle,
-                  height: "auto",
-                  padding: "0.55rem 0.75rem",
-                  resize: "none",
-                }}
+                className="w-full p-3 rounded-md bg-[#1c1e22] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 focus:ring-1 focus:ring-[#00e5ff]/20 transition-colors resize-none"
               />
             </div>
 
             {/* Deadline */}
             <div>
-              <label className="cl-label">Deadline</label>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                Delivery Deadline
+              </label>
               <input
                 type="date"
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}
-                style={{ ...inputStyle, colorScheme: "dark" } as React.CSSProperties}
+                className="w-full h-10 px-3 rounded-md bg-[#1c1e22] border border-white/[0.08] text-xs text-white outline-none focus:border-[#00e5ff]/60 focus:ring-1 focus:ring-[#00e5ff]/20 transition-colors [color-scheme:dark]"
               />
             </div>
 
             {/* Freelancer Emails */}
             <div>
-              <label className="cl-label">
-                Invite Freelancers{" "}
-                <span style={{ color: "var(--m1)", fontWeight: 400 }}>(comma-separated emails)</span>
+              <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                Collaborators & Freelancers{" "}
+                <span className="text-zinc-500 font-normal">(comma-separated emails)</span>
               </label>
               <input
                 type="text"
                 value={freelancerEmails}
                 onChange={(e) => setFreelancerEmails(e.target.value)}
-                placeholder="dev@email.com, designer@email.com"
-                style={inputStyle}
+                placeholder="editor@studio.com, colorist@post.com"
+                className="w-full h-10 px-3 rounded-md bg-[#1c1e22] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 focus:ring-1 focus:ring-[#00e5ff]/20 transition-colors"
               />
-              <div style={{ fontSize: "0.71rem", color: "var(--m1)", marginTop: "0.3rem" }}>
-                Freelancers must have an existing CreaoLink account.
-              </div>
+              <p className="text-[11px] font-mono text-zinc-500 mt-1">
+                Collaborators will receive access to timeline review and comments.
+              </p>
             </div>
 
             {/* Actions */}
-            <div style={{ display: "flex", gap: "0.5rem", paddingTop: "0.35rem" }}>
+            <div className="flex gap-2.5 pt-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="btn btn-g btn-lg"
-                style={{ flex: 1 }}
+                className="btn btn-g btn-lg flex-1"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="btn btn-p btn-lg"
-                style={{ flex: 1 }}
+                className="btn btn-p btn-lg flex-1"
               >
-                {loading ? (
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{
-                      width: 14, height: 14, borderRadius: "50%",
-                      border: "2px solid rgba(255,255,255,0.3)",
-                      borderTopColor: "#fff",
-                      animation: "spin 0.8s linear infinite",
-                      display: "inline-block",
-                    }} />
-                    Creating…
-                  </span>
-                ) : "Create project →"}
+                {loading ? "Creating..." : "Create Project Room"}
               </button>
             </div>
           </form>

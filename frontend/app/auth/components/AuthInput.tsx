@@ -24,27 +24,19 @@ export default function AuthInput({
   const isPassword = type === "password";
 
   return (
-    <div style={{ marginBottom: "0.9rem" }}>
-      <label style={{
-        display: "block",
-        fontSize: "0.74rem",
-        fontWeight: 500,
-        color: "var(--m2)",
-        marginBottom: "0.35rem",
-      }}>
+    <div className="mb-3.5">
+      <label className="block text-xs font-medium text-zinc-400 mb-1.5">
         {label}
       </label>
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        background: "var(--s3)",
-        border: `1px solid ${error ? "var(--red)" : focused ? "var(--b3)" : "var(--b2)"}`,
-        borderRadius: "var(--r)",
-        padding: "0 11px",
-        height: 40,
-        gap: 7,
-        transition: "border-color 0.15s",
-      }}>
+      <div
+        className={`flex items-center h-10 px-3 rounded-md bg-[#141618] border transition-colors ${
+          error
+            ? "border-red-500/80 ring-1 ring-red-500/30"
+            : focused
+            ? "border-[#00e5ff]/60 ring-1 ring-[#00e5ff]/20"
+            : "border-white/[0.08] hover:border-white/[0.16]"
+        }`}
+      >
         <input
           type={isPassword && showPwd ? "text" : type}
           placeholder={placeholder}
@@ -52,38 +44,22 @@ export default function AuthInput({
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          style={{
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            fontSize: "0.81rem",
-            color: "var(--white)",
-            width: "100%",
-            fontFamily: "var(--fb)",
-          }}
+          className="w-full bg-transparent text-xs text-white placeholder:text-zinc-600 outline-none"
         />
         {isPassword && (
           <button
             type="button"
             onClick={() => setShowPwd((v) => !v)}
-            style={{
-              fontSize: "0.7rem",
-              color: "var(--m1)",
-              cursor: "pointer",
-              background: "none",
-              border: "none",
-              flexShrink: 0,
-              fontFamily: "var(--fb)",
-            }}
+            className="text-[11px] font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer ml-2 shrink-0 select-none"
           >
             {showPwd ? "Hide" : "Show"}
           </button>
         )}
       </div>
       {error && (
-        <div style={{ fontSize: "0.72rem", color: "var(--red)", marginTop: "0.25rem" }}>
+        <p className="text-[11px] font-medium text-red-400 mt-1">
           {error}
-        </div>
+        </p>
       )}
     </div>
   );

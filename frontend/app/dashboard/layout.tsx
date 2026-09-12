@@ -43,12 +43,8 @@ export default function DashboardLayout({
 
   if (!ready || !user) {
     return (
-      <div style={{ height: "100dvh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: "50%",
-          border: "2.5px solid var(--b2)", borderTopColor: "var(--red)",
-          animation: "spin 0.8s linear infinite",
-        }} />
+      <div className="h-[100dvh] bg-[#08090a] flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
       </div>
     );
   }

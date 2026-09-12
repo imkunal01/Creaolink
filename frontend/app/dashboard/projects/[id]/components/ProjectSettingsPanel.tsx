@@ -26,52 +26,15 @@ interface ProjectSettingsPanelProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  online: "#4ade80",
-  away: "#fbbf24",
-  offline: "var(--m1)",
+  online: "#10b981",
+  away: "#f59e0b",
+  offline: "#71717a",
 };
 
 function formatDate(value?: string) {
   if (!value) return "—";
   return new Date(value).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" });
 }
-
-const sectionStyle = {
-  background: "var(--s2)",
-  border: "1px solid var(--b2)",
-  borderRadius: "var(--rl)",
-  padding: "1rem 1.1rem",
-  marginBottom: "0.85rem",
-} as React.CSSProperties;
-
-const labelStyle = {
-  display: "block",
-  fontSize: "0.7rem",
-  fontWeight: 600,
-  color: "var(--m1)",
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.07em",
-  marginBottom: "0.4rem",
-};
-
-const inputStyle = {
-  width: "100%",
-  height: 36,
-  padding: "0 10px",
-  background: "var(--s3)",
-  border: "1px solid var(--b2)",
-  borderRadius: "var(--r)",
-  fontSize: "0.79rem",
-  color: "var(--white)",
-  outline: "none",
-  fontFamily: "var(--fb)",
-} as React.CSSProperties;
-
-const selectStyle = {
-  ...inputStyle,
-  cursor: "pointer",
-  colorScheme: "dark",
-} as React.CSSProperties;
 
 export default function ProjectSettingsPanel({
   projectId,
@@ -159,12 +122,12 @@ export default function ProjectSettingsPanel({
   };
 
   const handleRename = async () => {
-    if (nameError || !canManage) return;
+    if (!canManage || nameError) return;
     try {
       setSaving(true);
       await apiUpdateProjectSettings(projectId, { title: nameInput.trim(), visibility });
-      showMsg("Settings saved.");
       await onProjectUpdated();
+      showMsg("Settings updated successfully.");
     } catch (err) {
       showMsg(err instanceof Error ? err.message : "Failed to update settings", "err");
     } finally {
@@ -173,14 +136,14 @@ export default function ProjectSettingsPanel({
   };
 
   const handleAddFreelancer = async () => {
-    if (!identifier.trim() || !canManage) return;
+    if (!canManage || !identifier.trim()) return;
     try {
       setAddingMember(true);
       await apiAddFreelancer(projectId, { identifier: identifier.trim(), permission });
       setIdentifier("");
       await fetchTeam();
       await onProjectUpdated();
-      showMsg("Freelancer added.");
+      showMsg("Collaborator added.");
     } catch (err) {
       showMsg(err instanceof Error ? err.message : "Failed to add freelancer", "err");
     } finally {
@@ -188,12 +151,13 @@ export default function ProjectSettingsPanel({
     }
   };
 
-  const handlePermissionChange = async (targetUserId: string, next: ProjectPermission) => {
+  const handlePermissionChange = async (targetUserId: string, nextPerm: ProjectPermission) => {
     if (!canManage) return;
     try {
-      await apiUpdateFreelancerPermission(projectId, { userId: targetUserId, permission: next });
+      await apiUpdateFreelancerPermission(projectId, { userId: targetUserId, permission: nextPerm });
       await fetchTeam();
       await onProjectUpdated();
+      showMsg("Permission updated.");
     } catch (err) {
       showMsg(err instanceof Error ? err.message : "Failed to update permission", "err");
     }
@@ -201,7 +165,7 @@ export default function ProjectSettingsPanel({
 
   const handleRemoveFreelancer = async (targetUserId: string) => {
     if (!canManage) return;
-    if (!window.confirm("Remove this freelancer from the project?")) return;
+    if (!window.confirm("Remove this collaborator from the workspace?")) return;
     try {
       await apiRemoveFreelancer(projectId, { userId: targetUserId });
       await fetchTeam();
@@ -216,7 +180,7 @@ export default function ProjectSettingsPanel({
     try {
       await apiUpdateFreelancerPresence(projectId, { status: myStatus, currentTask: myTask, hoursLogged: myHours });
       await fetchPresence();
-      showMsg("Live status updated.");
+      showMsg("Live status synced.");
     } catch (err) {
       showMsg(err instanceof Error ? err.message : "Failed to update live status", "err");
     }
@@ -225,7 +189,7 @@ export default function ProjectSettingsPanel({
   const handleDeleteProject = async () => {
     if (!canManage) return;
     if (deletePhrase.trim().toLowerCase() !== project.title.trim().toLowerCase()) {
-      showMsg("Type the exact project name before deleting.", "err");
+      showMsg("Type the exact project title to confirm deletion.", "err");
       return;
     }
     try {
@@ -242,105 +206,79 @@ export default function ProjectSettingsPanel({
   };
 
   return (
-    <aside>
-      {/* Feedback toast */}
+    <aside className="space-y-4">
+      {/* Feedback Toast */}
       {message && (
-        <div style={{
-          marginBottom: "0.85rem",
-          padding: "0.6rem 0.9rem",
-          background: messageType === "err" ? "var(--rs)" : "rgba(74,222,128,0.08)",
-          border: `1px solid ${messageType === "err" ? "var(--rg)" : "rgba(74,222,128,0.22)"}`,
-          borderRadius: "var(--r)",
-          fontSize: "0.77rem",
-          color: messageType === "err" ? "var(--red)" : "#4ade80",
-        }}>
+        <div
+          className={`p-2.5 rounded-md text-xs font-mono border ${
+            messageType === "err"
+              ? "bg-red-500/10 border-red-500/20 text-red-400"
+              : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+          }`}
+        >
           {message}
         </div>
       )}
 
-      {/* ── Project Settings ── */}
-      <div style={sectionStyle}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.6rem" }}>
-          Project Settings
+      {/* Settings Card */}
+      <div className="p-3.5 rounded-lg border border-white/[0.08] bg-[#141618] space-y-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          Room Settings
         </div>
 
-        <div style={{ marginBottom: "0.65rem" }}>
-          <label style={labelStyle}>Rename</label>
+        <div>
+          <label className="block text-[10px] font-mono uppercase text-zinc-500 mb-1">Rename Workspace</label>
           <input
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
-            style={{ ...inputStyle, borderColor: nameError ? "var(--red)" : "var(--b2)" }}
+            className="w-full h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white outline-none focus:border-[#00e5ff]/60"
             disabled={!canManage}
           />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.64rem", color: nameError ? "var(--red)" : "var(--m1)", marginTop: "0.2rem" }}>
-            <span>{nameError || "Looks good"}</span>
-            <span>{nameInput.trim().length}/80</span>
-          </div>
+          {nameError && <span className="text-[10px] text-red-400 font-mono mt-1 block">{nameError}</span>}
         </div>
 
-        <div style={{ marginBottom: "0.75rem" }}>
-          <label style={labelStyle}>Visibility</label>
+        <div>
+          <label className="block text-[10px] font-mono uppercase text-zinc-500 mb-1">Visibility Scope</label>
           <select
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as ProjectVisibility)}
-            style={selectStyle}
+            className="w-full h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-zinc-300 outline-none [color-scheme:dark]"
             disabled={!canManage}
           >
-            <option value="private">🔒 Private</option>
-            <option value="followers-only">👥 Followers Only</option>
-            <option value="public">🌐 Public</option>
+            <option value="private">Private Workspace</option>
+            <option value="followers-only">Team & Followers</option>
+            <option value="public">Public Showcase</option>
           </select>
         </div>
 
         <button
           onClick={handleRename}
           disabled={saving || !!nameError || !canManage}
-          className="btn btn-p btn-full"
-          style={{ fontSize: "0.79rem" }}
+          className="btn btn-p btn-sm w-full"
         >
-          {saving ? "Saving…" : "Save Settings"}
+          {saving ? "Saving..." : "Save Settings"}
         </button>
       </div>
 
-      {/* ── Metadata ── */}
-      <div style={sectionStyle}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.6rem" }}>
-          Metadata
-        </div>
-        {[
-          { label: "Created", value: formatDate(project.created_at) },
-          { label: "Updated", value: formatDate(project.updated_at) },
-          { label: "Owner", value: project.owner?.name || "Unknown" },
-        ].map(({ label, value }) => (
-          <div key={label} style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            fontSize: "0.77rem", marginBottom: "0.4rem",
-          }}>
-            <span style={{ color: "var(--m1)" }}>{label}</span>
-            <span style={{ color: "var(--m2)", fontWeight: 500 }}>{value}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Manage Freelancers ── */}
-      <div style={sectionStyle}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.65rem" }}>
-          Manage Freelancers
+      {/* Manage Collaborators */}
+      <div className="p-3.5 rounded-lg border border-white/[0.08] bg-[#141618] space-y-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+          Manage Team
         </div>
 
-        <div style={{ display: "flex", gap: 6, marginBottom: "0.5rem" }}>
+        <div className="flex gap-1.5">
           <input
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="username or email"
-            style={{ ...inputStyle, flex: 1 }}
+            placeholder="Username or email"
+            className="flex-1 h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60"
             disabled={!canManage}
             onKeyDown={(e) => { if (e.key === "Enter") handleAddFreelancer(); }}
           />
           <select
             value={permission}
             onChange={(e) => setPermission(e.target.value as ProjectPermission)}
-            style={{ ...selectStyle, width: 86 }}
+            className="w-20 h-8 px-1 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-zinc-300 outline-none [color-scheme:dark]"
             disabled={!canManage}
           >
             <option value="admin">Admin</option>
@@ -352,34 +290,27 @@ export default function ProjectSettingsPanel({
         <button
           onClick={handleAddFreelancer}
           disabled={!canManage || addingMember || !identifier.trim()}
-          className="btn btn-s btn-full"
-          style={{ fontSize: "0.77rem", marginBottom: "0.75rem" }}
+          className="btn btn-g btn-sm w-full"
         >
-          {addingMember ? "Adding…" : "+ Add Freelancer"}
+          {addingMember ? "Adding..." : "+ Add Collaborator"}
         </button>
 
         {/* Team list */}
         {loadingTeam ? (
-          <div style={{ fontSize: "0.75rem", color: "var(--m1)" }}>Loading team…</div>
+          <div className="text-[11px] font-mono text-zinc-500">Loading team members...</div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div className="space-y-1.5 pt-1">
             {team.map((member) => (
-              <div key={member.id} style={{
-                background: "var(--s3)", border: "1px solid var(--b1)",
-                borderRadius: "var(--r)", padding: "0.55rem 0.75rem",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                  <div>
-                    <div style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)" }}>{member.name}</div>
-                    <div style={{ fontSize: "0.67rem", color: "var(--m1)" }}>{member.email}</div>
-                  </div>
-                  <span className="tag tag-n" style={{ fontSize: "0.62rem", textTransform: "capitalize" }}>{member.role}</span>
+              <div key={member.id} className="p-2 rounded bg-[#0d0e10] border border-white/[0.04] space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-white truncate">{member.name}</span>
+                  <span className="text-[10px] font-mono uppercase text-zinc-500">{member.role}</span>
                 </div>
-                <div style={{ display: "flex", gap: 6, marginTop: "0.4rem" }}>
+                <div className="flex gap-1.5">
                   <select
                     value={member.permission || "editor"}
                     onChange={(e) => handlePermissionChange(member.id, e.target.value as ProjectPermission)}
-                    style={{ ...selectStyle, flex: 1, height: 30, fontSize: "0.72rem", padding: "0 8px" }}
+                    className="flex-1 h-6 px-1 rounded bg-[#141618] border border-white/[0.08] text-[10px] text-zinc-300 outline-none [color-scheme:dark]"
                     disabled={!canManage}
                   >
                     <option value="admin">Admin</option>
@@ -390,12 +321,7 @@ export default function ProjectSettingsPanel({
                     <button
                       onClick={() => handleRemoveFreelancer(member.id)}
                       disabled={!canManage}
-                      style={{
-                        height: 30, padding: "0 10px",
-                        background: "var(--rs)", border: "1px solid var(--rg)",
-                        borderRadius: "var(--r)", fontSize: "0.72rem", color: "var(--red)",
-                        cursor: "pointer",
-                      }}
+                      className="px-2 h-6 rounded bg-red-500/10 border border-red-500/20 text-[10px] text-red-400 hover:bg-red-500/20 cursor-pointer"
                     >
                       Remove
                     </button>
@@ -407,169 +333,121 @@ export default function ProjectSettingsPanel({
         )}
       </div>
 
-      {/* ── Active Freelancers ── */}
-      <div style={sectionStyle}>
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          fontSize: "0.82rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.65rem",
-        }}>
-          <span>Active Freelancers</span>
-          {loadingPresence && (
-            <div style={{
-              width: 12, height: 12, borderRadius: "50%",
-              border: "1.5px solid var(--b2)", borderTopColor: "var(--red)",
-              animation: "spin 0.8s linear infinite",
-            }} />
-          )}
+      {/* Live Presence */}
+      <div className="p-3.5 rounded-lg border border-white/[0.08] bg-[#141618] space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Live Presence</span>
+          {loadingPresence && <div className="w-3 h-3 rounded-full border border-white/20 border-t-[#00e5ff] animate-spin" />}
         </div>
 
-        {presence.length === 0 ? (
-          <div style={{ fontSize: "0.77rem", color: "var(--m1)" }}>No active statuses yet.</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: "0.75rem" }}>
+        {presence.length > 0 ? (
+          <div className="space-y-1.5">
             {presence.map((item) => (
-              <div key={item.user_id} style={{
-                background: "var(--s3)", border: "1px solid var(--b1)",
-                borderRadius: "var(--r)", padding: "0.55rem 0.75rem",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)" }}>{item.name}</div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: "0.72rem", color: "var(--m2)" }}>
-                    <span style={{
-                      width: 7, height: 7, borderRadius: "50%",
-                      background: STATUS_COLORS[item.status] || STATUS_COLORS.offline,
-                    }} />
+              <div key={item.user_id} className="p-2 rounded bg-[#0d0e10] border border-white/[0.04]">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-white">{item.name}</span>
+                  <span className="flex items-center gap-1 text-[10px] font-mono text-zinc-400 capitalize">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: STATUS_COLORS[item.status] || STATUS_COLORS.offline }}
+                    />
                     {item.status}
-                  </div>
+                  </span>
                 </div>
-                <div style={{ fontSize: "0.68rem", color: "var(--m1)", marginTop: "0.2rem" }}>
-                  {item.current_task ? `Working on: ${item.current_task}` : "No task set"} · {Number(item.hours_logged || 0).toFixed(1)}h logged
-                </div>
+                {item.current_task && (
+                  <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
+                    Task: {item.current_task}
+                  </p>
+                )}
               </div>
             ))}
           </div>
+        ) : (
+          <p className="text-[11px] font-mono text-zinc-500">No active telemetry logged.</p>
         )}
 
-        {/* Update my status */}
-        <div style={{
-          background: "var(--s3)", border: "1px solid var(--b1)",
-          borderRadius: "var(--r)", padding: "0.65rem 0.75rem",
-        }}>
-          <div style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--m1)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem" }}>
-            Update My Status
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <select
-              value={myStatus}
-              onChange={(e) => setMyStatus(e.target.value as "online" | "away" | "offline")}
-              style={{ ...selectStyle, height: 32, fontSize: "0.75rem", padding: "0 8px" }}
-            >
-              <option value="online">🟢 Online</option>
-              <option value="away">🟡 Away</option>
-              <option value="offline">⚫ Offline</option>
-            </select>
+        {/* Update My Status */}
+        <div className="pt-2 border-t border-white/[0.04] space-y-2">
+          <div className="text-[10px] font-mono uppercase text-zinc-500">Update My Status</div>
+          <select
+            value={myStatus}
+            onChange={(e) => setMyStatus(e.target.value as "online" | "away" | "offline")}
+            className="w-full h-7 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-[11px] text-zinc-300 outline-none [color-scheme:dark]"
+          >
+            <option value="online">Online / Editing</option>
+            <option value="away">Away / In Render</option>
+            <option value="offline">Offline / Standby</option>
+          </select>
+          <input
+            value={myTask}
+            onChange={(e) => setMyTask(e.target.value)}
+            className="w-full h-7 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-[11px] text-white placeholder:text-zinc-600 outline-none"
+            placeholder="Current task focus"
+          />
+          <div className="flex gap-1.5">
             <input
-              value={myTask}
-              onChange={(e) => setMyTask(e.target.value)}
-              style={{ ...inputStyle, height: 32, fontSize: "0.75rem", padding: "0 8px" }}
-              placeholder="Current task"
+              type="number"
+              min={0}
+              step={0.1}
+              value={myHours}
+              onChange={(e) => setMyHours(Number(e.target.value || 0))}
+              className="flex-1 h-7 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-[11px] text-white placeholder:text-zinc-600 outline-none"
+              placeholder="Hours logged"
             />
-            <div style={{ display: "flex", gap: 6 }}>
-              <input
-                type="number"
-                min={0}
-                step={0.1}
-                value={myHours}
-                onChange={(e) => setMyHours(Number(e.target.value || 0))}
-                style={{ ...inputStyle, height: 32, fontSize: "0.75rem", padding: "0 8px", flex: 1 }}
-                placeholder="Hours logged"
-              />
-              <button
-                onClick={handleUpdatePresence}
-                className="btn btn-p"
-                style={{ height: 32, fontSize: "0.73rem", padding: "0 12px", flexShrink: 0 }}
-              >
-                Sync
-              </button>
-            </div>
+            <button
+              onClick={handleUpdatePresence}
+              className="btn btn-p btn-sm px-3"
+            >
+              Sync
+            </button>
           </div>
         </div>
       </div>
 
-      {/* ── Danger Zone ── */}
-      <div style={{
-        ...sectionStyle,
-        background: "rgba(232,57,46,0.06)",
-        border: "1px solid rgba(232,57,46,0.25)",
-      }}>
-        <div style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--red)", marginBottom: "0.45rem" }}>
-          Danger Zone
+      {/* Danger Zone */}
+      {canManage && (
+        <div className="p-3.5 rounded-lg border border-red-500/20 bg-red-500/5 space-y-2">
+          <div className="text-xs font-semibold text-red-400">Danger Zone</div>
+          <p className="text-[11px] text-zinc-500 leading-snug">
+            Permanently delete this project workspace and all timeline sync data.
+          </p>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full py-1.5 rounded bg-red-500/10 border border-red-500/30 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-colors cursor-pointer"
+          >
+            Delete Workspace...
+          </button>
         </div>
-        <div style={{ fontSize: "0.76rem", color: "var(--m1)", lineHeight: 1.55, marginBottom: "0.65rem" }}>
-          Permanently delete this project, including all versions, feedback, team members, and plugin data.
-        </div>
-        <button
-          onClick={() => setShowDeleteModal(true)}
-          disabled={!canManage}
-          style={{
-            width: "100%", padding: "0.55rem 1rem",
-            background: "transparent", border: "1px solid rgba(232,57,46,0.45)",
-            borderRadius: "var(--r)", fontSize: "0.79rem", color: "var(--red)",
-            cursor: canManage ? "pointer" : "not-allowed", opacity: canManage ? 1 : 0.5,
-            fontFamily: "var(--fb)",
-          }}
-        >
-          Delete Project…
-        </button>
-      </div>
+      )}
 
-      {/* ── Delete Confirmation Modal ── */}
+      {/* Delete Modal */}
       {showDeleteModal && (
-        <div style={{
-          position: "fixed", inset: 0, zIndex: 50,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(0,0,0,0.7)",
-        }}>
-          <div style={{
-            width: "100%", maxWidth: 420, margin: "0 1rem",
-            background: "var(--s1)", border: "1px solid var(--b2)",
-            borderRadius: "var(--rxl)", padding: "1.5rem",
-            boxShadow: "0 30px 60px rgba(0,0,0,0.5)",
-          }}>
-            <div style={{ fontSize: "1rem", fontWeight: 600, color: "var(--white)", marginBottom: "0.5rem" }}>
-              Confirm permanent deletion
-            </div>
-            <div style={{ fontSize: "0.81rem", color: "var(--m2)", lineHeight: 1.6, marginBottom: "0.85rem" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-white/[0.1] bg-[#141618] p-5 shadow-2xl space-y-3">
+            <h4 className="text-sm font-semibold text-white">Permanent Deletion</h4>
+            <p className="text-xs text-zinc-400 leading-relaxed">
               This action cannot be undone. Type{" "}
-              <span style={{ color: "var(--white)", fontWeight: 600 }}>{project.title}</span>{" "}
-              to confirm.
-            </div>
+              <strong className="text-white font-mono">{project.title}</strong> to confirm.
+            </p>
             <input
               value={deletePhrase}
               onChange={(e) => setDeletePhrase(e.target.value)}
-              style={{ ...inputStyle, marginBottom: "0.85rem" }}
               placeholder={project.title}
+              className="w-full h-8 px-2.5 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white outline-none focus:border-red-500/60"
             />
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex gap-2 pt-2">
               <button
                 onClick={() => { setShowDeleteModal(false); setDeletePhrase(""); }}
-                className="btn btn-g"
-                style={{ flex: 1, fontSize: "0.79rem" }}
+                className="btn btn-g btn-sm flex-1"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteProject}
                 disabled={deleting || deletePhrase.trim().toLowerCase() !== project.title.trim().toLowerCase()}
-                style={{
-                  flex: 1, padding: "0.5rem 1rem",
-                  background: "rgba(232,57,46,0.15)", border: "1px solid rgba(232,57,46,0.4)",
-                  borderRadius: "var(--r)", fontSize: "0.79rem", color: "var(--red)",
-                  cursor: "pointer", fontFamily: "var(--fb)",
-                  opacity: (deleting || deletePhrase.trim().toLowerCase() !== project.title.trim().toLowerCase()) ? 0.45 : 1,
-                }}
+                className="btn btn-danger btn-sm flex-1"
               >
-                {deleting ? "Deleting…" : "Delete Forever"}
+                {deleting ? "Deleting..." : "Delete Forever"}
               </button>
             </div>
           </div>

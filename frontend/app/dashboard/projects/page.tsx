@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getUser, type User } from "@/lib/auth";
 import { apiFetch } from "@/lib/api-client";
 import CreateProjectModal from "../components/CreateProjectModal";
+import EmptyState from "../components/EmptyState";
 
 interface ApiProject {
   id: string;
@@ -16,10 +17,10 @@ interface ApiProject {
 
 function statusTag(status: string) {
   if (status === "active" || status === "approved")
-    return <span className="tag tag-a">● Active</span>;
+    return <span className="tag tag-a">Active</span>;
   if (status === "paused")
-    return <span className="tag tag-r">⏳ Review</span>;
-  return <span className="tag tag-d">✓ Done</span>;
+    return <span className="tag tag-r">In Review</span>;
+  return <span className="tag tag-d">Approved</span>;
 }
 
 const STATUS_FILTERS = ["All", "Active", "Review", "Done"] as const;
@@ -75,129 +76,111 @@ export default function ProjectsPage() {
     projects.filter((p) => matchesFilter(p, f)).length;
 
   return (
-    <div className="mc">
+    <div className="mc pb-10">
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.25rem", gap: "1rem" }}>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-white/[0.06]">
         <div>
-          <div style={{ fontFamily: "var(--fd)", fontSize: "1.55rem", color: "var(--white)", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-            Projects
-          </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--m2)", marginTop: "0.2rem" }}>
-            {isClient ? "Manage and track your projects" : "View your assigned projects"}
-          </div>
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Project Workspaces
+          </h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            {isClient ? "Manage deliverable rooms and timeline sync" : "Assigned client sequences and review rooms"}
+          </p>
         </div>
         {isClient && (
           <button className="btn btn-p" onClick={() => setShowCreateModal(true)}>
-            + New project
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            New Project Room
           </button>
         )}
       </div>
 
-      {/* Filter bar */}
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
-        {STATUS_FILTERS.map((f) => (
-          <button
-            key={f}
-            onClick={() => setActiveFilter(f)}
-            className={`filter-chip${activeFilter === f ? " active" : ""}`}
-          >
-            {f}
-            <span style={{
-              fontSize: "0.62rem",
-              background: "var(--s4)",
-              borderRadius: "3px",
-              padding: "0 5px",
-              color: "var(--m2)",
-            }}>
-              {countFor(f)}
-            </span>
-          </button>
-        ))}
+      {/* Filter bar & Search */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#0d0e10] border border-white/[0.08]">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`px-3 py-1.5 rounded-md text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
+                activeFilter === f
+                  ? "bg-[#1c1e22] text-white border border-white/10"
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              <span>{f}</span>
+              <span className="text-[10px] opacity-70">
+                {countFor(f)}
+              </span>
+            </button>
+          ))}
+        </div>
 
         {/* Search */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 7,
-          padding: "0 11px", height: 34,
-          background: "var(--s3)", border: "1px solid var(--b2)", borderRadius: "var(--r)",
-          fontSize: "0.79rem", color: "var(--white)", marginLeft: "auto",
-        }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "var(--m1)" }}>
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+        <div className="flex items-center gap-2 h-9 px-3 rounded-md bg-[#141618] border border-white/[0.08] text-xs text-white w-full sm:w-64">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-500 shrink-0">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects…"
-            style={{
-              background: "transparent", border: "none", outline: "none",
-              fontSize: "0.79rem", color: "var(--white)", width: 160,
-            }}
+            placeholder="Search workspaces..."
+            className="w-full bg-transparent placeholder:text-zinc-600 outline-none text-xs"
           />
         </div>
       </div>
 
       {/* Projects grid */}
       {loading ? (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "4rem 0" }}>
-          <div style={{
-            width: 20, height: 20, borderRadius: "50%",
-            border: "2px solid var(--b2)", borderTopColor: "var(--red)",
-            animation: "spin 0.8s linear infinite",
-          }} />
+        <div className="flex items-center justify-center py-20">
+          <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <div style={{
-            width: 56, height: 56, borderRadius: "var(--rl)",
-            background: "var(--s3)", border: "1px solid var(--b2)",
-            display: "flex", alignItems: "center", justifyContent: "center", color: "var(--m1)",
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-            </svg>
-          </div>
-          <div style={{ fontSize: "1rem", fontWeight: 500, color: "var(--white)" }}>
-            {search ? "No matching projects" : isClient ? "No projects yet" : "No projects assigned"}
-          </div>
-          <div style={{ fontSize: "0.82rem", color: "var(--m1)", maxWidth: 280, lineHeight: 1.6, textAlign: "center" }}>
-            {isClient
-              ? "Create your first project to start collaborating with freelancers."
-              : "When a client adds you to a project, it will appear here."}
-          </div>
-          {isClient && (
-            <button className="btn btn-p" onClick={() => setShowCreateModal(true)}>
-              + Create project
-            </button>
-          )}
+        <div className="cl-card">
+          <EmptyState
+            icon={
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+            }
+            title={search ? "No matching workspaces" : isClient ? "No project rooms yet" : "No assigned workspaces"}
+            description={
+              isClient
+                ? "Create your first project room to start collaborating with freelancers and editors."
+                : "When a studio or client invites you, your workspace will appear here."
+            }
+            action={isClient ? { label: "Create Project Room", onClick: () => setShowCreateModal(true) } : undefined}
+          />
         </div>
       ) : (
-        <div className="proj-card-grid">
-          {filtered.map((project, i) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((project) => {
             const progress = project.status === "completed" || project.status === "approved" ? 100 :
-              project.status === "paused" ? 60 : 35;
-            const colors = ["#e8392e", "#fbbf24", "#7dd3fc", "#86efac", "#f9a8d4"];
-            const dotColor = colors[i % colors.length];
+              project.status === "paused" ? 75 : 40;
 
             return (
               <div
                 key={project.id}
-                className="proj-card"
+                className="proj-card group"
                 onClick={() => router.push(`/dashboard/projects/${project.id}`)}
               >
                 {/* Header */}
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "0.65rem" }}>
-                  <div>
-                    <div className="proj-card-title">{project.title}</div>
-                    <div className="proj-card-desc">
-                      {project.description || "No description provided."}
-                    </div>
-                  </div>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="proj-card-title truncate">{project.title}</div>
                   {statusTag(project.status)}
+                </div>
+
+                <div className="proj-card-desc">
+                  {project.description || "No description provided."}
                 </div>
 
                 {/* Progress */}
                 <div className="proj-card-prog-lbl">
-                  <span>Progress</span>
+                  <span>Timeline Delivery</span>
                   <span>{progress}%</span>
                 </div>
                 <div className="proj-card-prog-bar">
@@ -205,21 +188,14 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Footer */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  {/* Avatar stack */}
-                  <div style={{ display: "flex" }}>
-                    <div style={{
-                      width: 22, height: 22, borderRadius: "50%",
-                      border: "1.5px solid var(--s1)",
-                      background: dotColor,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "0.5rem", fontWeight: 700, color: "#0d0f0e",
-                      marginRight: -6,
-                    }}>
+                <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.04] text-[11px] font-mono text-zinc-500">
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex h-5 w-5 items-center justify-center rounded bg-[#00e5ff]/15 text-[#00e5ff] font-bold text-[9px]">
                       {project.title.slice(0, 2).toUpperCase()}
                     </div>
+                    <span>Workspace</span>
                   </div>
-                  <span style={{ fontSize: "0.68rem", color: "var(--m1)" }}>
+                  <span>
                     {new Date(project.created_at).toLocaleDateString()}
                   </span>
                 </div>

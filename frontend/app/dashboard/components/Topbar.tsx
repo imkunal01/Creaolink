@@ -7,7 +7,6 @@ import { User } from "@/lib/auth";
 import { apiSearchUsers, type SearchUserItem } from "@/lib/api";
 import {
   getUnreadCount,
-  markAllRead,
   startNotificationPolling,
 } from "@/lib/notifications";
 import NotificationPanel from "./NotificationPanel";
@@ -74,85 +73,59 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
-  const handleBellClick = () => {
-    if (!panelOpen && unread > 0) {
-      // Don't mark read yet — user needs to see them
-    }
-    setPanelOpen((v) => !v);
-  };
-
   return (
     <header className="app-topbar">
-      {/* Mobile hamburger */}
-      <button
-        onClick={onMenuToggle}
-        className="lg:hidden"
-        style={{
-          background: "var(--s3)",
-          border: "1px solid var(--b2)",
-          borderRadius: "var(--r)",
-          cursor: "pointer",
-          color: "var(--m2)",
-          padding: 0,
-          width: 40,
-          height: 40,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          touchAction: "manipulation",
-          transition: "background 0.12s, color 0.12s",
-        }}
-        aria-label="Toggle menu"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <line x1="3" y1="12" x2="21" y2="12" />
-          <line x1="3" y1="18" x2="21" y2="18" />
-        </svg>
-      </button>
+      {/* Left: Mobile hamburger + Logo */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden flex h-8 w-8 items-center justify-center rounded-md bg-[#141618] border border-white/[0.08] text-zinc-400 hover:text-white transition-colors cursor-pointer"
+          aria-label="Toggle menu"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
 
+        <Link href="/" className="tb-logo">
+          <b>Creao</b><span>Link</span>
+        </Link>
+      </div>
 
-      {/* Logo */}
-      <Link href="/" className="tb-logo">
-        <b>Creao</b>Link
-      </Link>
+      {/* Center: Search */}
+      <div className="relative flex-1 max-w-sm hidden sm:block">
+        <div className="tb-search">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-500 shrink-0">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search projects, editors, clients..."
+          />
+        </div>
 
-      {/* Search */}
-      <div className="tb-search" style={{ position: "relative" }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "var(--m1)", flexShrink: 0 }}>
-          <circle cx="11" cy="11" r="8" />
-          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search users, projects…"
-        />
         {(loading || results.length > 0) && (
-          <div style={{
-            position: "absolute", left: 0, right: 0, top: "calc(100% + 8px)",
-            background: "var(--s1)", border: "1px solid var(--b2)",
-            borderRadius: "var(--r)", boxShadow: "0 12px 36px rgba(0,0,0,0.4)",
-            zIndex: 100, overflow: "hidden",
-          }}>
+          <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 overflow-hidden rounded-md border border-white/[0.08] bg-[#141618] shadow-2xl">
             {loading ? (
-              <div style={{ padding: "10px 12px", fontSize: "0.76rem", color: "var(--m1)" }}>Searching…</div>
+              <div className="px-3 py-2 text-xs font-mono text-zinc-500">Searching workspace...</div>
             ) : (
               results.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => { setQuery(""); setResults([]); router.push(`/dashboard/profile/${item.id}`); }}
-                  style={{
-                    width: "100%", textAlign: "left", padding: "8px 12px",
-                    background: "none", border: "none", cursor: "pointer",
-                    color: "var(--m2)", fontSize: "0.8rem", transition: "background 0.1s",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--s3)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  className="w-full px-3 py-2 text-left hover:bg-[#1c1e22] transition-colors flex items-center justify-between cursor-pointer border-b border-white/[0.04] last:border-b-0"
                 >
-                  <div style={{ color: "var(--white)", fontWeight: 500, fontSize: "0.8rem" }}>{item.name}</div>
-                  <div style={{ fontSize: "0.68rem", color: "var(--m1)" }}>@{item.username}</div>
+                  <div>
+                    <div className="text-xs font-medium text-white">{item.name}</div>
+                    <div className="text-[10px] font-mono text-zinc-500">@{item.username}</div>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase text-zinc-500 bg-[#0d0e10] px-1.5 py-0.5 rounded border border-white/[0.06]">
+                    Profile
+                  </span>
                 </button>
               ))
             )}
@@ -160,15 +133,14 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
         )}
       </div>
 
-      {/* Right side */}
-      <div className="tb-right">
-        {/* Notification bell */}
-        <div ref={bellRef} style={{ position: "relative" }}>
+      {/* Right: Notifications + User profile */}
+      <div className="flex items-center gap-2.5">
+        {/* Notification Bell */}
+        <div ref={bellRef} className="relative">
           <button
-            onClick={handleBellClick}
-            className="tb-notif"
+            onClick={() => setPanelOpen((v) => !v)}
+            className="relative flex h-8 w-8 items-center justify-center rounded-md bg-[#141618] border border-white/[0.08] text-zinc-400 hover:text-white hover:border-white/20 transition-colors cursor-pointer"
             title="Notifications"
-            style={{ position: "relative", cursor: "pointer" }}
             aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ""}`}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -176,44 +148,32 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
             {unread > 0 && (
-              <div className="dot" style={{ position: "absolute", top: -1, right: -1 }}>
-                {unread <= 9 ? (
-                  <span style={{
-                    position: "absolute", inset: 0,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: "0.42rem", fontWeight: 800, color: "#fff",
-                    lineHeight: 1,
-                  }}>
-                    {unread}
-                  </span>
-                ) : null}
-              </div>
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#00e5ff] px-1 font-mono text-[9px] font-bold text-[#08090a] shadow-sm">
+                {unread <= 9 ? unread : "9+"}
+              </span>
             )}
           </button>
 
-          {/* Notification panel dropdown */}
           <NotificationPanel
             open={panelOpen}
             onClose={() => setPanelOpen(false)}
           />
         </div>
 
-        {/* User chip */}
-        <Link href="/dashboard/profile" className="tb-user">
-          <div style={{
-            width: 26, height: 26, borderRadius: "50%",
-            background: "var(--red)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "0.56rem", fontWeight: 700, color: "#fff", flexShrink: 0,
-          }}>
+        {/* User Chip */}
+        <Link
+          href="/dashboard/profile"
+          className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-md bg-[#141618] border border-white/[0.08] hover:border-white/20 transition-colors"
+        >
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[#00e5ff]/15 font-mono text-[10px] font-bold text-[#00e5ff]">
             {initials}
           </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ fontSize: "0.77rem", fontWeight: 500, color: "var(--white)", lineHeight: 1.2 }}>
+          <div className="hidden sm:block text-left">
+            <div className="text-xs font-medium text-white leading-tight">
               {user?.name ?? "User"}
             </div>
-            <div style={{ fontSize: "0.64rem", color: "var(--m1)", lineHeight: 1.2, textTransform: "capitalize" }}>
-              {user?.role ?? "—"}
+            <div className="text-[10px] font-mono text-zinc-500 capitalize leading-tight">
+              {user?.role ?? "member"}
             </div>
           </div>
         </Link>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { getUser, type User } from "@/lib/auth";
 import {
   apiGetProject,
@@ -22,26 +23,16 @@ type FeedbackItem = Awaited<ReturnType<typeof apiGetFeedback>>["feedback"][numbe
 type Tab = "overview" | "chat" | "feedback";
 
 function statusTag(status: string) {
-  if (status === "active") return <span className="tag tag-a">● Active</span>;
-  if (status === "pending") return <span className="tag tag-r">⏳ Review</span>;
-  if (status === "approved") return <span className="tag tag-d">✓ Approved</span>;
+  if (status === "active") return <span className="tag tag-a">Active</span>;
+  if (status === "pending") return <span className="tag tag-r">In Review</span>;
+  if (status === "approved" || status === "completed") return <span className="tag tag-d">Approved</span>;
   return <span className="tag tag-n">{status}</span>;
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  High: "rgba(239,68,68,.12)",
-  Medium: "rgba(251,191,36,.12)",
-  Low: "rgba(74,222,128,.12)",
-};
-const PRIORITY_TEXT: Record<string, string> = {
-  High: "#f87171",
-  Medium: "#fbbf24",
-  Low: "#4ade80",
-};
-const PRIORITY_BORDER: Record<string, string> = {
-  High: "rgba(239,68,68,.25)",
-  Medium: "rgba(251,191,36,.25)",
-  Low: "rgba(74,222,128,.25)",
+const PRIORITY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
+  High: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20" },
+  Medium: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20" },
+  Low: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
 };
 
 export default function ProjectDetailPage() {
@@ -138,24 +129,20 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-        <div style={{
-          width: 20, height: 20, borderRadius: "50%",
-          border: "2px solid var(--b2)", borderTopColor: "var(--red)",
-          animation: "spin 0.8s linear infinite",
-        }} />
+      <div className="flex items-center justify-center h-full min-h-[50vh]">
+        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
       </div>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="mc" style={{ textAlign: "center", paddingTop: "4rem" }}>
-        <p style={{ color: "var(--red)", fontSize: "0.9rem", marginBottom: "1rem" }}>
-          {error || "Project not found"}
+      <div className="mc text-center pt-16">
+        <p className="text-xs font-mono text-red-400 mb-4">
+          {error || "Project room not found"}
         </p>
-        <button className="btn btn-g" onClick={() => router.push("/dashboard/projects")}>
-          ← Back to Projects
+        <button className="btn btn-g btn-sm" onClick={() => router.push("/dashboard/projects")}>
+          Return to Projects
         </button>
       </div>
     );
@@ -164,511 +151,419 @@ export default function ProjectDetailPage() {
   const openFeedback = feedback.filter((f) => f.status === "open");
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* Project header bar */}
-      <div style={{
-        padding: "0.85rem 1.75rem",
-        borderBottom: "1px solid var(--b2)",
-        background: "var(--s1)",
-        display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0,
-      }}>
+    <div className="flex flex-col h-full bg-[#08090a]">
+      {/* Top Action Header Bar */}
+      <div className="px-6 py-3 border-b border-white/[0.08] bg-[#0d0e10] flex flex-wrap items-center justify-between gap-3 shrink-0">
         {/* Breadcrumb */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.77rem", color: "var(--m1)" }}>
-          <button
-            onClick={() => router.push("/dashboard/projects")}
-            style={{ color: "var(--m2)", background: "none", border: "none", cursor: "pointer", fontSize: "0.77rem" }}
+        <div className="flex items-center gap-2 text-xs font-mono">
+          <Link
+            href="/dashboard/projects"
+            className="text-zinc-400 hover:text-white transition-colors"
           >
             Projects
-          </button>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-          <span style={{ color: "var(--white)" }}>{project.title}</span>
+          </Link>
+          <span className="text-zinc-600">/</span>
+          <span className="text-white font-medium truncate max-w-[200px]">{project.title}</span>
         </div>
-
-        <div style={{ flex: 1 }} />
 
         {/* Actions */}
-        <button
-          className="btn btn-g btn-sm"
-          onClick={() => router.push(`/dashboard/projects/${projectId}/link`)}
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-          </svg>
-          Premiere Pro
-        </button>
-
-        {isClient && (
+        <div className="flex items-center gap-2.5">
           <button
             className="btn btn-g btn-sm"
-            onClick={() => setShowVersionForm(true)}
+            onClick={() => router.push(`/dashboard/projects/${projectId}/link`)}
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
-            Invite
+            Premiere Pro Sync
           </button>
-        )}
 
-        {statusTag(project.status)}
+          {statusTag(project.status)}
 
-        {isClient && (
-          <button className="btn btn-p btn-sm" onClick={() => setShowVersionForm(true)}>
-            + New version
-          </button>
-        )}
-      </div>
-
-      {/* Project title + meta */}
-      <div style={{
-        padding: "0.75rem 1.75rem 0",
-        background: "var(--s1)",
-        borderBottom: "1px solid var(--b2)",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.35rem" }}>
-          <div style={{ fontSize: "1.15rem", fontWeight: 600, color: "var(--white)" }}>{project.title}</div>
-        </div>
-        <div style={{ fontSize: "0.72rem", color: "var(--m1)", display: "flex", alignItems: "center", gap: "0.5rem", paddingBottom: "0.5rem" }}>
-          <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
-          <span>·</span>
-          <span>{project.members?.length || 0} members</span>
-          {project.currentVersion && (
-            <>
-              <span>·</span>
-              <span>Current: <b style={{ color: "var(--red)" }}>{project.currentVersion.version_name}</b></span>
-            </>
+          {isClient && (
+            <button className="btn btn-p btn-sm" onClick={() => setShowVersionForm(true)}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              New Version
+            </button>
           )}
         </div>
       </div>
 
+      {/* Project Title and Metadata Subheader */}
+      <div className="px-6 py-4 bg-[#0d0e10]/60 border-b border-white/[0.06]">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h1 className="text-lg font-bold text-white tracking-tight">
+            {project.title}
+          </h1>
+          <div className="flex items-center gap-3 text-xs font-mono text-zinc-500">
+            <span>Created {new Date(project.created_at).toLocaleDateString()}</span>
+            <span>&middot;</span>
+            <span>{project.members?.length || 0} members</span>
+            {project.currentVersion && (
+              <>
+                <span>&middot;</span>
+                <span className="text-[#00e5ff] font-semibold">Active: {project.currentVersion.version_name}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Tabs */}
-      <div className="proj-tab-bar">
+      <div className="proj-tab-bar bg-[#0d0e10]">
         {(["overview", "chat", "feedback"] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`proj-tab${activeTab === tab ? " active" : ""}`}
           >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === "overview" ? "Timeline & Specs" : tab === "chat" ? "Workspace Chat" : "Review Feedback"}
             {tab === "feedback" && openFeedback.length > 0 && (
-              <span className="proj-tab-count">{openFeedback.length}</span>
+              <span className="proj-tab-count font-mono">{openFeedback.length}</span>
             )}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 280px", flex: 1, overflow: "hidden" }}>
-
-        {/* ── OVERVIEW TAB ── */}
-        {activeTab === "overview" && (
-          <div style={{ padding: "1.5rem", overflowY: "auto", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            {/* Premiere Pro */}
-            <div>
-              <div className="sec-title">Premiere Pro Sequence</div>
-              {project.currentVersion?.timeline_data ? (
-                <TimelineViewer data={project.currentVersion.timeline_data as Parameters<typeof TimelineViewer>[0]["data"]} />
-              ) : (
-                <div style={{
-                  background: "var(--s3)", border: "1px dashed var(--b2)",
-                  borderRadius: "var(--r)", padding: "2rem",
-                  textAlign: "center", color: "var(--m1)", fontSize: "0.79rem",
-                }}>
-                  No timeline data synced yet.
-                  <div style={{ marginTop: "0.5rem" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-4 flex-1 overflow-hidden">
+        {/* Main 3 cols */}
+        <div className="lg:col-span-3 overflow-y-auto p-6 space-y-6">
+          {/* ── OVERVIEW TAB ── */}
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              {/* Premiere Pro Timeline */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    Premiere Pro Timeline Sequence
+                  </h2>
+                  {project.currentVersion && (
+                    <span className="text-[11px] font-mono text-zinc-500">
+                      Tracking sequence: {project.currentVersion.version_name}
+                    </span>
+                  )}
+                </div>
+                {project.currentVersion?.timeline_data ? (
+                  <TimelineViewer data={project.currentVersion.timeline_data as Parameters<typeof TimelineViewer>[0]["data"]} />
+                ) : (
+                  <div className="rounded-xl border border-dashed border-white/[0.08] bg-[#0d0e10] p-8 text-center">
+                    <p className="text-xs font-mono text-zinc-400 mb-3">
+                      No sequence metadata synced from Adobe Premiere Pro yet.
+                    </p>
                     <button
                       className="btn btn-g btn-sm"
                       onClick={() => router.push(`/dashboard/projects/${projectId}/link`)}
                     >
-                      Connect Premiere Pro plugin →
+                      Connect Premiere Pro Extension &rarr;
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Description + Deadline */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.85rem" }}>
-              <div>
-                <div className="sec-title">Description</div>
-                <div style={{
-                  background: "var(--s3)", border: "1px solid var(--b1)",
-                  borderRadius: "var(--r)", padding: "0.8rem 1rem",
-                  fontSize: "0.8rem", color: "var(--m2)", lineHeight: 1.55,
-                }}>
-                  {project.description || "No description provided."}
-                </div>
+                )}
               </div>
-              <div>
-                <div className="sec-title">Deadline</div>
-                <div style={{
-                  background: "var(--s3)", border: "1px solid var(--b1)",
-                  borderRadius: "var(--r)", padding: "0.8rem 1rem",
-                  fontSize: "0.8rem", color: "var(--m2)",
-                }}>
+
+              {/* Description + Deadline */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-white/[0.08] bg-[#141618]">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                    Creative Brief & Requirements
+                  </h3>
+                  <p className="text-xs text-zinc-300 leading-relaxed">
+                    {project.description || "No description provided."}
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-white/[0.08] bg-[#141618]">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                    Delivery Schedule
+                  </h3>
                   {project.deadline ? (
-                    <>
-                      <div style={{ fontSize: "0.7rem", color: "var(--m1)", marginBottom: "0.25rem" }}>Target date</div>
-                      <div style={{ fontWeight: 500, color: "var(--white)" }}>
+                    <div>
+                      <div className="text-sm font-semibold text-white font-mono">
                         {new Date(project.deadline).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
                       </div>
                       {new Date(project.deadline) < new Date() && (
-                        <div style={{ fontSize: "0.7rem", color: "var(--red)", marginTop: "0.25rem" }}>⚠ Deadline has passed</div>
+                        <div className="text-xs font-mono text-red-400 mt-1 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                          Delivery deadline has passed
+                        </div>
                       )}
-                    </>
+                    </div>
                   ) : (
-                    <span style={{ color: "var(--m1)" }}>No deadline set</span>
+                    <span className="text-xs font-mono text-zinc-500">Flexible / No hard deadline set</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Versions Stack */}
+              <div className="p-5 rounded-xl border border-white/[0.08] bg-[#141618]">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    Version History Stack
+                  </h3>
+                  <button className="btn btn-g btn-sm" onClick={() => setShowVersionForm((v) => !v)}>
+                    + Add Version Cut
+                  </button>
+                </div>
+
+                {showVersionForm && (
+                  <div className="mb-4 p-4 rounded-lg bg-[#0d0e10] border border-white/[0.08] space-y-3">
+                    <textarea
+                      value={versionNotes}
+                      onChange={(e) => setVersionNotes(e.target.value)}
+                      placeholder="Version changelog and render notes..."
+                      rows={2}
+                      className="w-full p-2.5 rounded-md bg-[#141618] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 resize-none"
+                    />
+                    <div className="flex gap-2">
+                      <button className="btn btn-p btn-sm" onClick={handleCreateVersion} disabled={creatingVersion}>
+                        {creatingVersion ? "Deploying..." : "Publish Version"}
+                      </button>
+                      <button className="btn btn-g btn-sm" onClick={() => setShowVersionForm(false)}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {project.currentVersion && (
+                    <div className="vt-item">
+                      <div className="vt-line" />
+                      <div className="vt-dot current">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#00e5ff]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-white flex items-center gap-2">
+                          <span>{project.currentVersion.version_name}</span>
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/20">
+                            Active Cut
+                          </span>
+                          <span className="text-[10px] font-mono text-zinc-500 font-normal">
+                            &middot; {new Date(project.currentVersion.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {project.currentVersion.notes && (
+                          <div className="vt-note mt-1">{project.currentVersion.notes}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {project.versions
+                    .filter((v) => v.id !== project.currentVersion?.id)
+                    .reverse()
+                    .map((v) => (
+                      <div className="vt-item" key={v.id}>
+                        <div className="vt-dot" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-medium text-zinc-300">
+                            {v.version_name}{" "}
+                            <span className="text-[10px] font-mono text-zinc-500 font-normal">
+                              &middot; {new Date(v.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {v.notes && <div className="vt-note mt-1">{v.notes}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  {project.versions.length === 0 && (
+                    <div className="text-xs font-mono text-zinc-500">No versions tracked yet.</div>
                   )}
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Versions */}
-            <div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-                <div className="sec-title" style={{ margin: 0 }}>Versions</div>
-                <button className="btn btn-g btn-sm" onClick={() => setShowVersionForm((v) => !v)}>
-                  + New version
-                </button>
-              </div>
-
-              {/* New version form */}
-              {showVersionForm && (
-                <div style={{
-                  marginBottom: "0.85rem",
-                  padding: "0.85rem 1rem",
-                  background: "var(--s3)", border: "1px solid var(--b2)",
-                  borderRadius: "var(--r)",
-                  display: "flex", flexDirection: "column", gap: "0.6rem",
-                }}>
-                  <textarea
-                    value={versionNotes}
-                    onChange={(e) => setVersionNotes(e.target.value)}
-                    placeholder="Version notes (optional)"
-                    rows={2}
-                    style={{
-                      width: "100%", padding: "0.5rem 0.75rem",
-                      background: "var(--s2)", border: "1px solid var(--b2)",
-                      borderRadius: "var(--r)", fontSize: "0.81rem",
-                      color: "var(--white)", outline: "none", resize: "none",
-                    }}
-                  />
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <button className="btn btn-p btn-sm" onClick={handleCreateVersion} disabled={creatingVersion}>
-                      {creatingVersion ? "Creating…" : "Create Version"}
-                    </button>
-                    <button className="btn btn-g btn-sm" onClick={() => setShowVersionForm(false)}>Cancel</button>
-                  </div>
-                </div>
-              )}
-
-              {/* Version timeline */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-                {project.currentVersion && (
-                  <div className="vt-item">
-                    <div className="vt-line" />
-                    <div className="vt-dot current">
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--red)" strokeWidth="3">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--white)", marginBottom: "0.15rem" }}>
-                        {project.currentVersion.version_name} — Current{" "}
-                        <span style={{ color: "var(--m1)", fontWeight: 400 }}>
-                          · {new Date(project.currentVersion.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {project.currentVersion.notes && (
-                        <div className="vt-note">{project.currentVersion.notes}</div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                {project.versions
-                  .filter((v) => v.id !== project.currentVersion?.id)
-                  .reverse()
-                  .map((v) => (
-                    <div className="vt-item" key={v.id}>
-                      <div className="vt-dot" />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--white)", marginBottom: "0.15rem" }}>
-                          {v.version_name}{" "}
-                          <span style={{ color: "var(--m1)", fontWeight: 400 }}>
-                            · {new Date(v.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        {v.notes && <div className="vt-note">{v.notes}</div>}
-                      </div>
-                    </div>
-                  ))}
-                {project.versions.length === 0 && (
-                  <div style={{ fontSize: "0.8rem", color: "var(--m1)" }}>No versions yet.</div>
-                )}
-              </div>
+          {/* ── CHAT TAB ── */}
+          {activeTab === "chat" && (
+            <div className="h-[600px] rounded-xl border border-white/[0.08] overflow-hidden bg-[#0d0e10]">
+              <ProjectChatRoom projectId={projectId} />
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── CHAT TAB ── */}
-        {activeTab === "chat" && (
-          <div style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
-            <ProjectChatRoom projectId={projectId} />
-          </div>
-        )}
-
-        {/* ── FEEDBACK TAB ── */}
-        {activeTab === "feedback" && (
-          <div style={{ padding: "1.25rem 1.5rem", overflowY: "auto" }}>
-            {/* Filter + add */}
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.1rem", flexWrap: "wrap" }}>
-              <button className="filter-chip active">All <span style={{ fontSize: "0.62rem", background: "var(--s4)", borderRadius: 3, padding: "0 5px" }}>{feedback.length}</span></button>
-              <button className="filter-chip">Open <span style={{ fontSize: "0.62rem", background: "var(--s4)", borderRadius: 3, padding: "0 5px" }}>{openFeedback.length}</span></button>
-              <button className="filter-chip">Resolved <span style={{ fontSize: "0.62rem", background: "var(--s4)", borderRadius: 3, padding: "0 5px" }}>{feedback.filter(f => f.status !== "open").length}</span></button>
-              <div style={{ marginLeft: "auto" }}>
+          {/* ── FEEDBACK TAB ── */}
+          {activeTab === "feedback" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="tag tag-n font-mono">{feedback.length} Total</span>
+                  <span className="tag tag-r font-mono">{openFeedback.length} Open</span>
+                </div>
                 {isClient && (
                   <button className="btn btn-p btn-sm" onClick={() => setShowFeedbackForm((v) => !v)}>
-                    + Add feedback
+                    + Add Timestamped Feedback
                   </button>
                 )}
               </div>
-            </div>
 
-            {/* Feedback form */}
-            {showFeedbackForm && (
-              <form onSubmit={handleAddFeedback} style={{
-                background: "var(--s1)", border: "1px solid var(--b2)",
-                borderRadius: "var(--rl)", padding: "1rem 1.1rem",
-                marginBottom: "0.85rem", display: "flex", flexDirection: "column", gap: "0.75rem",
-              }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.6rem" }}>
-                  <div>
-                    <label className="sec-title" style={{ display: "block" }}>Type</label>
-                    <select
-                      value={fbType}
-                      onChange={(e) => setFbType(e.target.value)}
-                      style={{
-                        width: "100%", height: 36, padding: "0 10px",
-                        background: "var(--s3)", border: "1px solid var(--b2)",
-                        borderRadius: "var(--r)", fontSize: "0.8rem", color: "var(--white)",
-                        outline: "none", colorScheme: "dark",
-                      }}
-                    >
-                      <option value="Revision">Revision</option>
-                      <option value="Bug">Bug</option>
-                      <option value="Enhancement">Enhancement</option>
-                      <option value="General">General</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="sec-title" style={{ display: "block" }}>Priority</label>
-                    <select
-                      value={fbPriority}
-                      onChange={(e) => setFbPriority(e.target.value)}
-                      style={{
-                        width: "100%", height: 36, padding: "0 10px",
-                        background: "var(--s3)", border: "1px solid var(--b2)",
-                        borderRadius: "var(--r)", fontSize: "0.8rem", color: "var(--white)",
-                        outline: "none", colorScheme: "dark",
-                      }}
-                    >
-                      <option value="High">High</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Low">Low</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="sec-title" style={{ display: "block" }}>Timestamp</label>
-                  <input
-                    type="text"
-                    value={fbTimestamp}
-                    onChange={(e) => setFbTimestamp(e.target.value)}
-                    placeholder="e.g. 00:45"
-                    style={{
-                      width: "100%", height: 36, padding: "0 10px",
-                      background: "var(--s3)", border: "1px solid var(--b2)",
-                      borderRadius: "var(--r)", fontSize: "0.8rem", color: "var(--white)",
-                      outline: "none",
-                    }}
-                  />
-                </div>
-                <div>
-                  <label className="sec-title" style={{ display: "block" }}>Description</label>
-                  <textarea
-                    value={fbDescription}
-                    onChange={(e) => setFbDescription(e.target.value)}
-                    placeholder="Describe the feedback…"
-                    rows={3}
-                    style={{
-                      width: "100%", padding: "0.5rem 0.75rem",
-                      background: "var(--s3)", border: "1px solid var(--b2)",
-                      borderRadius: "var(--r)", fontSize: "0.8rem",
-                      color: "var(--white)", outline: "none", resize: "none",
-                    }}
-                  />
-                </div>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button type="submit" className="btn btn-p btn-sm" disabled={addingFeedback}>
-                    {addingFeedback ? "Submitting…" : "Submit feedback"}
-                  </button>
-                  <button type="button" className="btn btn-g btn-sm" onClick={() => setShowFeedbackForm(false)}>
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Feedback cards */}
-            {feedback.length === 0 ? (
-              <div style={{
-                border: "1px dashed var(--b2)", borderRadius: "var(--rl)",
-                padding: "2rem", textAlign: "center", color: "var(--m1)", fontSize: "0.8rem",
-              }}>
-                No feedback yet. Click <b style={{ color: "var(--white)" }}>+ Add feedback</b> to leave timestamped notes.
-              </div>
-            ) : (
-              feedback.map((item) => (
-                <div key={item.id} className="fb-full-card" style={{ opacity: item.status !== "open" ? 0.65 : 1 }}>
-                  <div className="fb-fc-header">
-                    <div style={{
-                      width: 28, height: 28, borderRadius: "50%",
-                      background: "var(--red)", display: "flex", alignItems: "center",
-                      justifyContent: "center", fontSize: "0.58rem", fontWeight: 700, color: "#fff",
-                    }}>
-                      {item.creator_name?.slice(0, 2).toUpperCase() || "??"}
+              {/* Feedback form */}
+              {showFeedbackForm && (
+                <form onSubmit={handleAddFeedback} className="p-4 rounded-xl border border-white/[0.1] bg-[#141618] space-y-3 shadow-xl">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Issue Type</label>
+                      <select
+                        value={fbType}
+                        onChange={(e) => setFbType(e.target.value)}
+                        className="w-full h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white outline-none [color-scheme:dark]"
+                      >
+                        <option value="Revision">Revision</option>
+                        <option value="Audio">Audio Mix</option>
+                        <option value="Color">Color Grade</option>
+                        <option value="Pacing">Pacing & Cut</option>
+                      </select>
                     </div>
                     <div>
-                      <div style={{ fontSize: "0.8rem", fontWeight: 500, color: "var(--white)" }}>{item.creator_name}</div>
-                      <div style={{ fontSize: "0.67rem", color: "var(--m1)" }}>
-                        {item.status === "open" ? "Open" : "Resolved"}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: "0.67rem", color: "var(--m1)", marginLeft: "auto" }}>
-                      {new Date(item.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-
-                  <div style={{ padding: "0.85rem 1.1rem" }}>
-                    <div style={{ fontSize: "0.8rem", color: "var(--m2)", lineHeight: 1.6, marginBottom: "0.65rem" }}>
-                      {item.description}
-                    </div>
-
-                    {/* Tags */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.65rem" }}>
-                      <span style={{
-                        background: "rgba(99,102,241,.12)", color: "#a5b4fc",
-                        borderColor: "rgba(99,102,241,.25)",
-                        padding: "2px 8px", borderRadius: 5, fontSize: "0.67rem", fontWeight: 600,
-                        border: "1px solid",
-                      }}>{item.type}</span>
-                      <span style={{
-                        background: PRIORITY_COLORS[item.priority] || "var(--s3)",
-                        color: PRIORITY_TEXT[item.priority] || "var(--m2)",
-                        borderColor: PRIORITY_BORDER[item.priority] || "var(--b2)",
-                        padding: "2px 8px", borderRadius: 5, fontSize: "0.67rem", fontWeight: 600,
-                        border: "1px solid",
-                      }}>{item.priority} priority</span>
-                      {item.timestamp && (
-                        <span className="tag tag-n">@ {item.timestamp}</span>
-                      )}
-                      {item.version_name && (
-                        <span className="tag tag-n">{item.version_name}</span>
-                      )}
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <button className="btn btn-g btn-sm">Reply</button>
-                      {item.status === "open" && (
-                        <button
-                          className="btn btn-sm"
-                          style={{
-                            background: "rgba(74,222,128,.15)", color: "#4ade80",
-                            borderColor: "rgba(74,222,128,.25)",
-                          }}
-                          onClick={() => handleResolve(item.id)}
-                        >
-                          ✓ Mark resolved
-                        </button>
-                      )}
-                      <button className="btn btn-g btn-sm" style={{ marginLeft: "auto" }}>⋯ More</button>
+                      <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Priority</label>
+                      <select
+                        value={fbPriority}
+                        onChange={(e) => setFbPriority(e.target.value)}
+                        className="w-full h-8 px-2 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white outline-none [color-scheme:dark]"
+                      >
+                        <option value="High">High Priority</option>
+                        <option value="Medium">Medium Priority</option>
+                        <option value="Low">Low Priority</option>
+                      </select>
                     </div>
                   </div>
-
-                  <div className="fb-open-bar">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    Status:{" "}
-                    <b style={{ color: item.status === "open" ? "var(--red)" : "#4ade80" }}>
-                      {item.status === "open" ? "Open" : "Resolved"}
-                    </b>
-                    {" "}· Add a reply to this feedback thread
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Sequence Timestamp (optional)</label>
+                    <input
+                      type="text"
+                      value={fbTimestamp}
+                      onChange={(e) => setFbTimestamp(e.target.value)}
+                      placeholder="e.g. 01:24 or 00:01:24:12"
+                      className="w-full h-8 px-2.5 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white font-mono placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60"
+                    />
                   </div>
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">Feedback Description</label>
+                    <textarea
+                      value={fbDescription}
+                      onChange={(e) => setFbDescription(e.target.value)}
+                      placeholder="Specific note or instruction for the editor..."
+                      rows={3}
+                      className="w-full p-2.5 rounded bg-[#0d0e10] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 resize-none"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="submit" className="btn btn-p btn-sm" disabled={addingFeedback}>
+                      {addingFeedback ? "Posting..." : "Post Feedback Item"}
+                    </button>
+                    <button type="button" className="btn btn-g btn-sm" onClick={() => setShowFeedbackForm(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Feedback List */}
+              {feedback.length === 0 ? (
+                <div className="p-8 text-center rounded-xl border border-dashed border-white/[0.08] bg-[#0d0e10]">
+                  <p className="text-xs font-mono text-zinc-400">
+                    No feedback items logged. All reviews clear.
+                  </p>
                 </div>
-              ))
-            )}
-          </div>
-        )}
+              ) : (
+                <div className="space-y-3">
+                  {feedback.map((item) => {
+                    const priorityStyle = PRIORITY_STYLES[item.priority] || PRIORITY_STYLES.Medium;
+                    return (
+                      <div
+                        key={item.id}
+                        className={`rounded-xl border bg-[#141618] p-4 transition-opacity ${
+                          item.status !== "open" ? "opacity-60 border-white/[0.04]" : "border-white/[0.08]"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded bg-[#00e5ff]/15 font-mono text-[9px] font-bold text-[#00e5ff]">
+                              {item.creator_name?.slice(0, 2).toUpperCase() || "CR"}
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-white">{item.creator_name}</div>
+                              <div className="text-[10px] font-mono text-zinc-500">
+                                {new Date(item.created_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
 
-        {/* Right metadata panel */}
-        <div style={{
-          borderLeft: "1px solid var(--b2)",
-          background: "var(--s1)", overflowY: "auto",
-          padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem",
-        }}>
-          {/* Project info */}
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${priorityStyle.bg} ${priorityStyle.text} ${priorityStyle.border}`}>
+                              {item.priority}
+                            </span>
+                            {item.timestamp && (
+                              <span className="tag tag-n font-mono">@{item.timestamp}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-zinc-300 leading-relaxed mb-3">
+                          {item.description}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-2 border-t border-white/[0.04]">
+                          <span className={`text-[11px] font-mono ${item.status === "open" ? "text-[#00e5ff]" : "text-emerald-400"}`}>
+                            Status: {item.status === "open" ? "Open" : "Resolved"}
+                          </span>
+                          {item.status === "open" && (
+                            <button
+                              className="btn btn-g btn-sm text-[10px]"
+                              onClick={() => handleResolve(item.id)}
+                            >
+                              Mark Resolved
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right Sidebar Metadata */}
+        <div className="lg:col-span-1 border-t lg:border-t-0 lg:border-l border-white/[0.08] bg-[#0d0e10] p-5 space-y-6 overflow-y-auto">
+          {/* Project Details */}
           <div>
-            <div className="sec-title">Project info</div>
-            <div className="info-pair">
-              <span className="info-k">Status</span>
-              <span className="info-v">{statusTag(project.status)}</span>
-            </div>
-            <div className="info-pair">
-              <span className="info-k">Created</span>
-              <span className="info-v">{new Date(project.created_at).toLocaleDateString()}</span>
-            </div>
-            <div className="info-pair">
-              <span className="info-k">Visibility</span>
-              <span className="info-v">Public</span>
-            </div>
-            {project.currentVersion && (
-              <div className="info-pair">
-                <span className="info-k">Version</span>
-                <span className="info-v" style={{ color: "var(--red)" }}>{project.currentVersion.version_name}</span>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+              Room Specs
+            </h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                <span className="text-zinc-500 font-mono">Status</span>
+                <span className="text-zinc-300 font-medium capitalize">{project.status}</span>
               </div>
-            )}
+              <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                <span className="text-zinc-500 font-mono">Version</span>
+                <span className="text-[#00e5ff] font-mono">{project.currentVersion?.version_name || "v1"}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-white/[0.04]">
+                <span className="text-zinc-500 font-mono">Visibility</span>
+                <span className="text-zinc-300">Workspace</span>
+              </div>
+            </div>
+
             {isClient && (
-              <div style={{ marginTop: "0.5rem", position: "relative" }}>
+              <div className="mt-3 relative">
                 <button
-                  className="btn btn-g btn-sm"
-                  style={{ width: "100%" }}
+                  className="btn btn-g btn-sm w-full"
                   onClick={() => setShowStatusMenu((v) => !v)}
                 >
-                  Change status ▾
+                  Update Status
                 </button>
                 {showStatusMenu && (
-                  <div style={{
-                    position: "absolute", left: 0, right: 0, top: "calc(100% + 4px)",
-                    background: "var(--s3)", border: "1px solid var(--b2)",
-                    borderRadius: "var(--r)", zIndex: 10, overflow: "hidden",
-                  }}>
+                  <div className="absolute left-0 right-0 top-full mt-1 bg-[#141618] border border-white/[0.1] rounded-md shadow-2xl z-30 overflow-hidden">
                     {["active", "pending", "completed", "approved"].map((s) => (
                       <button
                         key={s}
                         onClick={() => handleStatusChange(s)}
-                        style={{
-                          width: "100%", textAlign: "left", padding: "7px 11px",
-                          background: "none", border: "none", cursor: "pointer",
-                          fontSize: "0.78rem", color: "var(--m2)", transition: "all 0.1s",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--white)"; e.currentTarget.style.background = "var(--s4)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--m2)"; e.currentTarget.style.background = "none"; }}
+                        className="block w-full px-3 py-2 text-left text-xs text-zinc-300 hover:bg-[#1c1e22] hover:text-white capitalize transition-colors"
                       >
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                        {s}
                       </button>
                     ))}
                   </div>
@@ -677,51 +572,36 @@ export default function ProjectDetailPage() {
             )}
           </div>
 
-          {/* Team */}
+          {/* Team Collaborators */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.6rem" }}>
-              <div className="sec-title" style={{ margin: 0 }}>Team</div>
-              <button className="btn btn-g btn-sm">+ Add</button>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+              Collaborators ({project.members?.length || 0})
+            </h3>
+            <div className="space-y-2">
+              {project.members?.map((m) => (
+                <div key={m.id} className="flex items-center justify-between gap-2 py-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-5 w-5 items-center justify-center rounded bg-[#1c1e22] border border-white/[0.08] font-mono text-[9px] text-zinc-300">
+                      {m.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="text-xs text-zinc-200 truncate">{m.name}</div>
+                  </div>
+                  <span className="text-[10px] font-mono uppercase text-zinc-500">
+                    {m.role}
+                  </span>
+                </div>
+              ))}
             </div>
-            {project.members.map((member) => (
-              <div key={member.id} style={{
-                display: "flex", alignItems: "center", gap: "0.6rem",
-                padding: "0.5rem 0", borderBottom: "1px solid var(--b1)",
-              }}>
-                <div style={{
-                  width: 26, height: 26, borderRadius: "50%",
-                  background: member.role === "client" ? "var(--red)" : "#7dd3fc",
-                  color: member.role === "client" ? "#fff" : "#0d0f0e",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.54rem", fontWeight: 700, flexShrink: 0,
-                }}>
-                  {member.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)" }}>{member.name}</div>
-                  <div style={{ fontSize: "0.68rem", color: "var(--m1)" }}>{member.email}</div>
-                </div>
-                <span className="tag tag-n" style={{ fontSize: "0.6rem", textTransform: "uppercase" }}>
-                  {member.role}
-                </span>
-              </div>
-            ))}
           </div>
 
-          {/* Settings panel (preserved) */}
-          <ProjectSettingsPanel
-            projectId={projectId}
-            project={project}
-            user={user}
-            onProjectUpdated={fetchProject}
-          />
-
-          {/* CTAs */}
-          <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            <button className="btn btn-p btn-full" onClick={() => setShowVersionForm(true)}>
-              + Submit new version
-            </button>
-            <button className="btn btn-g btn-full">Request approval</button>
+          {/* Project Settings Accordion */}
+          <div className="pt-2 border-t border-white/[0.06]">
+            <ProjectSettingsPanel
+              projectId={projectId}
+              project={project}
+              user={user}
+              onProjectUpdated={fetchProject}
+            />
           </div>
         </div>
       </div>

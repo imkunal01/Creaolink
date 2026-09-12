@@ -29,12 +29,8 @@ interface ClientDashboardProps {
 
 function Spinner() {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "4rem" }}>
-      <div style={{
-        width: 22, height: 22, borderRadius: "50%",
-        border: "2px solid var(--b2)", borderTopColor: "var(--red)",
-        animation: "spin 0.8s linear infinite",
-      }} />
+    <div className="flex items-center justify-center py-16">
+      <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#00e5ff] animate-spin" />
     </div>
   );
 }
@@ -68,31 +64,29 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
   const pendingFeedback = projects.reduce((sum, p) => sum + (p.openFeedback || 0), 0);
 
   const clientStats = [
-    { label: "Active Projects", value: activeCount },
-    { label: "Completed", value: completedCount },
-    { label: "Pending Feedback", value: pendingFeedback, accent: pendingFeedback > 0 },
+    { label: "Active Review Rooms", value: activeCount },
+    { label: "Delivered & Approved", value: completedCount },
+    { label: "Pending Resolution", value: pendingFeedback, accent: pendingFeedback > 0 },
   ];
 
   return (
-    <div className="mc" style={{ paddingBottom: "2rem" }}>
+    <div className="mc pb-10">
       {/* Page header */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap",
-      }}>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-white/[0.06]">
         <div>
-          <div style={{ fontFamily: "var(--fd)", fontSize: "1.3rem", color: "var(--white)", letterSpacing: "-0.02em" }}>
-            Overview
-          </div>
-          <div style={{ fontSize: "0.8rem", color: "var(--m1)", marginTop: "0.15rem" }}>
-            Welcome back, <span style={{ color: "var(--m2)", fontWeight: 500 }}>{user.name}</span>
-          </div>
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Workspace Overview
+          </h1>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Logged in as <span className="text-zinc-200 font-medium">{user.name}</span> &middot; Client Studio
+          </p>
         </div>
         <button onClick={() => setShowCreateModal(true)} className="btn btn-p">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: 6 }}>
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          New Project
+          New Project Room
         </button>
       </div>
 
@@ -100,15 +94,14 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
       <StatsCards stats={clientStats} />
 
       {/* Projects grid */}
-      <div style={{ marginTop: "1.5rem" }}>
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          marginBottom: "0.75rem", paddingBottom: "0.65rem", borderBottom: "1px solid var(--b2)",
-        }}>
-          <span style={{ fontSize: "0.84rem", fontWeight: 500, color: "var(--white)" }}>My Projects</span>
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            Active Review Workspaces
+          </h2>
           {projects.length > 0 && (
-            <span style={{ fontSize: "0.73rem", color: "var(--m1)" }}>
-              {projects.length} project{projects.length !== 1 ? "s" : ""}
+            <span className="text-[11px] font-mono text-zinc-500">
+              {projects.length} {projects.length === 1 ? "room" : "rooms"}
             </span>
           )}
         </div>
@@ -119,19 +112,21 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
           <div className="cl-card">
             <EmptyState
               icon={
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                  <path d="M3 7V5a2 2 0 0 1 2-2h4" /><path d="M3 17v2a2 2 0 0 0 2 2h4" />
-                  <path d="M13 7l-4 5 4 5" /><line x1="9" y1="12" x2="21" y2="12" />
+                  <path d="M3 7V5a2 2 0 0 1 2-2h4" />
+                  <path d="M3 17v2a2 2 0 0 0 2 2h4" />
+                  <path d="M13 7l-4 5 4 5" />
+                  <line x1="9" y1="12" x2="21" y2="12" />
                 </svg>
               }
-              title="No projects yet"
-              description="Create your first project to get started. Manage deliverables, track progress, and collaborate with freelancers."
-              action={{ label: "Create Project", onClick: () => setShowCreateModal(true) }}
+              title="No active workspaces"
+              description="Create a project room to invite video editors, sync timelines from Premiere Pro, and resolve client feedback."
+              action={{ label: "Create First Room", onClick: () => setShowCreateModal(true) }}
             />
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "0.85rem" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {projects.map((project) => (
               <ProjectCard
                 key={project.id}
@@ -156,7 +151,7 @@ export default function ClientDashboard({ user }: ClientDashboardProps) {
 
       <CreateProjectModal
         open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => { setShowCreateModal(false); fetchProjects(); }}
       />
     </div>
   );

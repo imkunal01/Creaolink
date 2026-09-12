@@ -16,10 +16,10 @@ type SortValue = "recent" | "alphabetical" | "status";
 type SectionKey = "pinned" | "active" | "draft" | "archived";
 
 const statusDot: Record<ProjectStatus, string> = {
-  active: "#4ade80",
-  pending: "#fbbf24",
-  completed: "var(--m1)",
-  approved: "#7dd3fc",
+  active: "#00e5ff",
+  pending: "#f59e0b",
+  completed: "#10b981",
+  approved: "#10b981",
 };
 
 function getProjectGroup(status: ProjectStatus): Exclude<FilterValue, "all"> {
@@ -106,45 +106,38 @@ export default function ProjectExplorer({
     setOpenMenuId(null);
   };
 
-  const inputStyle = {
-    width: "100%", height: 36, padding: "0 10px",
-    background: "var(--s3)", border: "1px solid var(--b2)",
-    borderRadius: "var(--r)", fontSize: "0.78rem",
-    color: "var(--white)", outline: "none", fontFamily: "var(--fb)",
-  } as React.CSSProperties;
-
   return (
-    <aside className="cl-card" style={{ overflow: "hidden" }}>
+    <aside className="cl-card overflow-hidden">
       {/* Header */}
-      <div style={{ padding: "0.9rem 1.1rem", borderBottom: "1px solid var(--b2)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.7rem" }}>
-          <span style={{ fontSize: "0.82rem", fontWeight: 500, color: "var(--white)" }}>Project Explorer</span>
-          <span className="tag tag-n" style={{ fontSize: "0.65rem" }}>{projects.length} total</span>
+      <div className="p-4 border-b border-white/[0.08] bg-[#0d0e10]">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold uppercase tracking-wider text-white">Project Explorer</span>
+          <span className="tag tag-n text-[10px] font-mono">{projects.length} Total</span>
         </div>
 
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search projects…"
-          style={inputStyle}
+          placeholder="Filter workspaces..."
+          className="w-full h-8 px-2.5 rounded-md bg-[#141618] border border-white/[0.08] text-xs text-white placeholder:text-zinc-600 outline-none focus:border-[#00e5ff]/60 transition-colors"
         />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: "0.5rem" }}>
+        <div className="grid grid-cols-2 gap-2 mt-2">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortValue)}
-            style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" } as React.CSSProperties}
+            className="w-full h-8 px-2 rounded-md bg-[#141618] border border-white/[0.08] text-[11px] text-zinc-300 outline-none cursor-pointer [color-scheme:dark]"
           >
             <option value="recent">Recent</option>
-            <option value="alphabetical">A → Z</option>
-            <option value="status">By status</option>
+            <option value="alphabetical">A to Z</option>
+            <option value="status">By Status</option>
           </select>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterValue)}
-            style={{ ...inputStyle, colorScheme: "dark", cursor: "pointer" } as React.CSSProperties}
+            className="w-full h-8 px-2 rounded-md bg-[#141618] border border-white/[0.08] text-[11px] text-zinc-300 outline-none cursor-pointer [color-scheme:dark]"
           >
-            <option value="all">All states</option>
+            <option value="all">All States</option>
             <option value="active">Active</option>
             <option value="draft">Draft</option>
             <option value="archived">Archived</option>
@@ -153,16 +146,16 @@ export default function ProjectExplorer({
       </div>
 
       {/* Sections */}
-      <div style={{ maxHeight: "60vh", overflowY: "auto", padding: "0.75rem" }}>
+      <div className="max-h-[60vh] overflow-y-auto p-3 space-y-3">
         <ProjectSection
           title="Pinned"
-          description="Fast access to revisited projects"
+          description="Quick access favorites"
           count={pinnedProjects.length}
           collapsed={collapsed.pinned}
           onToggle={() => setCollapsed((c) => ({ ...c, pinned: !c.pinned }))}
         >
           {pinnedProjects.length === 0 ? (
-            <ExplorerEmptyText text="Pin projects from the quick actions menu." />
+            <ExplorerEmptyText text="Pin projects to save them for quick access." />
           ) : (
             pinnedProjects.map((project) => (
               <ProjectRow
@@ -186,16 +179,16 @@ export default function ProjectExplorer({
             key={group}
             title={groupLabel(group)}
             description={
-              group === "active" ? "Currently in progress with collaborators" :
-              group === "draft" ? "Waiting on review or kickoff" :
-              "Shipped, approved, or archived"
+              group === "active" ? "Currently in active review" :
+              group === "draft" ? "Pending kickoff" :
+              "Shipped and archived"
             }
             count={groupedProjects[group].length}
             collapsed={collapsed[group]}
             onToggle={() => setCollapsed((c) => ({ ...c, [group]: !c[group] }))}
           >
             {groupedProjects[group].length === 0 ? (
-              <ExplorerEmptyText text={`No ${groupLabel(group).toLowerCase()} projects match this filter.`} />
+              <ExplorerEmptyText text={`No ${groupLabel(group).toLowerCase()} projects match filter.`} />
             ) : (
               groupedProjects[group].map((project) => (
                 <ProjectRow
@@ -226,32 +219,35 @@ function ProjectSection({
   collapsed: boolean; onToggle: () => void; children: React.ReactNode;
 }) {
   return (
-    <div style={{ marginBottom: "0.6rem" }}>
+    <div>
       <button
         onClick={onToggle}
-        style={{
-          display: "flex", width: "100%", alignItems: "center",
-          justifyContent: "space-between", padding: "0.45rem 0.6rem",
-          background: "none", border: "none", cursor: "pointer", textAlign: "left",
-        }}
+        className="flex w-full items-center justify-between p-1.5 text-left cursor-pointer rounded hover:bg-white/[0.04] transition-colors"
       >
         <div>
-          <div style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--m2)", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+          <div className="text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-400">
             {title}
           </div>
-          <div style={{ fontSize: "0.67rem", color: "var(--m1)", marginTop: "0.1rem" }}>{description}</div>
+          <div className="text-[10px] text-zinc-500">{description}</div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--m1)", fontSize: "0.68rem" }}>
-          <span style={{
-            padding: "1px 7px", borderRadius: 99,
-            background: "var(--s3)", border: "1px solid var(--b2)",
-          }}>{count}</span>
-          <span style={{ transform: collapsed ? "rotate(180deg)" : "none", transition: "transform 0.2s", fontSize: 10 }}>▴</span>
+        <div className="flex items-center gap-1.5 text-zinc-500 font-mono text-[10px]">
+          <span className="px-1.5 py-0.2 rounded bg-[#1c1e22] border border-white/[0.06]">{count}</span>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className={`transition-transform duration-150 ${collapsed ? "rotate-180" : ""}`}
+          >
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
         </div>
       </button>
 
       {!collapsed && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "0.2rem 0 0.5rem 0.2rem" }}>
+        <div className="mt-1.5 space-y-1.5 pl-1">
           {children}
         </div>
       )}
@@ -268,74 +264,64 @@ function ProjectRow({
   onArchive?: () => void; statusColor: string;
 }) {
   return (
-    <div style={{
-      borderRadius: "var(--r)",
-      background: isActive ? "var(--rs)" : "var(--s3)",
-      border: `1px solid ${isActive ? "var(--rg)" : "var(--b1)"}`,
-      padding: "0.55rem 0.75rem",
-      transition: "all 0.12s",
-    }}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-        <button onClick={onOpen} style={{ display: "flex", minWidth: 0, flex: 1, gap: 8, textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-          <span style={{
-            marginTop: 5, width: 7, height: 7, borderRadius: "50%",
-            background: statusColor, flexShrink: 0,
-          }} />
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <span style={{ fontSize: "0.79rem", fontWeight: 500, color: "var(--white)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+    <div className={`group rounded-md border p-2.5 transition-all ${
+      isActive
+        ? "bg-[#00e5ff]/10 border-[#00e5ff]/30"
+        : "bg-[#141618] border-white/[0.06] hover:border-white/[0.14]"
+    }`}>
+      <div className="flex items-start gap-2.5">
+        <button onClick={onOpen} className="flex min-w-0 flex-1 gap-2 text-left cursor-pointer">
+          <span
+            className="mt-1 h-2 w-2 rounded-full shrink-0"
+            style={{ backgroundColor: statusColor }}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-white truncate">
                 {project.title}
               </span>
-              {isPinned && <span style={{ fontSize: "0.6rem", color: "var(--red)" }}>📌</span>}
+              {isPinned && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" className="text-[#00e5ff] shrink-0">
+                  <path d="M16 3H8l2 6-4 4v2h7v6l1 1 1-1v-6h7v-2l-4-4 2-6z" />
+                </svg>
+              )}
             </div>
-            <div style={{ fontSize: "0.67rem", color: "var(--m1)", marginTop: "0.1rem", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-              {project.description || "No description yet."}
-            </div>
-            <div style={{ display: "flex", gap: 10, marginTop: "0.35rem", fontSize: "0.63rem", color: "var(--m1)", flexWrap: "wrap" }}>
-              <span>{project.owner_name}</span>
-              <span>· {project.member_count} people</span>
-              {project.open_feedback > 0 && <span style={{ color: "var(--red)" }}>· {project.open_feedback} feedback</span>}
+            <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5">
+              {project.description || "No description provided."}
+            </p>
+            <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-zinc-500">
+              <span className="truncate max-w-[90px]">{project.owner_name}</span>
+              <span>&middot; {project.member_count} members</span>
+              {project.open_feedback > 0 && (
+                <span className="text-[#00e5ff] font-medium">&middot; {project.open_feedback} open</span>
+              )}
             </div>
           </div>
         </button>
 
         {/* Context menu */}
-        <div style={{ position: "relative", flexShrink: 0 }}>
+        <div className="relative shrink-0">
           <button
             onClick={onMenuToggle}
-            style={{
-              width: 24, height: 24, borderRadius: 4,
-              background: "var(--s4)", border: "1px solid var(--b2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: "var(--m1)", fontSize: 13,
-            }}
+            className="flex h-6 w-6 items-center justify-center rounded bg-[#1c1e22] border border-white/[0.06] text-zinc-400 hover:text-white cursor-pointer"
           >
-            ⋯
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="12" cy="5" r="1" />
+              <circle cx="12" cy="19" r="1" />
+            </svg>
           </button>
           {menuOpen && (
-            <div style={{
-              position: "absolute", right: 0, top: "100%", zIndex: 30,
-              marginTop: 6, width: 150,
-              background: "var(--s1)", border: "1px solid var(--b2)",
-              borderRadius: "var(--rl)", padding: "0.3rem",
-              boxShadow: "0 12px 30px rgba(0,0,0,0.4)",
-            }}>
+            <div className="absolute right-0 top-full mt-1.5 z-40 w-36 rounded-md border border-white/[0.1] bg-[#141618] p-1 shadow-2xl">
               {[
-                { label: isPinned ? "Unpin" : "Pin project", action: onPinToggle },
-                onArchive ? { label: "Archive", action: onArchive } : null,
-                { label: "Open settings", action: onOpen },
+                { label: isPinned ? "Unpin Room" : "Pin Room", action: onPinToggle },
+                onArchive ? { label: "Archive Room", action: onArchive } : null,
+                { label: "Open Settings", action: onOpen },
               ].filter(Boolean).map((item) => (
                 <button
                   key={item!.label}
                   onClick={item!.action}
-                  style={{
-                    display: "block", width: "100%", padding: "0.4rem 0.65rem",
-                    textAlign: "left", fontSize: "0.76rem", color: "var(--m2)",
-                    background: "none", border: "none", cursor: "pointer",
-                    borderRadius: 5, transition: "background 0.1s",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "var(--s3)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                  className="block w-full px-2.5 py-1.5 text-left text-xs text-zinc-300 hover:bg-[#1c1e22] hover:text-white rounded transition-colors cursor-pointer"
                 >
                   {item!.label}
                 </button>
@@ -350,11 +336,7 @@ function ProjectRow({
 
 function ExplorerEmptyText({ text }: { text: string }) {
   return (
-    <div style={{
-      padding: "0.75rem 0.85rem",
-      border: "1px dashed var(--b2)", borderRadius: "var(--r)",
-      fontSize: "0.73rem", color: "var(--m1)", lineHeight: 1.55,
-    }}>
+    <div className="p-3 border border-dashed border-white/[0.08] rounded-md text-[11px] font-mono text-zinc-500 leading-relaxed text-center">
       {text}
     </div>
   );

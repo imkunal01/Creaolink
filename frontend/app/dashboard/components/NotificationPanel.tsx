@@ -12,22 +12,58 @@ import {
   markRead,
 } from "@/lib/notifications";
 
-const KIND_ICON: Record<NotifKind, string> = {
-  chat: "💬",
-  feedback: "📝",
-  status: "🔄",
-  member: "👥",
-  version: "🚀",
-  project: "🗂️",
-};
+function getKindIcon(kind: NotifKind) {
+  switch (kind) {
+    case "chat":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      );
+    case "feedback":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+        </svg>
+      );
+    case "status":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+        </svg>
+      );
+    case "member":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    case "version":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      );
+    case "project":
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        </svg>
+      );
+  }
+}
 
 const KIND_COLOR: Record<NotifKind, string> = {
   chat: "#a78bfa",
-  feedback: "#fbbf24",
-  status: "#7dd3fc",
-  member: "#4ade80",
-  version: "#f472b6",
-  project: "var(--red)",
+  feedback: "#f59e0b",
+  status: "#38bdf8",
+  member: "#10b981",
+  version: "#00e5ff",
+  project: "#00e5ff",
 };
 
 function timeAgo(iso: string): string {
@@ -56,7 +92,6 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
 
   useEffect(() => {
     reload();
-    // Re-render whenever polling pushes a new notification
     const onUpdate = () => reload();
     window.addEventListener("cl_notif_update", onUpdate);
     window.addEventListener("storage", onUpdate);
@@ -95,65 +130,31 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
   return (
     <div
       ref={panelRef}
-      style={{
-        position: "absolute",
-        top: "calc(100% + 8px)",
-        right: 0,
-        width: "min(360px, calc(100vw - 24px))",
-        maxHeight: "min(580px, calc(100dvh - 80px))",
-        display: "flex",
-        flexDirection: "column",
-        background: "var(--s1)",
-        border: "1px solid var(--b2)",
-        borderRadius: "var(--rxl)",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
-        zIndex: 200,
-        overflow: "hidden",
-      }}
+      className="absolute top-[calc(100%+8px)] right-0 w-[min(380px,calc(100vw-24px))] max-h-[min(580px,calc(100dvh-80px))] flex flex-col bg-[#141618] border border-white/[0.08] rounded-xl shadow-2xl z-50 overflow-hidden"
     >
-
       {/* Header */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "0.85rem 1.1rem",
-        borderBottom: "1px solid var(--b2)",
-        flexShrink: 0,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.55rem" }}>
-          <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "var(--white)" }}>Notifications</span>
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08] bg-[#0d0e10] shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-white">Notifications</span>
           {unreadCount > 0 && (
-            <span style={{
-              background: "var(--red)", color: "#fff",
-              fontSize: "0.6rem", fontWeight: 700,
-              padding: "1px 6px", borderRadius: 99,
-            }}>
+            <span className="bg-[#00e5ff] text-[#08090a] text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full">
               {unreadCount}
             </span>
           )}
         </div>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <button
               onClick={() => { markAllRead(); reload(); }}
-              style={{
-                fontSize: "0.7rem", color: "var(--m1)", background: "none",
-                border: "none", cursor: "pointer", fontFamily: "var(--fb)",
-                padding: "2px 6px",
-              }}
-              title="Mark all as read"
+              className="text-[11px] font-mono text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
-              Mark all read
+              Mark read
             </button>
           )}
           {notifs.length > 0 && (
             <button
               onClick={() => { clearAll(); reload(); }}
-              style={{
-                fontSize: "0.7rem", color: "var(--m1)", background: "none",
-                border: "none", cursor: "pointer", fontFamily: "var(--fb)",
-                padding: "2px 6px",
-              }}
-              title="Clear all"
+              className="text-[11px] font-mono text-zinc-500 hover:text-red-400 transition-colors cursor-pointer ml-1"
             >
               Clear
             </button>
@@ -161,52 +162,37 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
         </div>
       </div>
 
-      {/* Filter chips */}
-      <div style={{
-        display: "flex", gap: 6, padding: "0.6rem 1rem",
-        overflowX: "auto", flexShrink: 0,
-        borderBottom: "1px solid var(--b1)",
-      }}>
+      {/* Filter tabs */}
+      <div className="flex gap-1.5 px-3 py-2 overflow-x-auto shrink-0 border-b border-white/[0.04] bg-[#0d0e10]/60">
         {(["all", "chat", "feedback", "status", "project", "version"] as const).map((k) => (
           <button
             key={k}
             onClick={() => setFilter(k)}
-            style={{
-              padding: "3px 10px",
-              borderRadius: 99,
-              fontSize: "0.67rem", fontWeight: 500,
-              border: `1px solid ${filter === k ? "var(--b3)" : "var(--b1)"}`,
-              background: filter === k ? "var(--s3)" : "transparent",
-              color: filter === k ? "var(--white)" : "var(--m1)",
-              cursor: "pointer", whiteSpace: "nowrap",
-              fontFamily: "var(--fb)",
-              transition: "all 0.12s",
-            }}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-mono capitalize whitespace-nowrap transition-colors cursor-pointer ${
+              filter === k
+                ? "bg-zinc-800 text-white border border-white/10"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
           >
-            {k === "all" ? "All" : KIND_ICON[k as NotifKind] + " " + k.charAt(0).toUpperCase() + k.slice(1)}
+            {k}
           </button>
         ))}
       </div>
 
       {/* List */}
-      <div style={{ overflowY: "auto", flex: 1 }}>
+      <div className="overflow-y-auto flex-1 divide-y divide-white/[0.04]">
         {filtered.length === 0 ? (
-          <div style={{
-            display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", padding: "3rem 1.5rem", gap: "0.75rem", textAlign: "center",
-          }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: "50%",
-              border: "1px solid var(--b2)", background: "var(--s3)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "1.1rem",
-            }}>
-              🔔
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+            <div className="w-10 h-10 rounded-full bg-[#1c1e22] border border-white/[0.06] flex items-center justify-center text-zinc-500 mb-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
             </div>
-            <div style={{ fontSize: "0.82rem", color: "var(--m2)", fontWeight: 500 }}>All caught up!</div>
-            <div style={{ fontSize: "0.74rem", color: "var(--m1)", lineHeight: 1.55 }}>
-              New chat messages, feedback, and project updates will appear here automatically.
-            </div>
+            <p className="text-xs font-semibold text-zinc-300">All caught up</p>
+            <p className="text-[11px] text-zinc-500 mt-1 max-w-[200px]">
+              New timeline sync events and project feedback will appear here.
+            </p>
           </div>
         ) : (
           filtered.map((notif) => (
@@ -220,102 +206,78 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
         )}
       </div>
 
-      {/* Footer hint */}
-      <div style={{
-        padding: "0.55rem 1rem",
-        borderTop: "1px solid var(--b1)",
-        fontSize: "0.64rem", color: "var(--m1)", textAlign: "center",
-        flexShrink: 0,
-      }}>
-        Checks for new activity every 30 seconds
+      {/* Footer */}
+      <div className="px-3 py-2 border-t border-white/[0.06] bg-[#0d0e10] text-[10px] font-mono text-zinc-600 text-center shrink-0">
+        Real-time telemetry active
       </div>
     </div>
   );
 }
 
 function NotifRow({
-  notif, onClick, onDelete,
+  notif,
+  onClick,
+  onDelete,
 }: {
   notif: AppNotification;
   onClick: () => void;
   onDelete: () => void;
 }) {
-  const [hov, setHov] = useState(false);
-  const color = KIND_COLOR[notif.kind];
+  const color = KIND_COLOR[notif.kind] || "#00e5ff";
 
   return (
     <div
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        display: "flex", gap: "0.75rem", padding: "0.75rem 1rem",
-        background: !notif.read ? "rgba(255,255,255,0.025)" : "transparent",
-        borderBottom: "1px solid var(--b1)",
-        cursor: "pointer",
-        transition: "background 0.1s",
-        ...(hov ? { background: "var(--s3)" } : {}),
-      }}
       onClick={onClick}
+      className={`group flex items-start gap-3 p-3 transition-colors cursor-pointer hover:bg-[#1c1e22] ${
+        !notif.read ? "bg-white/[0.02]" : "bg-transparent"
+      }`}
     >
-      {/* Kind dot + unread indicator */}
-      <div style={{ flexShrink: 0, paddingTop: 2, position: "relative" }}>
-        <div style={{
-          width: 34, height: 34, borderRadius: "var(--r)",
-          background: `${color}18`,
-          border: `1px solid ${color}30`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "0.95rem",
-        }}>
-          {KIND_ICON[notif.kind]}
+      <div className="relative shrink-0 pt-0.5">
+        <div
+          className="flex h-7 w-7 items-center justify-center rounded-md border"
+          style={{
+            backgroundColor: `${color}15`,
+            borderColor: `${color}30`,
+            color: color,
+          }}
+        >
+          {getKindIcon(notif.kind)}
         </div>
         {!notif.read && (
-          <div style={{
-            position: "absolute", top: -2, right: -2,
-            width: 8, height: 8, borderRadius: "50%",
-            background: "var(--red)", border: "1.5px solid var(--s1)",
-          }} />
+          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#00e5ff] ring-2 ring-[#141618]" />
         )}
       </div>
 
-      {/* Content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontSize: "0.79rem", fontWeight: notif.read ? 400 : 600,
-          color: notif.read ? "var(--m2)" : "var(--white)",
-          lineHeight: 1.3, marginBottom: "0.2rem",
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        }}>
+      <div className="flex-1 min-w-0">
+        <div className={`text-xs leading-tight truncate ${notif.read ? "text-zinc-300" : "text-white font-medium"}`}>
           {notif.title}
         </div>
-        <div style={{
-          fontSize: "0.72rem", color: "var(--m1)", lineHeight: 1.5,
-          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-        }}>
+        <p className="text-[11px] text-zinc-400 leading-snug line-clamp-2 mt-1">
           {notif.body}
-        </div>
-        <div style={{ fontSize: "0.62rem", color: "var(--m1)", marginTop: "0.25rem" }}>
-          {timeAgo(notif.createdAt)}
+        </p>
+        <div className="flex items-center gap-2 mt-1.5 text-[10px] font-mono text-zinc-500">
+          <span>{timeAgo(notif.createdAt)}</span>
           {notif.projectTitle && (
-            <span style={{ marginLeft: 6, color: color, opacity: 0.8 }}>· {notif.projectTitle}</span>
+            <span className="text-zinc-400 truncate max-w-[140px]">
+              &middot; {notif.projectTitle}
+            </span>
           )}
         </div>
       </div>
 
-      {/* Delete button */}
       <button
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        title="Dismiss"
-        style={{
-          flexShrink: 0, alignSelf: "flex-start",
-          width: 22, height: 22, borderRadius: 4,
-          background: "var(--s4)", border: "1px solid var(--b2)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: "var(--m1)", cursor: "pointer",
-          opacity: hov ? 1 : 0, transition: "opacity 0.15s",
-          fontSize: 10,
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
         }}
+        title="Dismiss"
+        className="opacity-0 group-hover:opacity-100 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-[#1c1e22] border border-white/[0.08] text-zinc-500 hover:text-white transition-opacity"
       >
-        ✕
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
       </button>
     </div>
   );

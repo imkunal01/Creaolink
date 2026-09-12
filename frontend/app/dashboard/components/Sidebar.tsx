@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { logout } from "@/lib/auth";
 import { apiFetch } from "@/lib/api-client";
 
@@ -48,15 +48,15 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const isProfile = pathname.startsWith("/dashboard/profile");
 
   const statusColor = (status: string) => {
-    if (status === "active") return "var(--red)";
-    if (status === "pending") return "#fbbf24";
-    return "var(--m1)";
+    if (status === "active") return "#00e5ff";
+    if (status === "pending") return "#f59e0b";
+    if (status === "approved" || status === "completed") return "#10b981";
+    return "#71717a";
   };
 
   return (
     <aside
       className={`app-sidebar${open ? " open" : ""}`}
-      style={{ paddingTop: "0.75rem" }}
     >
       {/* WORKSPACE section */}
       <div className="sb-section-label">Workspace</div>
@@ -71,7 +71,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           <rect x="3" y="14" width="7" height="7" rx="1" />
           <rect x="14" y="14" width="7" height="7" rx="1" />
         </svg>
-        Dashboard
+        Overview
       </Link>
 
       <Link
@@ -87,49 +87,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         )}
       </Link>
 
-      <Link href="/dashboard" className="sb-item">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-        Feedback
-      </Link>
-
-      <Link href="/dashboard" className="sb-item">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <polyline points="12 6 12 12 16 14" />
-        </svg>
-        Timeline
-      </Link>
-
-      {/* PROJECTS section */}
-      {projects.length > 0 && (
-        <>
-          <div className="sb-divider" />
-          <div className="sb-section-label">Projects</div>
-          {projects.slice(0, 6).map((p) => (
-            <Link
-              key={p.id}
-              href={`/dashboard/projects/${p.id}`}
-              className="sb-proj-item"
-              style={{
-                color: pathname === `/dashboard/projects/${p.id}` ? "var(--white)" : undefined,
-              }}
-            >
-              <span
-                className="sb-proj-dot"
-                style={{ background: statusColor(p.status) }}
-              />
-              {p.title}
-            </Link>
-          ))}
-        </>
-      )}
-
-      {/* ACCOUNT section */}
-      <div className="sb-divider" />
-      <div className="sb-section-label">Account</div>
-
       <Link
         href="/dashboard/profile"
         className={`sb-item${isProfile ? " active" : ""}`}
@@ -138,38 +95,56 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
-        Profile
+        Profile & Portfolio
       </Link>
+
+      {/* PROJECTS section */}
+      {projects.length > 0 && (
+        <>
+          <div className="sb-divider" />
+          <div className="sb-section-label">Active Rooms</div>
+          <div className="space-y-0.5 max-h-48 overflow-y-auto pr-1">
+            {projects.slice(0, 8).map((p) => (
+              <Link
+                key={p.id}
+                href={`/dashboard/projects/${p.id}`}
+                className="sb-proj-item"
+                style={{
+                  color: pathname === `/dashboard/projects/${p.id}` ? "#ffffff" : undefined,
+                  fontWeight: pathname === `/dashboard/projects/${p.id}` ? 600 : 400,
+                }}
+              >
+                <span
+                  className="sb-proj-dot"
+                  style={{ background: statusColor(p.status) }}
+                />
+                <span className="truncate">{p.title}</span>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Bottom user card */}
       <div className="sb-bottom">
+        <div className="sb-divider" />
         <button
           onClick={handleLogout}
           className="sb-user-card"
           style={{ width: "100%", cursor: "pointer" }}
         >
-          <div
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: "50%",
-              background: "var(--red)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "0.58rem",
-              fontWeight: 700,
-              color: "#fff",
-              flexShrink: 0,
-            }}
-          >
-            KK
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1c1e22] border border-white/[0.08] text-zinc-400 hover:text-white">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div className="sb-user-name">My Workspace</div>
-            <div className="sb-user-role">Log out</div>
+            <div className="sb-user-name">Sign out</div>
+            <div className="sb-user-role font-mono text-[10px]">End session</div>
           </div>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: "var(--m1)", flexShrink: 0 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-600">
             <path d="M9 18l6-6-6-6" />
           </svg>
         </button>

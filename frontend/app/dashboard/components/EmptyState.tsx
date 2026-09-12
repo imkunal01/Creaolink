@@ -12,21 +12,13 @@ interface EmptyStateProps {
 
 export default function EmptyState({ icon, title, description, action }: EmptyStateProps) {
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", padding: "4rem 2rem", textAlign: "center",
-      gap: "0.85rem",
-    }}>
+    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
       {/* Icon container */}
-      <div style={{
-        width: 56, height: 56, borderRadius: "var(--rl)",
-        background: "var(--s3)", border: "1px solid var(--b2)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        color: "var(--m1)",
-      }}>
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#141618] border border-white/[0.08] text-zinc-500 mb-4 shadow-sm">
         {icon ?? (
           <svg
-            width="26" height="26"
+            width="22"
+            height="22"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -41,21 +33,18 @@ export default function EmptyState({ icon, title, description, action }: EmptySt
         )}
       </div>
 
-      <div style={{ fontSize: "0.95rem", fontWeight: 500, color: "var(--white)" }}>
+      <h3 className="text-sm font-semibold text-white mb-1">
         {title}
-      </div>
-      <div style={{
-        fontSize: "0.82rem", color: "var(--m1)",
-        maxWidth: 280, lineHeight: 1.65, textAlign: "center",
-      }}>
+      </h3>
+      <p className="text-xs text-zinc-400 max-w-xs leading-relaxed mb-5">
         {description}
-      </div>
+      </p>
 
       {action && (
         <button
+          type="button"
           onClick={action.onClick}
-          className="btn btn-p"
-          style={{ marginTop: "0.35rem" }}
+          className="btn btn-p btn-sm"
         >
           {action.label}
         </button>

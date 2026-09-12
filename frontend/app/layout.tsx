@@ -1,23 +1,22 @@
 import type { Metadata } from "next";
-import { DM_Sans, Instrument_Serif } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const geistSans = Geist({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-geist-sans",
   display: "swap",
 });
 
-const instrumentSerif = Instrument_Serif({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-instrument-serif",
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "CreaoLink",
-  description: "Client and freelancer delivery workspaces for modern creative teams.",
+  title: "CreaoLink — Creative Review & Premiere Pro Sync Workspace",
+  description: "Collaborative project management, version review, and real-time Premiere Pro timeline sync for creative teams and video editors.",
 };
 
 export default function RootLayout({
@@ -27,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${dmSans.variable} ${instrumentSerif.variable} bg-bg text-text-primary antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} font-sans bg-[#08090a] text-[#f4f4f5] antialiased selection:bg-[#00e5ff]/20 selection:text-[#00e5ff]`}>
         {children}
       </body>
     </html>

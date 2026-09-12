@@ -14,32 +14,28 @@ interface ProjectCardProps {
 }
 
 function statusTag(status: Project["status"]) {
-  if (status === "active") return <span className="tag tag-a">● Active</span>;
-  if (status === "pending") return <span className="tag tag-r">⏳ Review</span>;
-  return <span className="tag tag-d">✓ Done</span>;
+  if (status === "active") return <span className="tag tag-a">Active</span>;
+  if (status === "pending") return <span className="tag tag-r">In Review</span>;
+  return <span className="tag tag-d">Approved</span>;
 }
 
 const progressMap: Record<Project["status"], number> = {
   active: 40,
-  pending: 65,
+  pending: 75,
   completed: 100,
 };
 
 export default function ProjectCard({ project, onClick }: ProjectCardProps) {
-  const progress = progressMap[project.status];
+  const progress = progressMap[project.status] ?? 40;
 
   return (
     <button
       onClick={onClick}
-      className="proj-card"
-      style={{ width: "100%", textAlign: "left", fontFamily: "var(--fb)" }}
+      className="proj-card w-full text-left"
     >
       {/* Header */}
-      <div style={{
-        display: "flex", alignItems: "flex-start",
-        justifyContent: "space-between", gap: "0.5rem", marginBottom: "0.5rem",
-      }}>
-        <div className="proj-card-title">{project.name}</div>
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="proj-card-title truncate">{project.name}</div>
         {statusTag(project.status)}
       </div>
 
@@ -49,28 +45,22 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
 
       {/* Progress */}
       <div className="proj-card-prog-lbl">
-        <span>Progress</span>
-        <span>{progress}%</span>
+        <span>Timeline Delivery</span>
+        <span className="font-mono">{progress}%</span>
       </div>
       <div className="proj-card-prog-bar">
         <div className="proj-card-prog-fill" style={{ width: `${progress}%` }} />
       </div>
 
       {/* Footer */}
-      <div style={{
-        display: "flex", alignItems: "center",
-        justifyContent: "space-between", marginTop: "0.25rem",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-          <div style={{
-            width: 20, height: 20, borderRadius: "50%",
-            background: "var(--red)", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: "0.5rem", fontWeight: 700, color: "#fff",
-          }}>
+      <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/[0.04]">
+        <div className="flex items-center gap-1.5">
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-[#00e5ff]/15 font-mono text-[9px] font-bold text-[#00e5ff]">
             {project.name.slice(0, 2).toUpperCase()}
           </div>
+          <span className="text-[11px] font-mono text-zinc-500">Workspace</span>
         </div>
-        <span style={{ fontSize: "0.68rem", color: "var(--m1)" }}>
+        <span className="text-[11px] font-mono text-zinc-500">
           {project.updatedAt}
         </span>
       </div>

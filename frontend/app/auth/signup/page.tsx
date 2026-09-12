@@ -25,10 +25,10 @@ const PRO_PLANS: {
     period: "/mo",
     features: [
       "Up to 5 team members",
-      "15 active projects",
-      "Full version history",
-      "Priority support",
-      "Advanced feedback tools",
+      "15 active project workspaces",
+      "Full Premiere Pro timeline sync",
+      "Priority resolution support",
+      "Advanced task workflows",
     ],
   },
   {
@@ -36,19 +36,19 @@ const PRO_PLANS: {
     name: "Business",
     price: "₹1,499",
     period: "/mo",
-    badge: "Best value",
+    badge: "Best Value",
     features: [
       "Unlimited team members",
-      "Unlimited projects",
-      "Custom branding & themes",
-      "Dedicated account manager",
-      "API access & integrations",
-      "Everything in Growth",
+      "Unlimited active projects",
+      "Custom review stages & presets",
+      "Dedicated account engineer",
+      "Full API & webhook access",
+      "Includes all Growth features",
     ],
   },
 ];
 
-const STEP_LABELS = ["Plan", "Role", "Profile", "Method", "Done"];
+const STEP_LABELS = ["Plan", "Scale", "Profile", "Method", "Credentials"];
 
 export default function SignupPage() {
   const router = useRouter();
@@ -71,11 +71,11 @@ export default function SignupPage() {
   const currentVisualStep = visualSteps.indexOf(step) + 1;
 
   const stepTitles: Record<number, { title: string; desc: string }> = {
-    1: { title: "Choose your plan", desc: "Select how you'll use CreaoLink" },
-    2: { title: "Pick your plan", desc: "Unlock powerful features for your team" },
-    3: { title: "What should we call you?", desc: "This helps personalize your workspace" },
-    4: { title: "How will you sign up?", desc: "Choose your preferred method" },
-    5: { title: "Create your account", desc: "Almost there — set up your credentials" },
+    1: { title: "Choose your workspace tier", desc: "Select how your studio will collaborate." },
+    2: { title: "Select team scale", desc: "Unlock unlimited workspaces and team capacity." },
+    3: { title: "Set up your profile", desc: "Your identity across project review rooms." },
+    4: { title: "Select signup method", desc: "Choose your preferred authentication provider." },
+    5: { title: "Create credentials", desc: "Set up your secure workspace access." },
   };
 
   const nextStep = () => {
@@ -141,16 +141,8 @@ export default function SignupPage() {
     }
   };
 
-  const inputStyle = (hasError?: boolean) => ({
-    width: "100%", height: 40, padding: "0 11px",
-    background: "var(--s3)",
-    border: `1px solid ${hasError ? "var(--red)" : "var(--b2)"}`,
-    borderRadius: "var(--r)", fontSize: "0.81rem", color: "var(--white)",
-    outline: "none", fontFamily: "var(--fb)", transition: "border-color 0.15s",
-  } as React.CSSProperties);
-
   return (
-    <div>
+    <div className="w-full">
       {/* Step progress bar */}
       <div className="step-bar">
         {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
@@ -160,152 +152,153 @@ export default function SignupPage() {
           />
         ))}
       </div>
-      <div style={{
-        display: "flex", justifyContent: "space-between",
-        fontSize: "0.62rem", color: "var(--m1)", marginBottom: "1.1rem",
-      }}>
+      <div className="flex justify-between text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-4">
         {STEP_LABELS.slice(0, totalSteps).map((label, i) => (
-          <span key={label} style={{ color: i + 1 <= currentVisualStep ? "var(--red)" : "var(--m1)" }}>
+          <span key={label} className={i + 1 <= currentVisualStep ? "text-[#00e5ff] font-semibold" : "text-zinc-600"}>
             {label}
           </span>
         ))}
       </div>
 
-      <div style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--white)" }}>
+      <h2 className="text-xl font-bold tracking-tight text-white mb-1">
         {stepTitles[step].title}
-      </div>
-      <div style={{ fontSize: "0.8rem", color: "var(--m2)", margin: "0.2rem 0 1.1rem", lineHeight: 1.6 }}>
+      </h2>
+      <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
         {stepTitles[step].desc}
-      </div>
+      </p>
 
       {/* ── Step 1: Plan ── */}
       {step === 1 && (
-        <div>
-          {/* Plan options */}
+        <div className="space-y-4">
           <button
             type="button"
             onClick={() => setPlanType("hobby")}
-            className={`plan-opt${planType === "hobby" ? " sel" : ""}`}
-            style={{ width: "100%" }}
+            className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+              planType === "hobby"
+                ? "bg-[#141820] border-[#00e5ff]/60 shadow-[0_0_20px_rgba(0,229,255,0.15)] ring-1 ring-[#00e5ff]/30"
+                : "bg-[#0d0e12] border-white/[0.08] hover:border-white/20"
+            }`}
           >
             <div>
-              <div style={{ fontSize: "0.84rem", fontWeight: 500, color: "var(--white)" }}>
-                Starter{" "}
-                <span style={{
-                  background: "rgba(74,222,128,.12)", color: "#4ade80",
-                  border: "1px solid rgba(74,222,128,.2)", borderRadius: 3,
-                  fontSize: "0.6rem", fontWeight: 600, padding: "1px 7px", marginLeft: "0.3rem",
-                }}>Free forever</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-white">Starter</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Free Forever
+                </span>
               </div>
-              <div style={{ fontSize: "0.72rem", color: "var(--m1)", marginTop: "0.12rem" }}>
-                Personal projects · up to 3 workspaces
-              </div>
+              <p className="text-xs text-zinc-400 mt-1">
+                Individual editors and clients. Up to 3 active project rooms.
+              </p>
             </div>
-            <div style={{
-              width: 15, height: 15, borderRadius: "50%",
-              border: `1.5px solid ${planType === "hobby" ? "var(--red)" : "var(--b3)"}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {planType === "hobby" && (
-                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--red)" }} />
-              )}
+            <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+              planType === "hobby" ? "border-[#00e5ff]" : "border-zinc-600"
+            }`}>
+              {planType === "hobby" && <div className="w-2 h-2 rounded-full bg-[#00e5ff]" />}
             </div>
           </button>
 
           <button
             type="button"
             onClick={() => setPlanType("pro")}
-            className={`plan-opt${planType === "pro" ? " sel" : ""}`}
-            style={{ width: "100%" }}
+            className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+              planType === "pro"
+                ? "bg-[#141820] border-[#00e5ff]/60 shadow-[0_0_20px_rgba(0,229,255,0.15)] ring-1 ring-[#00e5ff]/30"
+                : "bg-[#0d0e12] border-white/[0.08] hover:border-white/20"
+            }`}
           >
             <div>
-              <div style={{ fontSize: "0.84rem", fontWeight: 500, color: "var(--white)" }}>
-                Growth{" "}
-                <span style={{
-                  background: "var(--rs)", color: "var(--red)",
-                  border: "1px solid var(--rg)", borderRadius: 3,
-                  fontSize: "0.6rem", fontWeight: 600, padding: "1px 7px", marginLeft: "0.3rem",
-                }}>₹499/mo</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-white">Growth & Studio</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/20">
+                  ₹499/mo
+                </span>
               </div>
-              <div style={{ fontSize: "0.72rem", color: "var(--m1)", marginTop: "0.12rem" }}>
-                Unlimited projects · version history · priority support
-              </div>
+              <p className="text-xs text-zinc-400 mt-1">
+                Active studios. Unlimited projects, full version control, priority sync.
+              </p>
             </div>
-            <div style={{
-              width: 15, height: 15, borderRadius: "50%",
-              border: `1.5px solid ${planType === "pro" ? "var(--red)" : "var(--b3)"}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {planType === "pro" && (
-                <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--red)" }} />
-              )}
+            <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+              planType === "pro" ? "border-[#00e5ff]" : "border-zinc-600"
+            }`}>
+              {planType === "pro" && <div className="w-2 h-2 rounded-full bg-[#00e5ff]" />}
             </div>
           </button>
 
-          {/* Role */}
-          <div style={{ fontSize: "0.73rem", color: "var(--m1)", margin: "0.85rem 0 0.5rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-            I am a
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "1.1rem" }}>
-            {(["client", "freelancer"] as const).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                style={{
-                  padding: "0.6rem", border: `1px solid ${role === r ? "var(--red)" : "var(--b2)"}`,
-                  borderRadius: "var(--r)", textAlign: "center", fontSize: "0.81rem", fontWeight: 500,
-                  cursor: "pointer", background: role === r ? "var(--red)" : "var(--s3)",
-                  color: role === r ? "#fff" : "var(--m2)", transition: "all 0.15s",
-                }}
-              >
-                {r.charAt(0).toUpperCase() + r.slice(1)}
-              </button>
-            ))}
+          {/* Role selection */}
+          <div className="pt-2">
+            <span className="block text-[11px] font-mono uppercase tracking-wider text-zinc-500 mb-2">
+              Primary Role
+            </span>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-[#121418] border border-white/[0.08] rounded-lg mb-5">
+              {(["client", "freelancer"] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRole(r)}
+                  className={`py-2 px-3 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    role === r
+                      ? "bg-[#00e5ff] text-[#050d12] shadow-sm font-bold"
+                      : "text-zinc-400 hover:text-white"
+                  }`}
+                >
+                  {r === "client" ? "Client / Studio" : "Freelance Editor"}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <button type="button" onClick={nextStep} className="btn btn-p btn-lg btn-full">
-            Continue →
+          <button type="button" onClick={nextStep} className="saas-btn-cyan w-full h-10 text-sm">
+            Continue &rarr;
           </button>
-          <div style={{ textAlign: "center", fontSize: "0.77rem", color: "var(--m1)", marginTop: "0.75rem" }}>
+          <p className="text-center text-xs text-zinc-500 mt-4">
             Already have an account?{" "}
-            <Link href="/auth/login" style={{ color: "var(--m2)", fontWeight: 500 }}>Sign in</Link>
-          </div>
+            <Link href="/auth/login" className="text-white hover:text-[#00e5ff] font-medium transition-colors">
+              Sign in
+            </Link>
+          </p>
         </div>
       )}
 
-      {/* ── Step 2: Pro plan picker ── */}
+      {/* ── Step 2: Pro tier picker ── */}
       {step === 2 && (
-        <div>
+        <div className="space-y-4">
           {PRO_PLANS.map((plan) => (
             <button
               key={plan.id}
               type="button"
               onClick={() => setProTier(plan.id)}
-              className={`plan-opt${proTier === plan.id ? " sel" : ""}`}
-              style={{ width: "100%", flexDirection: "column", alignItems: "flex-start" }}
+              className={`w-full p-4 rounded-xl border text-left transition-all flex flex-col cursor-pointer ${
+                proTier === plan.id
+                  ? "bg-[#141820] border-[#00e5ff]/60 shadow-[0_0_20px_rgba(0,229,255,0.15)] ring-1 ring-[#00e5ff]/30"
+                  : "bg-[#0d0e12] border-white/[0.08] hover:border-white/20"
+              }`}
             >
-              <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div className="flex w-full items-start justify-between">
                 <div>
-                  <div style={{ fontSize: "0.84rem", fontWeight: 500, color: "var(--white)" }}>{plan.name}</div>
-                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--white)" }}>
-                    {plan.price}<span style={{ fontSize: "0.72rem", fontWeight: 400, color: "var(--m1)" }}>{plan.period}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white">{plan.name}</span>
+                    {plan.badge && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-medium bg-[#00e5ff]/10 text-[#00e5ff] border border-[#00e5ff]/20">
+                        {plan.badge}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-lg font-bold font-mono text-white mt-1">
+                    {plan.price}<span className="text-xs text-zinc-500 font-normal">{plan.period}</span>
                   </div>
                 </div>
-                <div style={{
-                  width: 15, height: 15, borderRadius: "50%",
-                  border: `1.5px solid ${proTier === plan.id ? "var(--red)" : "var(--b3)"}`,
-                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                }}>
-                  {proTier === plan.id && (
-                    <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--red)" }} />
-                  )}
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-1 ${
+                  proTier === plan.id ? "border-[#00e5ff]" : "border-zinc-600"
+                }`}>
+                  {proTier === plan.id && <div className="w-2 h-2 rounded-full bg-[#00e5ff]" />}
                 </div>
               </div>
-              <div style={{ marginTop: "0.5rem" }}>
+              <div className="mt-3 space-y-1.5 pt-3 border-t border-white/[0.06]">
                 {plan.features.map((f) => (
-                  <div key={f} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.72rem", color: "var(--m2)", marginBottom: "0.2rem" }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                  <div key={f} className="flex items-center gap-2 text-xs text-zinc-400">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
                     {f}
                   </div>
                 ))}
@@ -313,69 +306,103 @@ export default function SignupPage() {
             </button>
           ))}
 
-          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-            <button type="button" onClick={prevStep} className="btn btn-g btn-lg" style={{ flex: 1 }}>Back</button>
-            <button type="button" onClick={nextStep} className="btn btn-p btn-lg" style={{ flex: 1 }}>Continue →</button>
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={prevStep} className="saas-btn-secondary flex-1 h-10">
+              Back
+            </button>
+            <button type="button" onClick={nextStep} className="saas-btn-cyan flex-1 h-10">
+              Continue &rarr;
+            </button>
           </div>
         </div>
       )}
 
       {/* ── Step 3: Name & username ── */}
       {step === 3 && (
-        <form onSubmit={handleNameSubmit}>
-          <div style={{ marginBottom: "0.85rem" }}>
-            <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "var(--m2)", marginBottom: "0.35rem" }}>Your name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
-              style={inputStyle(!!errors.name)}
-            />
-            {errors.name && <div style={{ fontSize: "0.72rem", color: "var(--red)", marginTop: "0.25rem" }}>{errors.name}</div>}
+        <form onSubmit={handleNameSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Your Full Name</label>
+            <div
+              className={`flex items-center h-10 px-3 rounded-md bg-[#141618] border transition-colors ${
+                errors.name
+                  ? "border-red-500/80 ring-1 ring-red-500/30"
+                  : "border-white/[0.08] focus-within:border-[#00e5ff]/60 focus-within:ring-1 focus-within:ring-[#00e5ff]/20 hover:border-white/[0.16]"
+              }`}
+            >
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Alex Morgan"
+                className="w-full bg-transparent text-xs text-white placeholder:text-zinc-600 outline-none"
+              />
+            </div>
+            {errors.name && <p className="text-[11px] font-medium text-red-400 mt-1">{errors.name}</p>}
           </div>
-          <div style={{ marginBottom: "0.85rem" }}>
-            <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "var(--m2)", marginBottom: "0.35rem" }}>Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value.replace(/^@+/, ""))}
-              placeholder="john_doe"
-              style={inputStyle(!!errors.username)}
-            />
-            {errors.username && <div style={{ fontSize: "0.72rem", color: "var(--red)", marginTop: "0.25rem" }}>{errors.username}</div>}
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Workspace Username</label>
+            <div
+              className={`flex items-center h-10 px-3 rounded-md bg-[#141618] border transition-colors ${
+                errors.username
+                  ? "border-red-500/80 ring-1 ring-red-500/30"
+                  : "border-white/[0.08] focus-within:border-[#00e5ff]/60 focus-within:ring-1 focus-within:ring-[#00e5ff]/20 hover:border-white/[0.16]"
+              }`}
+            >
+              <span className="text-zinc-600 text-xs font-mono mr-1 select-none">@</span>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.replace(/^@+/, ""))}
+                placeholder="alexmorgan"
+                className="w-full bg-transparent text-xs text-white placeholder:text-zinc-600 outline-none"
+              />
+            </div>
+            {errors.username && <p className="text-[11px] font-medium text-red-400 mt-1">{errors.username}</p>}
           </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button type="button" onClick={prevStep} className="btn btn-g btn-lg" style={{ flex: 1 }}>Back</button>
-            <button type="submit" className="btn btn-p btn-lg" style={{ flex: 1 }}>Continue →</button>
+
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={prevStep} className="saas-btn-secondary flex-1 h-10">
+              Back
+            </button>
+            <button type="submit" className="saas-btn-cyan flex-1 h-10">
+              Continue &rarr;
+            </button>
           </div>
         </form>
       )}
 
       {/* ── Step 4: Method ── */}
       {step === 4 && (
-        <div>
+        <div className="space-y-3">
           <button
             type="button"
             onClick={() => { setErrors({}); nextStep(); }}
             className="oauth-btn"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="2" y="4" width="20" height="16" rx="2" />
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
             </svg>
-            Continue with Email
+            Continue with Email & Password
           </button>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", margin: "0.85rem 0", fontSize: "0.72rem", color: "var(--m1)" }}>
-            <div style={{ flex: 1, height: 1, background: "var(--b2)" }} />or<div style={{ flex: 1, height: 1, background: "var(--b2)" }} />
+          <div className="flex items-center gap-3 my-4 text-[11px] font-mono uppercase tracking-wider text-zinc-600">
+            <div className="flex-1 h-px bg-white/[0.08]" />
+            <span>or</span>
+            <div className="flex-1 h-px bg-white/[0.08]" />
           </div>
 
-          <button type="button" onClick={handleGoogleSignup} disabled={googleLoading} className="oauth-btn">
+          <button
+            type="button"
+            onClick={handleGoogleSignup}
+            disabled={googleLoading}
+            className="oauth-btn"
+          >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
             </svg>
-            {googleLoading ? "Redirecting to Google…" : "Continue with Google"}
+            {googleLoading ? "Connecting to Google..." : "Continue with Google"}
           </button>
 
           <button type="button" className="oauth-btn">
@@ -385,7 +412,7 @@ export default function SignupPage() {
             Continue with GitHub
           </button>
 
-          <button type="button" onClick={prevStep} className="btn btn-g btn-full" style={{ marginTop: "0.5rem" }}>
+          <button type="button" onClick={prevStep} className="saas-btn-secondary w-full h-10 mt-3">
             Back
           </button>
         </div>
@@ -393,33 +420,75 @@ export default function SignupPage() {
 
       {/* ── Step 5: Email credentials ── */}
       {step === 5 && (
-        <form onSubmit={handleEmailSignup}>
-          {[
-            { label: "Email", key: "email", type: "email", placeholder: "you@example.com", value: email, onChange: setEmail },
-            { label: "Password", key: "password", type: "password", placeholder: "••••••••", value: password, onChange: setPassword },
-            { label: "Confirm password", key: "confirmPassword", type: "password", placeholder: "••••••••", value: confirmPassword, onChange: setConfirmPassword },
-          ].map((field) => (
-            <div key={field.key} style={{ marginBottom: "0.85rem" }}>
-              <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 500, color: "var(--m2)", marginBottom: "0.35rem" }}>{field.label}</label>
+        <form onSubmit={handleEmailSignup} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Email address</label>
+            <div
+              className={`flex items-center h-10 px-3 rounded-md bg-[#141618] border transition-colors ${
+                errors.email
+                  ? "border-red-500/80 ring-1 ring-red-500/30"
+                  : "border-white/[0.08] focus-within:border-[#00e5ff]/60 focus-within:ring-1 focus-within:ring-[#00e5ff]/20 hover:border-white/[0.16]"
+              }`}
+            >
               <input
-                type={field.type}
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-                placeholder={field.placeholder}
-                style={inputStyle(!!(errors as Record<string, string>)[field.key])}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@studio.com"
+                className="w-full bg-transparent text-xs text-white placeholder:text-zinc-600 outline-none"
               />
-              {(errors as Record<string, string>)[field.key] && (
-                <div style={{ fontSize: "0.72rem", color: "var(--red)", marginTop: "0.25rem" }}>
-                  {(errors as Record<string, string>)[field.key]}
-                </div>
-              )}
             </div>
-          ))}
+            {errors.email && <p className="text-[11px] font-medium text-red-400 mt-1">{errors.email}</p>}
+          </div>
 
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button type="button" onClick={prevStep} className="btn btn-g btn-lg" style={{ flex: 1 }}>Back</button>
-            <button type="submit" disabled={loading} className="btn btn-p btn-lg" style={{ flex: 1 }}>
-              {loading ? "Creating…" : "Create account →"}
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Password</label>
+            <div
+              className={`flex items-center h-10 px-3 rounded-md bg-[#141618] border transition-colors ${
+                errors.password
+                  ? "border-red-500/80 ring-1 ring-red-500/30"
+                  : "border-white/[0.08] focus-within:border-[#00e5ff]/60 focus-within:ring-1 focus-within:ring-[#00e5ff]/20 hover:border-white/[0.16]"
+              }`}
+            >
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-transparent text-xs text-white placeholder:text-zinc-600 outline-none"
+              />
+            </div>
+            {errors.password && <p className="text-[11px] font-medium text-red-400 mt-1">{errors.password}</p>}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5">Confirm Password</label>
+            <div
+              className={`flex items-center h-10 px-3 rounded-md bg-[#141618] border transition-colors ${
+                errors.confirmPassword
+                  ? "border-red-500/80 ring-1 ring-red-500/30"
+                  : "border-white/[0.08] focus-within:border-[#00e5ff]/60 focus-within:ring-1 focus-within:ring-[#00e5ff]/20 hover:border-white/[0.16]"
+              }`}
+            >
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-transparent text-xs text-white placeholder:text-zinc-600 outline-none"
+              />
+            </div>
+            {errors.confirmPassword && (
+              <p className="text-[11px] font-medium text-red-400 mt-1">{errors.confirmPassword}</p>
+            )}
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button type="button" onClick={prevStep} className="saas-btn-secondary flex-1 h-10">
+              Back
+            </button>
+            <button type="submit" disabled={loading} className="saas-btn-cyan flex-1 h-10">
+              {loading ? "Creating..." : "Complete Setup &rarr;"}
             </button>
           </div>
         </form>
