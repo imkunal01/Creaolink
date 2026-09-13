@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     // Find user by email
     const { rows } = await db.query(
-      "SELECT id, name, email, username, password, role FROM users WHERE email = $1",
+      "SELECT id, name, email, username, password, role, COALESCE(status, 'active') as status FROM users WHERE email = $1",
       [email.toLowerCase().trim()]
     );
 
@@ -30,8 +30,22 @@ export async function POST(request: NextRequest) {
     if (!valid) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
+
+    if (user.status === "suspended") {
+      return NextResponse.json(
+        { error: "Your account has been suspended. Please contact platform support." },
+        { status: 403 }
+      );
+    }
+    if (user.status === "banned") {
+      return NextResponse.json(
+        { error: "Your account has been permanently banned for terms of service violations." },
+        { status: 403 }
+      );
+    }
+
     return NextResponse.json({
-      user: { id: user.id, name: user.name, email: user.email, username: user.username, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, username: user.username, role: user.role, status: user.status },
     });
   } catch (err) {
     console.error("Login error:", err);

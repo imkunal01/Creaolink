@@ -174,6 +174,16 @@ export default function Topbar({ user, onMenuToggle }: TopbarProps) {
           />
         </div>
 
+        {user?.role === "admin" && (
+          <Link
+            href="/admin"
+            className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ff2a3d]/15 hover:bg-[#ff2a3d]/25 border border-[#ff2a3d]/30 text-xs font-semibold text-[#ff4b5c] transition"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#ff2a3d] animate-pulse" />
+            Admin Console
+          </Link>
+        )}
+
         {/* User Chip */}
         <Link
           href="/dashboard/profile"

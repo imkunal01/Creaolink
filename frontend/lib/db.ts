@@ -59,6 +59,35 @@ async function initTables() {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS website TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS status_text TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS status_emoji TEXT;
+      -- Phase 1: User status (constrained to 'active' | 'suspended' | 'banned' at app layer)
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+
+      -- Phase 1: Feature flags table
+      CREATE TABLE IF NOT EXISTS feature_flags (
+        key         TEXT PRIMARY KEY,
+        enabled     BOOLEAN NOT NULL DEFAULT true,
+        updated_by  TEXT REFERENCES users(id),
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      -- Seed feature flags matching existing env flags (idempotent)
+      INSERT INTO feature_flags (key, enabled) VALUES
+        ('cacheFeed', true),
+        ('cacheProfile', true),
+        ('cacheProject', true)
+      ON CONFLICT (key) DO NOTHING;
+
+      -- Phase 1: Admin audit log table
+      CREATE TABLE IF NOT EXISTS admin_audit_log (
+        id          TEXT PRIMARY KEY,
+        admin_id    TEXT NOT NULL REFERENCES users(id),
+        action      TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        target_id   TEXT NOT NULL,
+        metadata    JSONB,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_audit_created_at ON admin_audit_log(created_at DESC);
 
       CREATE TABLE IF NOT EXISTS projects (
         id TEXT PRIMARY KEY,
@@ -250,10 +279,10 @@ export async function getAuthUser(request: Request) {
   const db = await getPool();
   try {
     const { rows } = await db.query(
-      "SELECT id, name, email, username, role FROM users WHERE id = $1",
+      "SELECT id, name, email, username, role, COALESCE(status, 'active') as status FROM users WHERE id = $1",
       [userId]
     );
-    return (rows[0] as { id: string; name: string; email: string; username: string; role: string }) ?? null;
+    return (rows[0] as { id: string; name: string; email: string; username: string; role: string; status: string }) ?? null;
   } catch (err) {
     if ((err as { code?: string }).code !== "42703") {
       throw err;
