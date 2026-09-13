@@ -85,6 +85,31 @@ export function getRedisHost(): string {
   return "not-configured";
 }
 
+export function getCircuitBreakerState(): {
+  isOpen: boolean;
+  cooldownRemainingSeconds: number;
+  lastFailureTime: number | null;
+  cooldownTotalSeconds: number;
+} {
+  const lastFailure = globalForRedis._redisLastFailureTime ?? null;
+  if (!lastFailure) {
+    return {
+      isOpen: false,
+      cooldownRemainingSeconds: 0,
+      lastFailureTime: null,
+      cooldownTotalSeconds: CIRCUIT_BREAKER_COOLDOWN_MS / 1000,
+    };
+  }
+  const elapsed = Date.now() - lastFailure;
+  const remaining = Math.max(0, CIRCUIT_BREAKER_COOLDOWN_MS - elapsed);
+  return {
+    isOpen: remaining > 0,
+    cooldownRemainingSeconds: Math.ceil(remaining / 1000),
+    lastFailureTime: lastFailure,
+    cooldownTotalSeconds: CIRCUIT_BREAKER_COOLDOWN_MS / 1000,
+  };
+}
+
 /** Utility to race any promise against a timeout */
 function withTimeout<T>(promise: Promise<T>, ms: number, fallbackValue?: T): Promise<T> {
   return new Promise<T>((resolve, reject) => {
