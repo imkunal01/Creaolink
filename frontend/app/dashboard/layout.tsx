@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getUser, type User } from "@/lib/auth";
+import { getUser, setUser as saveUser, type User } from "@/lib/auth";
+import { apiFetch } from "@/lib/api-client";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
 import { DashboardShellSkeleton } from "./components/DashboardSkeletons";
@@ -19,18 +20,34 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const syncUser = () => {
+    let cancelled = false;
+    const syncUser = async () => {
       const currentUser = getUser();
       setUser(currentUser);
       setReady(true);
       if (!currentUser) {
         router.replace("/auth/login");
+        return;
+      }
+
+      try {
+        const res = await apiFetch("/api/auth/me");
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          if (data.user && (data.user.role !== currentUser.role || data.user.status !== currentUser.status || data.user.name !== currentUser.name)) {
+            setUser(data.user);
+            saveUser(data.user);
+          }
+        }
+      } catch {
+        // ignore background fetch error
       }
     };
     syncUser();
     window.addEventListener("cl_user_update", syncUser);
     window.addEventListener("storage", syncUser);
     return () => {
+      cancelled = true;
       window.removeEventListener("cl_user_update", syncUser);
       window.removeEventListener("storage", syncUser);
     };

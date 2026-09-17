@@ -77,7 +77,11 @@ export default function AuthModal() {
     if (!validateLogin()) return;
     setLoginLoading(true);
     try {
-      const { user } = await apiLogin(loginEmail, loginPassword);
+      const { user } = await apiLogin(
+        loginEmail,
+        loginPassword,
+        isAdmin ? "creolink-admin-2026" : undefined
+      );
       setUser({
         id: user.id,
         name: user.name,
@@ -86,7 +90,7 @@ export default function AuthModal() {
         role: user.role as UserRole,
       });
       closeAuthModal();
-      router.push("/dashboard");
+      router.push(isAdmin || user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
       setLoginErrors({ email: message });

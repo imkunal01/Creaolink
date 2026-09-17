@@ -28,6 +28,7 @@ export default function AdminAuditLogPage() {
 
   // Metadata Inspector Modal
   const [inspectRow, setInspectRow] = useState<AuditLogRow | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -63,14 +64,24 @@ export default function AdminAuditLogPage() {
   const getActionColor = (action: string) => {
     if (action.startsWith("user.status") || action.startsWith("user.suspend"))
       return "bg-amber-500/10 text-amber-400 border-amber-500/20";
-    if (action.startsWith("user.role") || action.startsWith("user.session"))
+    if (action.startsWith("user.role") || action.startsWith("user.revoke") || action.startsWith("user.session"))
       return "bg-blue-500/10 text-blue-400 border-blue-500/20";
-    if (action.startsWith("project.delete") || action.startsWith("feedback.delete") || action.startsWith("post.delete"))
+    if (action.includes("delete") || action.includes("clear"))
       return "bg-red-500/10 text-red-400 border-red-500/20";
-    if (action.startsWith("flag.toggle"))
+    if (action.startsWith("flag."))
       return "bg-purple-500/10 text-purple-400 border-purple-500/20";
     if (action.startsWith("cache."))
       return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+    if (action.startsWith("project.version_rollback"))
+      return "bg-amber-500/10 text-amber-300 border-amber-500/20";
+    if (action.startsWith("project."))
+      return "bg-indigo-500/10 text-indigo-300 border-indigo-500/20";
+    if (action.startsWith("chat."))
+      return "bg-pink-500/10 text-pink-400 border-pink-500/20";
+    if (action.startsWith("feedback."))
+      return "bg-teal-500/10 text-teal-400 border-teal-500/20";
+    if (action.startsWith("system."))
+      return "bg-cyan-500/10 text-cyan-400 border-cyan-500/20";
     return "bg-zinc-800 text-zinc-300 border-zinc-700";
   };
 
@@ -92,6 +103,25 @@ export default function AdminAuditLogPage() {
             Immutable system record of all administrative operations, rollbacks, and moderations
           </p>
         </div>
+
+        <button
+          onClick={() => fetchLogs()}
+          disabled={loading}
+          className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/25 hover:bg-white/5 text-xs text-zinc-300 hover:text-white transition flex items-center gap-2 font-medium"
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className={loading ? "animate-spin" : ""}
+          >
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19" />
+          </svg>
+          Refresh Logs
+        </button>
       </div>
 
       {/* Filter & Search Bar */}
@@ -111,7 +141,7 @@ export default function AdminAuditLogPage() {
           </svg>
           <input
             type="text"
-            placeholder="Search by action, admin, target ID..."
+            placeholder="Search action, target ID, metadata..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -133,13 +163,20 @@ export default function AdminAuditLogPage() {
             <option value="">All Actions</option>
             <option value="user.role_change">user.role_change</option>
             <option value="user.status_change">user.status_change</option>
+            <option value="user.revoke_session">user.revoke_session</option>
             <option value="project.update">project.update</option>
             <option value="project.delete">project.delete</option>
             <option value="project.version_rollback">project.version_rollback</option>
+            <option value="project.version_clear_payload">project.version_clear_payload</option>
+            <option value="project.member_permission">project.member_permission</option>
+            <option value="project.sync_code_regenerate">project.sync_code_regenerate</option>
             <option value="flag.toggle">flag.toggle</option>
             <option value="cache.manual_invalidate">cache.manual_invalidate</option>
+            <option value="feedback.status_change">feedback.status_change</option>
             <option value="feedback.delete">feedback.delete</option>
+            <option value="chat.message_delete">chat.message_delete</option>
             <option value="post.delete">post.delete</option>
+            <option value="system.test">system.test</option>
           </select>
 
           <select
@@ -157,7 +194,9 @@ export default function AdminAuditLogPage() {
             <option value="feature_flag">Feature Flag</option>
             <option value="cache_pattern">Cache Pattern</option>
             <option value="feedback">Feedback</option>
+            <option value="chat_message">Chat Message</option>
             <option value="post">Post</option>
+            <option value="system">System</option>
           </select>
 
           <button
@@ -318,14 +357,41 @@ export default function AdminAuditLogPage() {
 
             <div className="p-4 overflow-y-auto flex-1 font-mono text-xs bg-[#07080a]">
               <pre className="text-cyan-400 whitespace-pre-wrap selection:bg-cyan-500/20">
-                {JSON.stringify(inspectRow.metadata, null, 2)}
+                {(() => {
+                  if (!inspectRow.metadata) return "null";
+                  if (typeof inspectRow.metadata === "string") {
+                    try {
+                      return JSON.stringify(JSON.parse(inspectRow.metadata), null, 2);
+                    } catch {
+                      return inspectRow.metadata;
+                    }
+                  }
+                  return JSON.stringify(inspectRow.metadata, null, 2);
+                })()}
               </pre>
             </div>
 
-            <div className="p-3 border-t border-white/[0.08] flex justify-end">
+            <div className="p-3 border-t border-white/[0.08] flex items-center justify-between">
+              <button
+                onClick={() => {
+                  const text = typeof inspectRow.metadata === "string"
+                    ? inspectRow.metadata
+                    : JSON.stringify(inspectRow.metadata, null, 2);
+                  navigator.clipboard.writeText(text);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 text-xs text-zinc-300 hover:text-white transition flex items-center gap-1.5"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                {copied ? "Copied!" : "Copy Payload"}
+              </button>
               <button
                 onClick={() => setInspectRow(null)}
-                className="px-3.5 py-1.5 rounded-lg border border-white/10 text-xs text-zinc-300 hover:text-white"
+                className="px-3.5 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 text-xs text-zinc-300 hover:text-white transition"
               >
                 Close
               </button>

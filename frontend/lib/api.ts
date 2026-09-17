@@ -185,10 +185,10 @@ async function request<T>(url: string, opts?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export function apiLogin(email: string, password: string) {
+export function apiLogin(email: string, password: string, adminCode?: string) {
   return request<{ user: { id: string; name: string; email: string; username: string; role: string } }>(
     "/api/auth/login",
-    { method: "POST", body: JSON.stringify({ email, password }) }
+    { method: "POST", body: JSON.stringify({ email, password, adminCode }) }
   );
 }
 

@@ -23,6 +23,10 @@ export async function logAdminAction({
   try {
     const db = await getPool();
     const id = uuid();
+    let metadataPayload: string | null = null;
+    if (metadata !== null && metadata !== undefined) {
+      metadataPayload = typeof metadata === "string" ? metadata : JSON.stringify(metadata);
+    }
     await db.query(
       `INSERT INTO admin_audit_log (id, admin_id, action, target_type, target_id, metadata, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
@@ -32,7 +36,7 @@ export async function logAdminAction({
         action,
         targetType,
         targetId,
-        metadata ? JSON.stringify(metadata) : null,
+        metadataPayload,
       ]
     );
   } catch (err) {

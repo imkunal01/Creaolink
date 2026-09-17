@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { getUser, logout, type User } from "@/lib/auth";
+import { getUser, setUser as saveUser, logout, type User } from "@/lib/auth";
+import { apiFetch } from "@/lib/api-client";
 
 const NAV_ITEMS = [
   {
@@ -104,22 +105,55 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const syncUser = () => {
-      const currentUser = getUser();
-      setUser(currentUser);
-      setReady(true);
-      if (!currentUser) {
+    let cancelled = false;
+
+    const verifyAdmin = async () => {
+      const localUser = getUser();
+      if (!localUser) {
         router.replace("/auth/login");
-      } else if (currentUser.role !== "admin") {
-        router.replace("/dashboard");
+        return;
+      }
+
+      // Fast-path: if local role is already admin, initialize immediately
+      if (localUser.role === "admin") {
+        setUser(localUser);
+        setReady(true);
+      }
+
+      // Always query server for ground-truth role
+      try {
+        const res = await apiFetch("/api/auth/me");
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            setUser(data.user);
+            saveUser(data.user);
+            setReady(true);
+            if (data.user.role !== "admin") {
+              router.replace("/dashboard");
+            }
+            return;
+          }
+        }
+      } catch {
+        // Fall back to local check if offline
+      }
+
+      if (!cancelled) {
+        setReady(true);
+        if (localUser.role !== "admin") {
+          router.replace("/dashboard");
+        }
       }
     };
-    syncUser();
-    window.addEventListener("cl_user_update", syncUser);
-    window.addEventListener("storage", syncUser);
+
+    verifyAdmin();
+    window.addEventListener("cl_user_update", verifyAdmin);
+    window.addEventListener("storage", verifyAdmin);
     return () => {
-      window.removeEventListener("cl_user_update", syncUser);
-      window.removeEventListener("storage", syncUser);
+      cancelled = true;
+      window.removeEventListener("cl_user_update", verifyAdmin);
+      window.removeEventListener("storage", verifyAdmin);
     };
   }, [router]);
 

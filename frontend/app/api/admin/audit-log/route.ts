@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     if (q) {
       conditions.push(
-        `(al.action ILIKE $${paramIndex} OR al.target_type ILIKE $${paramIndex} OR al.target_id ILIKE $${paramIndex} OR u.name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`
+        `(al.action ILIKE $${paramIndex} OR al.target_type ILIKE $${paramIndex} OR al.target_id ILIKE $${paramIndex} OR al.metadata::text ILIKE $${paramIndex} OR u.name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`
       );
       params.push(`%${q}%`);
       paramIndex++;
@@ -81,8 +81,23 @@ export async function GET(request: NextRequest) {
 
     const { rows } = await db.query(dataQuery, dataParams);
 
+    const auditLog = rows.map((r) => {
+      let meta = r.metadata;
+      if (typeof meta === "string") {
+        try {
+          meta = JSON.parse(meta);
+        } catch {
+          // keep as string
+        }
+      }
+      return {
+        ...r,
+        metadata: meta,
+      };
+    });
+
     return NextResponse.json({
-      auditLog: rows,
+      auditLog,
       total,
       page,
       limit,

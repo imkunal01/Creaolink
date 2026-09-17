@@ -9,6 +9,7 @@ export interface User {
   username: string;
   role: UserRole;
   avatar_url?: string | null;
+  status?: string;
 }
 
 const STORAGE_KEY = "creolink_user";
