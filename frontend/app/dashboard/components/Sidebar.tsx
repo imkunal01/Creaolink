@@ -3,15 +3,16 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { logout } from "@/lib/auth";
+import { logout, type User } from "@/lib/auth";
 import { apiFetch } from "@/lib/api-client";
 
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
+  user?: User | null;
 }
 
-export default function Sidebar({ open, onClose }: SidebarProps) {
+export default function Sidebar({ open, onClose, user }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [projects, setProjects] = useState<
@@ -110,26 +111,28 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <span className="sb-badge" style={{ background: "rgba(52, 211, 153, 0.15)", color: "#34d399", borderColor: "rgba(52, 211, 153, 0.3)" }}>UXP</span>
       </Link>
 
-      <Link
-        href="/admin"
-        className="sb-item"
-        style={{
-          background: "rgba(255, 42, 61, 0.08)",
-          color: "#ff4b5c",
-          border: "1px solid rgba(255, 42, 61, 0.25)",
-        }}
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1.5" />
-          <rect x="14" y="3" width="7" height="7" rx="1.5" />
-          <rect x="3" y="14" width="7" height="7" rx="1.5" />
-          <rect x="14" y="14" width="7" height="7" rx="1.5" />
-        </svg>
-        Admin Console
-        <span className="sb-badge" style={{ background: "rgba(255, 42, 61, 0.2)", color: "#ff4b5c", borderColor: "rgba(255, 42, 61, 0.4)" }}>
-          ADMIN
-        </span>
-      </Link>
+      {user?.role === "admin" && (
+        <Link
+          href="/admin"
+          className="sb-item"
+          style={{
+            background: "rgba(255, 42, 61, 0.08)",
+            color: "#ff4b5c",
+            border: "1px solid rgba(255, 42, 61, 0.25)",
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+            <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+          </svg>
+          Admin Console
+          <span className="sb-badge" style={{ background: "rgba(255, 42, 61, 0.2)", color: "#ff4b5c", borderColor: "rgba(255, 42, 61, 0.4)" }}>
+            ADMIN
+          </span>
+        </Link>
+      )}
 
       {/* PROJECTS section */}
       {projects.length > 0 && (

@@ -66,7 +66,7 @@ export default function DashboardLayout({
       <Topbar user={user} onMenuToggle={() => setSidebarOpen((v) => !v)} />
       <div className="app-body relative z-10 bg-transparent">
         {/* Sidebar */}
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} user={user} />
 
         {/* Mobile backdrop overlay */}
         <div
